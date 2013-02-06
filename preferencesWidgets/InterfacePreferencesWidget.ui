@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>InterfacePreferencesWidget</class>
+ <widget class="QWidget" name="InterfacePreferencesWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>520</width>
+    <height>298</height>
+   </rect>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <property name="fieldGrowthPolicy">
+    <enum>QFormLayout::ExpandingFieldsGrow</enum>
+   </property>
+   <item row="1" column="0">
+    <widget class="QCheckBox" name="minimizeCheckBox">
+     <property name="text">
+      <string>Close minimizes to tray</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="hideTrayCheckBox">
+     <property name="text">
+      <string>Hide system tray icon</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QCheckBox" name="switchTrackInfoCheckBox">
+     <property name="text">
+      <string>Show event balloon on track changed</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="refreshRateLabel">
+     <property name="text">
+      <string>Interface refresh rate (times per second):</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QSlider" name="refreshRateSlider">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>30</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="refreshRateValueLabel">
+       <property name="text">
+        <string notr="true">10</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="titlebarPlayingLabel">
+     <property name="text">
+      <string>Titlebar text while playing:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QLineEdit" name="titlebarPlayingLineEdit">
+     <property name="text">
+      <string notr="true"/>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="titlebarStoppedLabel">
+     <property name="text">
+      <string>Titlebar text while stopped:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QLineEdit" name="titlebarStoppedLineEdit">
+     <property name="text">
+      <string notr="true"/>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="trayIconMessageLabel">
+     <property name="text">
+      <string>Tray icon message format:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QLineEdit" name="trayIconMsgFormatLineEdit">
+     <property name="text">
+      <string notr="true"/>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="guiPluginLabel">
+     <property name="text">
+      <string>GUI Plugin (changing requires restart):</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QComboBox" name="guiPluginComboBox"/>
+   </item>
+   <item row="9" column="0" colspan="2">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
