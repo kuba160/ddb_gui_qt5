@@ -14,7 +14,7 @@ PlayList::PlayList(QWidget *parent) : QTreeView(parent), playListModel(this) {
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setDragEnabled(true);
     setAlternatingRowColors(true);
-    setSelectionMode(QAbstractItemView::SingleSelection);
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
     setIconSize(QSize(16, 16));
     setTextElideMode(Qt::ElideRight);
     setIndentation(0);
@@ -27,9 +27,19 @@ PlayList::PlayList(QWidget *parent) : QTreeView(parent), playListModel(this) {
     setExpandsOnDoubleClick(false);
     setAcceptDrops(true);
     setModel(&playListModel);
+    
     header()->setStretchLastSection(false);
+    
+//###################################################
+//     header()->setStretchLastSection(true);
+//     header()->setResizeMode(QHeaderView::Stretch);
+//###################################################
+    
     header()->setContextMenuPolicy(Qt::CustomContextMenu);
     header()->setSortIndicatorShown(false);
+    
+    header()->setDefaultSectionSize(80);
+    header()->setMinimumSectionSize(10);
     
     createContextMenu();
     createHeaderContextMenu();

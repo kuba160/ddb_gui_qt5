@@ -34,15 +34,13 @@ MainWindow::MainWindow(QWidget *parent) :
         progressBar(this) {
 
     ui->setupUi(this);
-
+    
+    loadActions();
     loadIcons();
     createToolBars();
     
-    dbStatusBar = NULL;
     trayIcon = NULL;
     trayMenu = NULL;
-    
-    createStatusbar();
     
     createConnections();
 
@@ -59,6 +57,7 @@ MainWindow::~MainWindow() {
 void MainWindow::createConnections() {
     connect(DBApiWrapper::Instance(), SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
     connect(ui->actionNewPlaylist, SIGNAL(triggered()), ui->playList, SIGNAL(newPlaylist()));
+    connect(DBApiWrapper::Instance(), SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
 }
 
 void MainWindow::loadIcons() {
@@ -76,6 +75,19 @@ void MainWindow::loadIcons() {
     ui->actionNewPlaylist->setIcon(getStockIcon(this, "document-new", QStyle::SP_FileDialogNewFolder));
     ui->actionPreferences->setIcon(getStockIcon(this, "preferences-system", QStyle::SP_CustomBase));
     ui->actionAbout->setIcon(getStockIcon(this, "help-about", QStyle::SP_DialogHelpButton));
+}
+
+void MainWindow::loadActions() {
+    addAction(ui->actionAddFolder);
+    addAction(ui->actionExit);
+    addAction(ui->actionPreferences);
+    addAction(ui->actionAddFiles);
+    addAction(ui->actionAddURL);
+    addAction(ui->actionSaveAsPlaylist);
+    addAction(ui->actionLoadPlaylist);
+    addAction(ui->actionNewPlaylist);
+    addAction(ui->actionHideMenuBar);
+    addAction(ui->actionFind);
 }
 
 void MainWindow::createTray() {
@@ -98,10 +110,6 @@ void MainWindow::createTray() {
     connect(trayIcon, SIGNAL(wheeled(int)), this, SLOT(trayIcon_wheeled(int)));
     
     trayIcon->setVisible(true);
-}
-
-void MainWindow::createStatusbar() {
-    setStatusBar(dbStatusBar);
 }
 
 void MainWindow::titleSettingChanged() {
@@ -208,13 +216,13 @@ void MainWindow::trayIcon_activated(QSystemTrayIcon::ActivationReason reason) {
         else
             hide();
     }
+    if (reason == QSystemTrayIcon::MiddleClick) {
+        DBAPI->sendmessage(DB_EV_TOGGLE_PAUSE, 0, 0, 0);
+    }
+
 }
 
 void MainWindow::on_actionExit_activated() {
-    if (dbStatusBar != NULL) {
-        delete dbStatusBar;
-        dbStatusBar = NULL;
-    }
     actionOnClose = Exit;
     close();
 }
@@ -336,28 +344,14 @@ QMenu *MainWindow::createPopupMenu() {
     popupMenu->addAction(ui->actionHideMenuBar);
     popupMenu->addSeparator();
     popupMenu->addSeparator();
-    popupMenu->addAction(ui->actionHideStatusbar);
     popupMenu->addSeparator();
     popupMenu->addAction(ui->actionBlockToolbarChanges);
     return popupMenu;
 }
 
-void MainWindow::on_actionHideStatusbar_activated() {
-    if (statusBar()->isHidden()) {
-        dbStatusBar = new StatusBar(this);
-        statusBar()->setHidden(false);
-        setStatusBar(dbStatusBar);
-    }
-    else {
-        setStatusBar(NULL);
-        statusBar()->setHidden(true);
-        delete dbStatusBar;
-        dbStatusBar = NULL;
-    }
-}
-
 void MainWindow::on_actionHideMenuBar_activated() {
-    on_actionToggleHideMenu_triggered();
+    ui->menuBar->setHidden(!ui->menuBar->isHidden());
+    ui->actionHideMenuBar->setChecked(!ui->menuBar->isHidden());
 }
 
 void MainWindow::on_actionBlockToolbarChanges_activated() {
@@ -458,11 +452,10 @@ void MainWindow::loadConfig() {
     QByteArray state = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, QByteArray()).toByteArray();
     bool tbIsLocked  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, false).toBool();
     bool mmIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, false).toBool();
-    bool sbIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::StatusbarIsHidden, false).toBool();
     bool trayIconIsHidden = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::TrayIconIsHidden, false).toBool();
     bool minimizeOnClose = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MinimizeOnClose, false).toBool();
-    bool isPlayListVisible = SETTINGS->getValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsVisible,true).toBool();
-    bool isTabBarVisible = SETTINGS->getValue(QtGuiSettings::MainWindow,QtGuiSettings::TabBarIsVisible,true).toBool();
+    bool headerIsVisible = SETTINGS->getValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsVisible,true).toBool();
+    bool tbIsVisible = SETTINGS->getValue(QtGuiSettings::MainWindow,QtGuiSettings::TabBarIsVisible,true).toBool();
 
     resize(size);
     move(point);
@@ -470,13 +463,8 @@ void MainWindow::loadConfig() {
     menuBar()->setHidden(mmIsHidden);
     ui->actionHideMenuBar->setChecked(!menuBar()->isHidden());
 
-    ui->actionPlayListHeader->setChecked(isPlayListVisible);
-    ui->actionHideTabBar->setChecked(isTabBarVisible);
-
-    dbStatusBar = sbIsHidden ? NULL : new StatusBar(this);
-    setStatusBar(dbStatusBar);
-    statusBar()->setHidden(sbIsHidden);
-    ui->actionHideStatusbar->setChecked(!sbIsHidden);
+    ui->actionPlayListHeader->setChecked(headerIsVisible);
+    ui->actionHideTabBar->setChecked(tbIsVisible);
 
     if (!trayIconIsHidden) {
         createTray();
@@ -522,9 +510,6 @@ void MainWindow::loadConfig() {
         break;
     }
 
-    addAction(ui->actionToggleHideMenu);
-
-
     qDebug() << QString::fromUtf8(DEADBEEF_PREFIX);
 }
 
@@ -534,7 +519,6 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, saveState());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
-    SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::StatusbarIsHidden, statusBar()->isHidden());
 #ifdef ARTWORK_ENABLED
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, !ui->actionHideCoverArt->isChecked());
 #endif
@@ -549,6 +533,6 @@ void MainWindow::on_actionHideTabBar_triggered() {
     ui->playList->hideTab();
 }
 
-void MainWindow::on_actionToggleHideMenu_triggered() {
-    ui->menuBar->setHidden(!ui->menuBar->isHidden());
+void MainWindow::on_deadbeefActivated() {
+    if (isHidden()) show();
 }

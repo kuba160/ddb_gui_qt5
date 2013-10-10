@@ -39,6 +39,12 @@ int DBApiWrapper::onPause() {
     return 0;
 }
 
+int DBApiWrapper::onDeadbeefActivated() {
+    emit WRAPPER->deadbeefActivated();
+    return 0;
+}
+
+
 void DBApiWrapper::addTracksByUrl(const QUrl &url, int position) {
     int pabort = 0;
     DB_playItem_t *track = (position > -1) ? DBAPI->pl_get_for_idx(position) : NULL;

@@ -38,7 +38,7 @@ extern "C" {
         plugin.plugin.id = "qtui";
         plugin.plugin.name = "Qt user interface";
         plugin.plugin.descr = "Qt user interface";
-        plugin.plugin.copyright = "Anton Novikov <tonn.post@gmail.com>, Semen Minyushov <semikmsv@gmail.com>, Karjavin Roman <redpunk231@gmail.com>";
+        plugin.plugin.copyright = "Anton Novikov <tonn.post@gmail.com>\nSemen Minyushov <semikmsv@gmail.com>\nRoman Karjavin<redpunk231@gmail.com>";
         plugin.plugin.website = "https://bitbucket.org/tonn/deadbeef-qt/wiki/Home";
         plugin.plugin.start = pluginStart;
         plugin.plugin.stop = pluginStop;
@@ -58,6 +58,9 @@ static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         break;
     case DB_EV_PLAYLISTCHANGED:
         WRAPPER->onPlaylistChanged();
+        break;
+    case DB_EV_ACTIVATED:
+        WRAPPER->onDeadbeefActivated();
         break;
     }
     return 0;

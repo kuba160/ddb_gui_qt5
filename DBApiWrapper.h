@@ -26,6 +26,7 @@ public:
     static int onSongChanged(ddb_event_trackchange_t *ev);
     static int onPause();
     static int onPlaylistChanged();
+    static int onDeadbeefActivated();
     
 private:
     DBApiWrapper();
@@ -35,6 +36,7 @@ signals:
     void playlistChanged();
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
     void playbackPaused();
+    void deadbeefActivated();
 };
 
 #endif // DBAPIWRAPPER_H

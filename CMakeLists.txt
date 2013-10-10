@@ -49,7 +49,6 @@ set(SOURCES
     QtGui.cpp
     QtGuiSettings.cpp
     SeekSlider.cpp
-    StatusBar.cpp
     SystemTrayIcon.cpp
     TabBar.cpp
     VolumeSlider.cpp
@@ -73,7 +72,6 @@ set(QT_HEADERS
     PreferencesDialog.h
     QtGuiSettings.h
     SeekSlider.h
-    StatusBar.h
     SystemTrayIcon.h
     TabBar.h
     VolumeSlider.h

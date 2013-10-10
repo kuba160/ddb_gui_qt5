@@ -7,7 +7,6 @@
 #include "config.h"
 
 #include "SystemTrayIcon.h"
-#include "StatusBar.h"
 #include "VolumeSlider.h"
 #include "SeekSlider.h"
 
@@ -49,7 +48,6 @@ private:
 
     SystemTrayIcon *trayIcon;
     QMenu *trayMenu;
-    StatusBar *dbStatusBar;
     VolumeSlider volumeSlider;
     SeekSlider progressBar;
 
@@ -64,10 +62,11 @@ private:
 
     void createToolBars();
     void createTray();
-    void createStatusbar();
     QMenu *createPopupMenu();
 
     void updateTitle(DB_playItem_t *it = NULL);
+    
+    void loadActions();
 
 private slots:
     void on_actionAddURL_activated();
@@ -98,7 +97,6 @@ private slots:
     void on_actionLoadPlaylist_activated();
 
     void on_actionHideMenuBar_activated();
-    void on_actionHideStatusbar_activated();
     void on_actionBlockToolbarChanges_activated();
 
 #ifdef ARTWORK_ENABLED
@@ -116,7 +114,8 @@ private slots:
     void titleSettingChanged();
     void on_actionPlayListHeader_triggered();
     void on_actionHideTabBar_triggered();
-    void on_actionToggleHideMenu_triggered();
+    
+    void on_deadbeefActivated();
 };
 
 #endif // MAINWINDOW_H

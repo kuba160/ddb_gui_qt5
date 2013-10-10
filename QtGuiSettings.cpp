@@ -42,8 +42,8 @@ void QtGuiSettings::Destroy() {
 }
 
 QtGuiSettings *QtGuiSettings::Instance() {
-    if (instance == NULL)
-        instance = new QtGuiSettings();
+    if (instance != NULL) delete instance;
+    instance = new QtGuiSettings();
     return instance;
 }
 

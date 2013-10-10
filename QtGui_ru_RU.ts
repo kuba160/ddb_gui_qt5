@@ -273,12 +273,6 @@
         <translation>Очистить</translation>
     </message>
     <message>
-        <location filename="MainWindow.ui" line="423"/>
-        <source>Save Playlist as...</source>
-        <oldsource>Save playlist</oldsource>
-        <translation type="unfinished">Сохранить плейлист как...</translation>
-    </message>
-    <message>
         <location filename="MainWindow.ui" line="547"/>
         <source>Select all</source>
         <translation>Выделить все</translation>
@@ -291,7 +285,7 @@
     <message>
         <location filename="MainWindow.ui" line="569"/>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Поиск</translation>
     </message>
     <message>
         <location filename="MainWindow.ui" line="586"/>
@@ -477,7 +471,7 @@
         <location filename="PlayListModel.cpp" line="10"/>
         <location filename="PlayListModel.cpp" line="99"/>
         <source>Status</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Статус</translation>
     </message>
     <message>
         <location filename="PlayListModel.cpp" line="11"/>
@@ -487,12 +481,12 @@
     <message>
         <location filename="PlayListModel.cpp" line="12"/>
         <source>Title</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Название</translation>
     </message>
     <message>
         <location filename="PlayListModel.cpp" line="13"/>
         <source>Artist</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Артист</translation>
     </message>
     <message>
         <location filename="PlayListModel.cpp" line="14"/>
@@ -502,12 +496,12 @@
     <message>
         <location filename="PlayListModel.cpp" line="15"/>
         <source>Year</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Год</translation>
     </message>
     <message>
         <location filename="PlayListModel.cpp" line="16"/>
         <source>Duration</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Продолжительность</translation>
     </message>
 </context>
 <context>
