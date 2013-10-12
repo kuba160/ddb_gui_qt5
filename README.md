@@ -28,4 +28,4 @@ $ make
 Then choose the QT gui plugin in the preference and restart DeaDBeeF.
 
 ##Arch Linux
-PKGBUILD from [AUR](https://aur.archlinux.org/packages/deadbeef-qt/)
+PKGBUILD from [AUR](https://aur.archlinux.org/packages/deadbeef-qt-git/)
