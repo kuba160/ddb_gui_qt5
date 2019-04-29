@@ -2,7 +2,6 @@
 #define VOLUMESLIDER_H
 
 #include <QSlider>
-#include <QMouseEvent>
 
 class VolumeSlider : public QSlider {
     Q_OBJECT
@@ -13,8 +12,7 @@ public:
     void setValue(int value);
 
 protected slots:
-    void mousePressEvent(QMouseEvent *ev);
-    void mouseMoveEvent(QMouseEvent *ev);
+    void onValueChanged(int value);
 };
 
 #endif // VOLUMESLIDER_H
