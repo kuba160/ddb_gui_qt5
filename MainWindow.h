@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QActionGroup>
+#include <QToolBar>
 
 #include "config.h"
 
@@ -23,7 +24,6 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
 
 protected:
     void changeEvent(QEvent *);
@@ -68,10 +68,10 @@ private:
     
     void loadActions();
 
-private slots:
-    void on_actionAddURL_activated();
-    void on_actionAddAudioCD_activated();
-    void on_actionAddFiles_activated();
+public slots:
+    void on_actionAddURL_triggered();
+    void on_actionAddAudioCD_triggered();
+    void on_actionAddFiles_triggered();
     void on_actionPreferences_triggered();
     void on_actionAboutQt_triggered();
     void on_actionAbout_triggered();
@@ -81,26 +81,26 @@ private slots:
     void on_actionShuffleOrder_triggered();
     void on_actionRandomOrder_triggered();
     void on_actionLinearOrder_triggered();
-    void on_actionExit_activated();
-    void on_actionPause_activated();
-    void on_actionPrev_activated();
-    void on_actionNext_activated();
-    void on_actionStop_activated();
-    void on_actionPlay_activated();
-    void on_actionAddFolder_activated();
-    void on_actionClearAll_activated();
-    void on_actionSelectAll_activated();
-    void on_actionDeselectAll_activated();
-    void on_actionRemove_activated();
+    void on_actionExit_triggered();
+    void on_actionPause_triggered();
+    void on_actionPrev_triggered();
+    void on_actionNext_triggered();
+    void on_actionStop_triggered();
+    void on_actionPlay_triggered();
+    void on_actionAddFolder_triggered();
+    void on_actionClearAll_triggered();
+    void on_actionSelectAll_triggered();
+    void on_actionDeselectAll_triggered();
+    void on_actionRemove_triggered();
 
-    void on_actionSaveAsPlaylist_activated();
-    void on_actionLoadPlaylist_activated();
+    void on_actionSaveAsPlaylist_triggered();
+    void on_actionLoadPlaylist_triggered();
 
-    void on_actionHideMenuBar_activated();
-    void on_actionBlockToolbarChanges_activated();
+    void on_actionHideMenuBar_triggered();
+    void on_actionBlockToolbarChanges_triggered();
 
 #ifdef ARTWORK_ENABLED
-    void on_actionHideCoverArt_activated();
+    void on_actionHideCoverArt_triggered();
     void onCoverartClose();
 #endif
 

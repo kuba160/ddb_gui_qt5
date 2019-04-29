@@ -4,6 +4,7 @@
 #include <deadbeef/deadbeef.h>
 
 #include <QUrl>
+#include <QObject>
 
 #define WRAPPER DBApiWrapper::Instance()
 
@@ -24,7 +25,7 @@ public:
     void addTracksByUrl(const QUrl &url, int position = -1);
     
     static int onSongChanged(ddb_event_trackchange_t *ev);
-    static int onPause();
+    static int onPause(int paused);
     static int onPlaylistChanged();
     static int onDeadbeefActivated();
     

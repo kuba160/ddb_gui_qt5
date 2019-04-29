@@ -33,8 +33,8 @@ int DBApiWrapper::onSongChanged(ddb_event_trackchange_t *ev) {
     return 0;
 }
 
-int DBApiWrapper::onPause() {
-    DBApiWrapper::Instance()->isPaused = !DBApiWrapper::Instance()->isPaused;
+int DBApiWrapper::onPause(int paused) {
+    DBApiWrapper::Instance()->isPaused = paused;
     emit DBApiWrapper::Instance()->playbackPaused();
     return 0;
 }

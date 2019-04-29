@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QFileDialog>
+#include <QToolBar>
 
 #include "QtGuiSettings.h"
 
@@ -18,7 +19,7 @@
 #define SIGNUM(x) ((x > 0) - (x < 0))
 
 #include <include/callbacks.h>
-#include <QtConcurrentRun>
+#include <QtConcurrent>
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
 
@@ -75,6 +76,9 @@ void MainWindow::loadIcons() {
     ui->actionNewPlaylist->setIcon(getStockIcon(this, "document-new", QStyle::SP_FileDialogNewFolder));
     ui->actionPreferences->setIcon(getStockIcon(this, "preferences-system", QStyle::SP_CustomBase));
     ui->actionAbout->setIcon(getStockIcon(this, "help-about", QStyle::SP_DialogHelpButton));
+
+    //pauseIcon = getStockIcon(this, "media-playback-pause", QStyle::SP_MediaPause);
+    //playIcon = getStockIcon(this, "media-playback-start", QStyle::SP_MediaPlay);
 }
 
 void MainWindow::loadActions() {
@@ -171,41 +175,41 @@ void MainWindow::closeEvent(QCloseEvent *e) {
     }
 }
 
-void MainWindow::on_actionAddFolder_activated() {
+void MainWindow::on_actionAddFolder_triggered() {
     DBFileDialog fileDialog(this,
                             tr("Add folder(s) to playlist..."),
                             QStringList(),
                             QFileDialog::DirectoryOnly,
                             QFileDialog::DontUseNativeDialog | QFileDialog::ShowDirsOnly | QFileDialog::ReadOnly);
-    QStringList fileNames = fileDialog.exec();
+    QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
     foreach (QString localFile, fileNames)
         ui->playList->insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
 }
 
-void MainWindow::on_actionClearAll_activated() {
+void MainWindow::on_actionClearAll_triggered() {
     ui->playList->clearPlayList();
 }
 
-void MainWindow::on_actionPlay_activated() {
+void MainWindow::on_actionPlay_triggered() {
     DBApiWrapper::Instance()->sendPlayMessage(DB_EV_PLAY_CURRENT);
 }
 
-void MainWindow::on_actionStop_activated() {
+void MainWindow::on_actionStop_triggered() {
     DBAPI->sendmessage(DB_EV_STOP, 0, 0, 0);
     updateTitle();
 }
 
-void MainWindow::on_actionNext_activated() {
+void MainWindow::on_actionNext_triggered() {
     DBApiWrapper::Instance()->sendPlayMessage(DB_EV_NEXT);
 }
 
-void MainWindow::on_actionPrev_activated() {
+void MainWindow::on_actionPrev_triggered() {
     DBApiWrapper::Instance()->sendPlayMessage(DB_EV_PREV);
 }
 
-void MainWindow::on_actionPause_activated() {
+void MainWindow::on_actionPause_triggered() {
     DBAPI->sendmessage(DB_EV_TOGGLE_PAUSE, 0, 0, 0);
 }
 
@@ -222,7 +226,7 @@ void MainWindow::trayIcon_activated(QSystemTrayIcon::ActivationReason reason) {
 
 }
 
-void MainWindow::on_actionExit_activated() {
+void MainWindow::on_actionExit_triggered() {
     actionOnClose = Exit;
     close();
 }
@@ -291,38 +295,38 @@ void MainWindow::on_actionPreferences_triggered() {
     delete prefDialog;
 }
 
-void MainWindow::on_actionSelectAll_activated() {
+void MainWindow::on_actionSelectAll_triggered() {
     ui->playList->selectAll();
 }
 
-void MainWindow::on_actionDeselectAll_activated() {
+void MainWindow::on_actionDeselectAll_triggered() {
     ui->playList->deselectAll();
 }
 
-void MainWindow::on_actionRemove_activated() {
+void MainWindow::on_actionRemove_triggered() {
     ui->playList->deleteSelectedTracks();
 }
 
-void MainWindow::on_actionAddFiles_activated() {
+void MainWindow::on_actionAddFiles_triggered() {
     DBFileDialog fileDialog(this,
                             tr("Add file(s) to playlist..."),
                             QStringList(),
                             QFileDialog::ExistingFiles,
                             QFileDialog::DontUseNativeDialog | QFileDialog::ReadOnly);
-    QStringList fileNames = fileDialog.exec();
+    QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
     foreach (QString localFile, fileNames)
         ui->playList->insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
 }
 
-void MainWindow::on_actionAddAudioCD_activated() {
+void MainWindow::on_actionAddAudioCD_triggered() {
     QFutureWatcher<void> *watcher = new QFutureWatcher<void>(this);
     connect(watcher, SIGNAL(finished()), ui->playList, SLOT(refresh()));
     watcher->setFuture(QtConcurrent::run(loadAudioCD));
 }
 
-void MainWindow::on_actionAddURL_activated() {
+void MainWindow::on_actionAddURL_triggered() {
     ui->playList->insertByURLAtPosition(QUrl::fromUserInput(QInputDialog::getText(this, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)));
 }
 
@@ -334,6 +338,8 @@ void MainWindow::createToolBars() {
     loopingGroup.addAction(ui->actionLoopAll);
     loopingGroup.addAction(ui->actionLoopTrack);
     loopingGroup.addAction(ui->actionLoopNothing);
+
+    //PlayBackToolBar->addAction(ui->actionStop);
 
     ui->PlayBackToolBar->addWidget(&progressBar);
     ui->PlayBackToolBar->addWidget(&volumeSlider);
@@ -349,16 +355,16 @@ QMenu *MainWindow::createPopupMenu() {
     return popupMenu;
 }
 
-void MainWindow::on_actionHideMenuBar_activated() {
+void MainWindow::on_actionHideMenuBar_triggered() {
     ui->menuBar->setHidden(!ui->menuBar->isHidden());
     ui->actionHideMenuBar->setChecked(!ui->menuBar->isHidden());
 }
 
-void MainWindow::on_actionBlockToolbarChanges_activated() {
+void MainWindow::on_actionBlockToolbarChanges_triggered() {
     ui->PlayBackToolBar->setMovable(!ui->actionBlockToolbarChanges->isChecked());
 }
 
-void MainWindow::on_actionSaveAsPlaylist_activated() {
+void MainWindow::on_actionSaveAsPlaylist_triggered() {
     QStringList filters;
     filters << tr("DeaDBeeF playlist files (*.dbpl)");
     DB_playlist_t **plug = deadbeef->plug_get_playlist_list();
@@ -377,7 +383,7 @@ void MainWindow::on_actionSaveAsPlaylist_activated() {
                             QFileDialog::DontUseNativeDialog);
     fileDialog.setAcceptMode(QFileDialog::AcceptSave);
     
-    QStringList fileNames = fileDialog.exec();
+    QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
     
@@ -388,7 +394,7 @@ void MainWindow::on_actionSaveAsPlaylist_activated() {
     }
 }
 
-void MainWindow::on_actionLoadPlaylist_activated() {
+void MainWindow::on_actionLoadPlaylist_triggered() {
     QStringList filters;
     filters << tr("Supported playlist formats (*.dbpl)");
     filters << tr("Other files (*)");
@@ -397,7 +403,7 @@ void MainWindow::on_actionLoadPlaylist_activated() {
                             filters,
                             QFileDialog::ExistingFile,
                             QFileDialog::DontUseNativeDialog | QFileDialog::ReadOnly);
-    QStringList fileNames = fileDialog.exec();
+    QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
 
@@ -407,7 +413,7 @@ void MainWindow::on_actionLoadPlaylist_activated() {
 }
 
 #ifdef ARTWORK_ENABLED
-void MainWindow::on_actionHideCoverArt_activated() {
+void MainWindow::on_actionHideCoverArt_triggered() {
     coverArtWidget.setHidden(!coverArtWidget.isHidden());
 }
 

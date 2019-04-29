@@ -29,7 +29,8 @@ void CoverArtWrapper::saveSettings() {
 
 void CoverArtWrapper::Destroy() {
     CoverArtWrapper::Instance()->saveSettings();
-    COVERART->reset(1);
+    if (COVERART)
+        COVERART->reset(1);
     delete instance;
     instance = NULL;
 }

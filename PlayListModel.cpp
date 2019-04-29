@@ -85,7 +85,7 @@ QVariant PlayListModel::data(const QModelIndex &index, int role = Qt::DisplayRol
 }
 
 QModelIndex PlayListModel::index(int row, int column, const QModelIndex &parent) const {
-    return createIndex(row, column, 0);
+    return createIndex(row, column, nullptr);
 }
 
 QModelIndex PlayListModel::parent(const QModelIndex &child) const {
@@ -117,7 +117,7 @@ QVariant PlayListModel::headerData(int section, Qt::Orientation orientation, int
 void PlayListModel::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
     if (status_column != -1) {
         ddb_playlist_t *plt = DBAPI->plt_get_curr();
-        emit dataChanged(createIndex(0, status_column, 0), createIndex(DBAPI->plt_get_item_count(plt, PL_MAIN) - 1, status_column, 0));
+        emit dataChanged(createIndex(0, status_column, nullptr), createIndex(DBAPI->plt_get_item_count(plt, PL_MAIN) - 1, status_column, nullptr));
         DBAPI->plt_unref(plt);
     }
 }
@@ -125,7 +125,7 @@ void PlayListModel::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
 void PlayListModel::playerPaused() {
     DB_playItem_t *track = DBAPI->streamer_get_playing_track();
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
-    QModelIndex index = createIndex(DBAPI->plt_get_item_idx(plt, track, PL_MAIN), status_column, 0);
+    QModelIndex index = createIndex(DBAPI->plt_get_item_idx(plt, track, PL_MAIN), status_column, nullptr);
     emit dataChanged(index, index);
     DBAPI->pl_item_unref(track);
     DBAPI->plt_unref(plt);
@@ -152,7 +152,7 @@ void PlayListModel::sort(int column, Qt::SortOrder order) {
         return;
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     DBAPI->plt_sort(plt, PL_MAIN, -1, columns[column].toUtf8().data(), order);
-    emit dataChanged(createIndex(0, 0, 0), createIndex(DBAPI->plt_get_item_count(plt, PL_MAIN), columns.count(), 0));
+    emit dataChanged(createIndex(0, 0, nullptr), createIndex(DBAPI->plt_get_item_count(plt, PL_MAIN), columns.count(), nullptr));
     DBAPI->plt_unref(plt);
 }
 

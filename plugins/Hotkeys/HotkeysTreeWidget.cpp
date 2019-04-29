@@ -9,7 +9,7 @@ HotkeysTreeWidget::HotkeysTreeWidget(QWidget* parent): QTreeWidget(parent) {
     labels.append(tr("Action"));
     labels.append(tr("Hotkey"));
     setHeaderLabels(labels);
-    header()->setResizeMode(QHeaderView::Stretch);
+    header()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 HotkeysTreeWidget::~HotkeysTreeWidget() {

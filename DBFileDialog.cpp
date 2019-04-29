@@ -15,15 +15,17 @@ DBFileDialog::DBFileDialog(QWidget *parent,
     setDirectory(lasturl.path());
     setFileMode(mode);
     setOptions(options);
-    setFilters(filters);
+    //setFilters(filters);
+    setNameFilters(filters);
 }
 
-QStringList DBFileDialog::exec() {
+QStringList DBFileDialog::exec2() {
     QStringList fileNames;
     if (QFileDialog::exec())
         fileNames = selectedFiles();
     
     if (fileNames.isEmpty())
+        //return 0;
         return fileNames;
     
     if (fileMode() != QFileDialog::DirectoryOnly) {
@@ -32,5 +34,6 @@ QStringList DBFileDialog::exec() {
         QString lastdir = path.join("/");
     }
     DBAPI->conf_set_str("filechooser.lastdir", fileNames.last().toUtf8().constData());
+    //return 0;
     return fileNames;
 }

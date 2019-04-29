@@ -32,7 +32,7 @@ PlayList::PlayList(QWidget *parent) : QTreeView(parent), playListModel(this) {
     
 //###################################################
 //     header()->setStretchLastSection(true);
-//     header()->setResizeMode(QHeaderView::Stretch);
+//     header()->setSectionResizeMode(QHeaderView::Stretch);
 //###################################################
     
     header()->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -108,7 +108,7 @@ void PlayList::storeCursor() {
 void PlayList::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsVisible,!header()->isHidden());
     SETTINGS->setValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderState, header()->saveState());
-    SETTINGS->setValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsLocked, !header()->isMovable() && header()->resizeMode(1) == QHeaderView::Fixed);
+    SETTINGS->setValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsLocked, !header()->sectionsMovable() && header()->sectionResizeMode(1) == QHeaderView::Fixed);
     playListModel.saveConfig();
 }
 
@@ -118,8 +118,8 @@ void PlayList::loadConfig() {
     headerState = SETTINGS->getValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderState, QByteArray()).toByteArray();
     header()->setHidden(!isVisible);
     header()->restoreState(headerState);
-    header()->setMovable(!isLocked);
-    header()->setResizeMode(isLocked ? QHeaderView::Fixed : QHeaderView::Interactive);
+    header()->setSectionsMovable(!isLocked);
+    header()->setSectionResizeMode(isLocked ? QHeaderView::Fixed : QHeaderView::Interactive);
     lockColumnsAction->setChecked(isLocked);
 }
 
@@ -197,7 +197,7 @@ void PlayList::createContextMenu() {
 void PlayList::createHeaderContextMenu() {
     lockColumnsAction = new QAction(tr("Lock columns"), &headerContextMenu);
     lockColumnsAction->setCheckable(true);
-    lockColumnsAction->setChecked(header()->isMovable() && header()->resizeMode(0) == QHeaderView::Fixed);
+    lockColumnsAction->setChecked(header()->sectionsMovable() && header()->sectionResizeMode(0) == QHeaderView::Fixed);
     connect(lockColumnsAction, SIGNAL(toggled(bool)), this, SLOT(lockColumns(bool)));
     
     loadConfig();
@@ -234,8 +234,8 @@ void PlayList::headerContextMenuRequested(QPoint pos) {
 }
 
 void PlayList::lockColumns(bool locked) {
-    header()->setResizeMode(locked ? QHeaderView::Fixed : QHeaderView::Interactive);
-    header()->setMovable(!locked);
+    header()->setSectionResizeMode(locked ? QHeaderView::Fixed : QHeaderView::Interactive);
+    header()->setSectionsMovable(!locked);
     headerState = header()->saveState();
 }
 

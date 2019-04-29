@@ -1,31 +1,28 @@
-#deadbeef-qt
-This plugin provides a Qt interface for [deadbeef](http://deadbeef.sourceforge.net/)
+# ddb_gui_qt5
 
-##Install
-For installation requires Qt 4.4 or greater and DeaDBeeF 0.5.6.
+This plugin provides a Qt interface for [deadbeef](http://deadbeef.sourceforge.net/). This plugin is continuation of [deadbeef-qt plugin](https://github.com/redpunk231/deadbeef-qt.git) ported to Qt5
 
-Get deadbeef-qt sources from repository:
+## Install
+For installation requires Qt 5 (specific version unknown) or greater and DeaDBeeF 0.7. For debian based systems install `qt5-default`.
+
+Get ddb_gui_qt5 sources from repository:
 ```bash
-$ git clone git://github.com/redpunk231/deadbeef-qt.git
+$ git clone git://github.com/kuba160/ddb_gui_qt5
 ```
 Create temporary directory (for example </path/to/sources>/build) and change into it:
 ```bash
-$ cd deadbeef-qt/
+$ cd ddb_gui_qt/
 $ mkdir build
 $ cd build
 ```
-Run cmake:
+Run cmake (`CMAKE_INSTALL_PREFIX` default is /usr/local):
 ```bash
 $ cmake -D CMAKE_INSTALL_PREFIX=<DEADBEEF_INSTALL_PREFIX> ../
 ```
-where the variable \<DEADBEEF_INSTALL_PREFIX\> is typically /usr
 
 Then run make:
 ```bash
 $ make
 # make install
 ```
-Then choose the QT gui plugin in the preference and restart DeaDBeeF.
-
-##Arch Linux
-PKGBUILD from [AUR](https://aur.archlinux.org/packages/deadbeef-qt-git/)
+Then choose the QT gui plugin in the preference and restart DeaDBeeF. Another possibility is to start deadbeef with `--gui qt5`	 parameter.

@@ -13,7 +13,9 @@ public:
                  FileMode mode = QFileDialog::AnyFile,
                  QFileDialog::Options options = QFileDialog::DontUseNativeDialog);
 
-    QStringList exec();
+    QStringList exec2();
+    //virtual int exec();
+
 };
 
 #endif // DBFILEDIALOG_H
