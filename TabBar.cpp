@@ -41,14 +41,15 @@ void TabBar::configure() {
     setAcceptDrops(true);
     setMouseTracking(true);
     setMovable(true);
-    setTabsClosable(true);
+    //setTabsClosable(true);
+    setTabsClosable(false);
     setSelectionBehaviorOnRemove(SelectLeftTab);
 }
 
 void TabBar::selectLastTab() {
     setCurrentIndex(DBAPI->plt_get_curr_idx());
     if (count() == 1) {
-        setTabsClosable(false);
+        //setTabsClosable(false);
         delPlaylist->setEnabled(false);
     }
 }
@@ -97,11 +98,17 @@ void TabBar::wheelEvent(QWheelEvent *event) {
         int lastIndex = count() - 1;
         int targetIndex = -1;
         bool forward = event->delta() < 0;
-        if (forward && lastIndex == currentIndex())
+        if (forward && lastIndex == currentIndex()) {
+            event->ignore();
+            return;
             targetIndex = 0;
+        }
         else
-            if (!forward && 0 == currentIndex())
+            if (!forward && 0 == currentIndex()) {
                 targetIndex = lastIndex;
+                event->ignore();
+                return;
+            }
         setCurrentIndex(targetIndex);
         if (targetIndex != currentIndex() || !isTabEnabled(targetIndex))
             QTabBar::wheelEvent(event);
@@ -186,7 +193,7 @@ void TabBar::newPlaylist() {
         if (i == cnt) {
             DBAPI->plt_add(cnt, name.toUtf8().constData());
             if (count() == 1) {
-                setTabsClosable(true);
+                //setTabsClosable(true);
                 delPlaylist->setEnabled(true);
             }
             insertTab(cnt, name);
