@@ -129,7 +129,7 @@ extern "C" {
     DB_plugin_t *ddb_gui_qt5_load(DB_functions_t *api) {
         deadbeef = api;
         plugin.plugin.api_vmajor = 1;
-        plugin.plugin.api_vminor = 10;
+        plugin.plugin.api_vminor = 9;
         plugin.plugin.version_major = 1;
         plugin.plugin.version_minor = 0;
         plugin.plugin.type = DB_PLUGIN_GUI;
