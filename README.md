@@ -2,6 +2,8 @@
 
 This plugin provides a Qt interface for [deadbeef](http://deadbeef.sourceforge.net/). This plugin is continuation of [deadbeef-qt plugin](https://github.com/redpunk231/deadbeef-qt.git) ported to Qt5
 
+![image](https://user-images.githubusercontent.com/6359901/56922057-a6252880-6ac7-11e9-807f-3dc7b49ad502.png)
+
 ## Install
 For installation requires Qt 5 (specific version unknown) or greater and DeaDBeeF 0.7. For debian based systems install `qt5-default`.
 
