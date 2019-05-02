@@ -106,8 +106,7 @@ void MainWindow::createTray() {
     trayMenu->addAction(ui->actionExit);
     trayIcon->setContextMenu(trayMenu);
 
-    QIcon icon;
-    icon.addFile(QString::fromUtf8(":/root/images/scalable.svg"), QSize(), QIcon::Normal, QIcon::On);
+    QIcon icon(":/root/images/deadbeef.png");
     trayIcon->setIcon(icon);
 
     connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(trayIcon_activated(QSystemTrayIcon::ActivationReason)));
