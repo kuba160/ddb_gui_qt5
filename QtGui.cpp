@@ -100,7 +100,7 @@ void MainThreadRun(void *) {
     int argc = sizeof(argv) / sizeof(char*) - 1;
     QApplication app(argc, argv);
     QApplication::setOrganizationName("deadbeef");
-    QApplication::setApplicationName("deadbeef-qt");
+    QApplication::setApplicationName("DeaDBeeF");
 
     QString locale = QLocale::system().name();
     
