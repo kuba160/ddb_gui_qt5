@@ -12,6 +12,9 @@
 
 #ifdef ARTWORK_ENABLED
 void cover_avail_callback(const char *fname, const char *artist, const char *album, void *user_data) {
+    if (!fname && !artist && !album) {
+        return;
+    }
     char *image_fname = COVERART->get_album_art(fname, artist, album, -1, CALLBACK(&cover_avail_callback), NULL);
     if (image_fname) {
         CoverArtWrapper::Instance()->openAndScaleCover(image_fname);
