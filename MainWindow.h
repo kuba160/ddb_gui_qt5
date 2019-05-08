@@ -5,8 +5,6 @@
 #include <QActionGroup>
 #include <QToolBar>
 
-#include "config.h"
-
 #include "SystemTrayIcon.h"
 #include "VolumeSlider.h"
 #include "SeekSlider.h"
@@ -100,8 +98,8 @@ public slots:
     void on_actionBlockToolbarChanges_triggered();
 
 #ifdef ARTWORK_ENABLED
-    void on_actionHideCoverArt_triggered();
-    void onCoverartClose();
+    //void on_actionHideCoverArt_triggered();
+   // void onCoverartClose();
 #endif
 
     void trayIcon_wheeled(int);

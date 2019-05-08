@@ -3,8 +3,6 @@
 
 #define SETTINGS QtGuiSettings::Instance()
 
-#include "config.h"
-
 #include <QVariant>
 #include <QString>
 #include <QSettings>

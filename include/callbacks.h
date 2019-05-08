@@ -1,7 +1,6 @@
 #ifndef CALLBACKS_H
 #define CALLBACKS_H
 
-#include "config.h"
 #include <QIcon>
 
 #ifdef ARTWORK_ENABLED

@@ -25,7 +25,4 @@ if (ARTWORK_ENABLED)
     set(HEADERS ${HEADERS}
         plugins/CoverArt/include/artwork.h
         )
-    set(TRANSLATIONS ${TRANSLATIONS}
-        plugins/CoverArt/CoverArtPlugin_ru_RU.ts
-        )
 endif (ARTWORK_ENABLED)

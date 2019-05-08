@@ -19,6 +19,8 @@ endif(NOT DEADBEEF_API)
 
 include_directories(BEFORE SYSTEM ${CMAKE_INSTALL_PREFIX}/include)
 
+add_definitions(-DARTWORK_ENABLED=1 -DHOTKEYS_ENABLED=1)
+
 find_package(Qt5Widgets)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
@@ -33,7 +35,11 @@ set(SOURCES
     preferencesWidgets/PluginsPreferencesWidget.cpp
     preferencesWidgets/PluginSettingsWidget.cpp
     preferencesWidgets/SoundPreferencesWidget.cpp
-    
+
+    plugins/CoverArt/CoverArtWidget.cpp
+    plugins/CoverArt/CoverArtWrapper.cpp
+    plugins/CoverArt/CoverArtCache.cpp
+
     AboutDialog.cpp
     DBApiWrapper.cpp
     DBFileDialog.cpp
@@ -42,6 +48,7 @@ set(SOURCES
     PlayList.cpp
     PlayListModel.cpp
     PlayListWidget.cpp
+    PluginLoader.cpp
     
     PreferencesDialog.cpp
     QtGui.cpp
@@ -59,6 +66,10 @@ set(QT_HEADERS
     preferencesWidgets/PluginSettingsWidget.h
     preferencesWidgets/SoundPreferencesWidget.h
     
+    plugins/CoverArt/CoverArtWrapper.h
+    plugins/CoverArt/CoverArtWidget.h
+    plugins/CoverArt/CoverArtCache.h
+
     AboutDialog.h
     DBApiWrapper.h
     DBFileDialog.h
@@ -67,6 +78,7 @@ set(QT_HEADERS
     PlayList.h
     PlayListModel.h
     PlayListWidget.h
+    PluginLoader.h
     PreferencesDialog.h
     QtGuiSettings.h
     SeekSlider.h
@@ -99,7 +111,6 @@ set(RESOURCES
      
 include(${CMAKE_SOURCE_DIR}/plugins/CoverArt/CoverArt.cmake)
 include(${CMAKE_SOURCE_DIR}/plugins/Hotkeys/Hotkeys.cmake)
-configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h)
 
 qt5_wrap_cpp(MOC_SRCS ${QT_HEADERS})
 qt5_wrap_ui(UIS_H ${FORMS})

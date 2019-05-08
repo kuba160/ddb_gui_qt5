@@ -1,10 +1,11 @@
 #include "AboutDialog.h"
 #include "ui_AboutDialog.h"
 
+#include "QtGui.h"
+#include <deadbeef/deadbeef.h>
+
 #include <QFile>
 #include <QTextStream>
-
-#include "QtGui.h"
 
 extern DB_gui_t plugin;
 

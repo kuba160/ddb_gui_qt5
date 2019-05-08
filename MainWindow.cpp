@@ -410,9 +410,9 @@ void MainWindow::on_actionLoadPlaylist_triggered() {
     connect(watcher, SIGNAL(finished()), ui->playList, SLOT(refresh()));
     watcher->setFuture(QtConcurrent::run(loadPlaylist, fileNames.last()));
 }
-
+/*
 #ifdef ARTWORK_ENABLED
-void MainWindow::on_actionHideCoverArt_triggered() {
+void MainWindow::on_actionHideCover_triggered() {
     coverArtWidget.setHidden(!coverArtWidget.isHidden());
 }
 
@@ -421,7 +421,7 @@ void MainWindow::onCoverartClose() {
 }
 
 #endif
-
+*/
 void MainWindow::setCloseOnMinimized(bool minimizeOnClose) {
     bool trayIconIsHidden = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::TrayIconIsHidden, false).toBool();
     configureActionOnClose(minimizeOnClose, trayIconIsHidden);

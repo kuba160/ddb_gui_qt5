@@ -8,6 +8,11 @@
 #include <include/callbacks.h>
 #include <QEvent>
 
+#include "PluginLoader.h"
+
+QtPlugin_t qtCoverart;
+
+
 CoverArtWidget::CoverArtWidget(QWidget *parent):
         QDockWidget(parent),
         label(this),
@@ -24,6 +29,9 @@ CoverArtWidget::CoverArtWidget(QWidget *parent):
     connect(CoverArtCache::Instance(this), SIGNAL(coverIsReady(const QImage &)), SLOT(setCover(const QImage &)));
     connect(&updateCoverAction, SIGNAL(triggered(bool)), SLOT(reloadCover()));
     CACHE->getDefaultCoverArt();
+
+    qtCoverart.plugin.id = "coverart_qt";
+    qtCoverart.widget = this;
 }
 
 CoverArtWidget::~CoverArtWidget() {
