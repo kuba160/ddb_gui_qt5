@@ -15,7 +15,7 @@ void cover_avail_callback(const char *fname, const char *artist, const char *alb
     if (!fname && !artist && !album) {
         return;
     }
-    char *image_fname = COVERART->get_album_art(fname, artist, album, -1, CALLBACK(&cover_avail_callback), NULL);
+    char *image_fname = COVERART->get_album_art(fname, artist, album, -1, CALLBACK_COVER(&cover_avail_callback), NULL);
     if (image_fname) {
         CoverArtWrapper::Instance()->openAndScaleCover(image_fname);
     }

@@ -49,7 +49,7 @@ void CoverArtWrapper::onImageLoaded(int num) {
 void CoverArtWrapper::getCoverArt(const char *fname, const char *artist, const char *album) {
     if (!COVERART)
         return;
-    char *image_fname = COVERART->get_album_art(fname, artist, album, -1, CALLBACK(&cover_avail_callback), NULL);
+    char *image_fname = COVERART->get_album_art(fname, artist, album, -1, CALLBACK_COVER(&cover_avail_callback), NULL);
     if (image_fname) {
         coverLoadWatcher.setFuture(QtConcurrent::run(scale, image_fname));
     }

@@ -7,7 +7,7 @@
 
 #include <QImage>
 typedef void (*DB_coverart_t)(const char *fname, const char *artist, const char *album, void *user_data);
-#define CALLBACK(x) ((DB_coverart_t)(x))
+#define CALLBACK_COVER(x) ((DB_coverart_t)(x))
 
 extern QImage *scale(const char *fname);
 extern void cover_avail_callback(const char *fname, const char *artist, const char *album, void *user_data);
