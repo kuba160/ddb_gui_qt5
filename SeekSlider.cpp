@@ -14,14 +14,18 @@ SeekSlider::~SeekSlider() {
 }
 
 void SeekSlider::mouseReleaseEvent(QMouseEvent *ev) {
-    DBAPI->playback_set_pos(value() / SEEK_SCALE);
-    activateNow = false;
+    if (ev->button() == Qt::LeftButton) {
+        DBAPI->playback_set_pos(value() / SEEK_SCALE);
+        activateNow = false;
+    }
 }
 
 
 void SeekSlider::mousePressEvent(QMouseEvent *ev) {
-    activateNow = true;
-    setValue(pos(ev));
+    if (ev->button() == Qt::LeftButton) {
+        activateNow = true;
+        setValue(pos(ev));
+    }
 }
 
 void SeekSlider::mouseMoveEvent(QMouseEvent *ev) {
