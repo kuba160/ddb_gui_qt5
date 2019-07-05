@@ -103,20 +103,6 @@ void MainThreadRun(void *) {
     QApplication::setApplicationName("DeaDBeeF");
 
     QString locale = QLocale::system().name();
-    
-#ifdef ARTWORK_ENABLED
-    QTranslator coverartTranslator;
-    coverartTranslator.load(QString::fromUtf8(DEADBEEF_PREFIX) + QString("/share/deadbeef/translations/CoverArtPlugin_") + locale);
-    app.installTranslator(&coverartTranslator);
-#endif
-#ifdef HOTKEYS_ENABLED
-    QTranslator hotkeysTranslator;
-    hotkeysTranslator.load(QString::fromUtf8(DEADBEEF_PREFIX) + QString("/share/deadbeef/translations/HotkeysPlugin_") + locale);
-    app.installTranslator(&hotkeysTranslator);
-#endif
-    QTranslator translator;
-    translator.load(QString::fromUtf8(DEADBEEF_PREFIX) + QString("/share/deadbeef/translations/QtGui_") + locale);
-    app.installTranslator(&translator);
 
     //QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
 
