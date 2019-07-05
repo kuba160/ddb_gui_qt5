@@ -142,7 +142,7 @@ extern "C" {
             "You should have received a copy of the GNU General Public License\n"
             "along with this program; if not, write to the Free Software\n"
             "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n";
-        plugin.plugin.website = "https://github.com/kuba160/deadbeef-qt";
+        plugin.plugin.website = "https://github.com/kuba160/ddb_gui_qt5";
         plugin.plugin.start = pluginStart;
         plugin.plugin.stop = pluginStop;
         plugin.plugin.connect = pluginConnect;
