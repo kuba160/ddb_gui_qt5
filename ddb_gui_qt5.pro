@@ -59,7 +59,7 @@ HEADERS =	preferencesWidgets/InterfacePreferencesWidget.h \
 			SeekSlider.h \
 			SystemTrayIcon.h \
 			TabBar.h \
-			VolumeSlider.h 
+                        VolumeSlider.h
 
 FORMS =	preferencesWidgets/InterfacePreferencesWidget.ui \
 		preferencesWidgets/NetworkPreferencesWidget.ui \
