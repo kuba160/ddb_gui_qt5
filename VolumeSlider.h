@@ -10,6 +10,8 @@ public:
     VolumeSlider(QWidget *parent = 0);
 
     void setValue(int value);
+protected:
+    void mousePressEvent(QMouseEvent *event);
 
 protected slots:
     void onValueChanged(int value);
