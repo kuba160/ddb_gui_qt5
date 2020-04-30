@@ -22,9 +22,6 @@
 #include "QtGui.h"
 
 #include <QApplication>
-#include <QTranslator>
-#include <QTextCodec>
-#include <QLocale>
 
 #include "DBApiWrapper.h"
 #include "MainWindow.h"
@@ -36,19 +33,15 @@ static int pluginConnect();
 static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
 void MainThreadRun(void *);
 
-static intptr_t thread;
-
 DB_functions_t *deadbeef;
 DB_gui_t plugin;
 
-#ifdef HOTKEYS_ENABLED
+// TODO make casual plugin list
 DB_hotkeys_plugin_t *hotkeys_plugin;
-#endif
-#ifdef ARTWORK_ENABLED
 DB_artwork_plugin_t *coverart_plugin;
-#endif
 
 static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
+    Q_UNUSED(p2);
     switch (id) {
     case DB_EV_SONGCHANGED:
         WRAPPER->onSongChanged((ddb_event_trackchange_t *)ctx);
