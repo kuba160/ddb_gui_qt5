@@ -1,8 +1,6 @@
 #ifndef SEEKSLIDER_H
 #define SEEKSLIDER_H
 
-//#include "ProgressBar.h"
-
 #include <QSlider>
 #include "QtGui.h"
 #include <QMouseEvent>
