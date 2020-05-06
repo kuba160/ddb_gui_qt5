@@ -9,6 +9,8 @@
 #include <QtGuiSettings.h>
 #include <TabBar.h>
 
+#include "MainWindow.h"
+
 PlayList::PlayList(QWidget *parent) : QTreeView(parent), playListModel(this) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -71,8 +73,8 @@ void PlayList::createConnections() {
     connect(header(), SIGNAL(sectionResized(int,int,int)), SLOT(saveHeaderState()));
     connect(header(), SIGNAL(sectionMoved(int,int,int)), SLOT(saveHeaderState()));
     connect(header(), SIGNAL(sectionClicked(int)), SLOT(saveHeaderState()));
-    connect(WRAPPER, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(onTrackChanged(DB_playItem_t *, DB_playItem_t *)));
-    connect(WRAPPER, SIGNAL(playlistChanged()), SLOT(refresh()));
+    //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(onTrackChanged(DB_playItem_t *, DB_playItem_t *)));
+    //connect(w->Api(), SIGNAL(playlistChanged()), SLOT(refresh()));
 }
 
 void PlayList::refresh() {
@@ -182,7 +184,7 @@ void PlayList::selectionChanged(const QItemSelection &selected, const QItemSelec
 }
 
 void PlayList::trackDoubleClicked(QModelIndex index) {
-    DBApiWrapper::Instance()->playTrackByIndex(index.row());
+    w->Api()->playTrackByIndex(index.row());
 }
 
 void PlayList::createContextMenu() {

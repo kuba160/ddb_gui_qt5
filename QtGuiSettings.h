@@ -31,9 +31,7 @@ public:
     static const QString TitlebarStopped;
     static const QString TabBarPosition;
     static const QString TabBarIsVisible;
-#ifdef ARTWORK_ENABLED
     static const QString CoverartIsHidden;
-#endif
 
     //TrayIcon Group
     static const QString TrayIcon;

@@ -6,11 +6,8 @@
 #include "QtGui.h"
 #include "qticonloader.h"
 
-#ifdef ARTWORK_ENABLED
 #include <plugins/CoverArt/CoverArtWrapper.h>
-#endif
 
-#ifdef ARTWORK_ENABLED
 void cover_avail_callback(const char *fname, const char *artist, const char *album, void *user_data) {
     if (!fname && !artist && !album) {
         return;
@@ -32,8 +29,6 @@ QImage *scale(const char *fname) {
     delete pm;
     return scaledImage;
 }
-
-#endif
 
 void conf_get_str(const char *key, char *value, int len, const char *def) {
     DBAPI->conf_get_str(key, def, value, len);

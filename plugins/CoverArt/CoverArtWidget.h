@@ -4,7 +4,7 @@
 #include <QDockWidget>
 #include <QLabel>
 
-#include "DBApiWrapper.h"
+#include "DBApi.h"
 #include <QAction>
 
 class CoverArtWidget : public QDockWidget {

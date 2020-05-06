@@ -5,9 +5,7 @@
 
 PluginLoader::PluginLoader (){
 
-#ifdef ARTWORK_ENABLED
-    load_plugin (&qtCoverart);
-#endif
+    //load_plugin (&qtCoverart);
 }
 
 int PluginLoader::load_plugin(QtPlugin_t *plugin) {

@@ -9,19 +9,25 @@
 #include "VolumeSlider.h"
 #include "SeekSlider.h"
 
-#ifdef ARTWORK_ENABLED
 #include <plugins/CoverArt/CoverArtWidget.h>
-#endif
 
 namespace Ui {
 class MainWindow;
 }
+
+enum ActionOnClose {
+    Exit = 0,
+    Hide = 1,
+    Minimize = 2,
+};
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+    DBApi *Api();
 
 protected:
     void changeEvent(QEvent *);
@@ -30,11 +36,6 @@ protected:
     void loadIcons();
 
 private:
-    enum ActionOnClose {
-        Exit = 0,
-        Hide = 1,
-        Minimize = 2,
-    };
     
     void loadConfig();
     void saveConfig();
@@ -44,14 +45,20 @@ private:
 
     Ui::MainWindow *ui;
 
+public:
+    DBApi api;
+
+private:
     SystemTrayIcon *trayIcon;
     QMenu *trayMenu;
     VolumeSlider volumeSlider;
     SeekSlider progressBar;
 
-#ifdef ARTWORK_ENABLED
+
+    QToolBar *ToolbarStack[64];
+    char ToolbarStackCount;
+
     CoverArtWidget coverArtWidget;
-#endif
 
     QActionGroup orderGroup;
     QActionGroup loopingGroup;
@@ -97,13 +104,9 @@ public slots:
     void on_actionHideMenuBar_triggered();
     void on_actionBlockToolbarChanges_triggered();
 
-#ifdef ARTWORK_ENABLED
+    // TODO: These were disabled, so now there is no way to enable artwork back :D
     //void on_actionHideCoverArt_triggered();
-   // void onCoverartClose();
-#endif
-
-    void trayIcon_wheeled(int);
-    void trayIcon_activated(QSystemTrayIcon::ActivationReason);
+    // void onCoverartClose();
 
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
 
@@ -114,6 +117,11 @@ public slots:
     void on_actionHideTabBar_triggered();
     
     void on_deadbeefActivated();
+
+    void windowActivate();
+    void windowShowHide();
 };
+
+extern MainWindow *w;
 
 #endif // MAINWINDOW_H

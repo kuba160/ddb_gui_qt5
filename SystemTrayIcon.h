@@ -10,11 +10,20 @@ class SystemTrayIcon : public QSystemTrayIcon {
 public:
     explicit SystemTrayIcon(QObject *parent = 0);
 
+
 protected:
-    virtual bool event(QEvent *event);
+    bool event(QEvent *event) override;
+
+private:
+    QWidget *window;
+public slots:
+    void onActivated(QSystemTrayIcon::ActivationReason reason);
 
 signals:
-    void wheeled(int);
+    void singleClick();
+    void doubleClick();
+    void middleClick();
+    void wheelScroll(int);
 };
 
 #endif // SYSTEMTRAYICON_H

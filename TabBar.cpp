@@ -257,6 +257,8 @@ void TabBar::setShape(QTabBar::Shape shape) {
         case QTabBar::RoundedEast:
             right->setChecked(true);
             break;
+        default:
+            break;
     }
     QTabBar::setShape(shape);
 }

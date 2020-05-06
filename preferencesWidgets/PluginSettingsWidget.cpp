@@ -26,7 +26,7 @@ void PluginSettingsWidget::configureWidgets() {
     QFormLayout *layout = new QFormLayout(this);
     char token[MAX_TOKEN];
     const char *script = settingsDialog->layout;
-    while (script = gettoken(script, token)) {
+    while ((script = gettoken(script, token))) {
         if (strcmp(token, "property")) {
             qDebug() << "invalid token while loading plugin " << settingsDialog->title << " config dialog: " << token << " at line " << parser_line;
             break;
@@ -44,7 +44,7 @@ void PluginSettingsWidget::configureWidgets() {
 
         if (!strncmp (type, "hbox[", 5) || !strncmp (type, "vbox[", 5)) {
             char semicolon[MAX_TOKEN];
-            while (script = gettoken_warn_eof(script, semicolon))
+            while ((script = gettoken_warn_eof(script, semicolon)))
                 if (!strcmp (semicolon, ";"))
                     break;
             continue;
@@ -53,7 +53,6 @@ void PluginSettingsWidget::configureWidgets() {
         if (!script)
             break;
 
-        int vertical = 0;
         char key[MAX_TOKEN];
         script = gettoken_warn_eof(script, key);
         if (!script)

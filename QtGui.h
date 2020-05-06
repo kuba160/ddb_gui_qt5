@@ -1,19 +1,15 @@
 #ifndef QTGUI_H
 #define QTGUI_H
 
-#include <deadbeef/deadbeef.h>
-#include "PluginLoader.h"
-
 #include <QDebug>
 
-#define Log(X) qDebug() << Q_FUNC_INFO << ":" << X
+#include <deadbeef/deadbeef.h>
 
-#ifdef ARTWORK_ENABLED
+
 #include <plugins/CoverArt/include/artwork.h>
 #define COVERART coverart_plugin
-extern QtPlugin_t qtCoverart;
+//extern QtPlugin_t qtCoverart;
 extern DB_artwork_plugin_t *coverart_plugin;
-#endif
 
 #ifdef HOTKEYS_ENABLED
 #include <plugins/Hotkeys/include/hotkeys.h>

@@ -11,37 +11,54 @@
 #include "QtGuiSettings.h"
 
 #include "QtGui.h"
-#include "DBApiWrapper.h"
+#include "DBApi.h"
 #include "AboutDialog.h"
 #include "PlayList.h"
 #include "PreferencesDialog.h"
-
-#define SIGNUM(x) ((x > 0) - (x < 0))
 
 #include <include/callbacks.h>
 #include <QtConcurrent>
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
 
-#include "MainWindow_actions.cpp"
-
 MainWindow::MainWindow(QWidget *parent) :
         QMainWindow(parent),
         ui(new Ui::MainWindow),
-        orderGroup(this),
-#ifdef ARTWORK_ENABLED
+        api(this),
+        volumeSlider(this, &api),
+        progressBar(this),
         coverArtWidget(this),
-#endif
-        loopingGroup(this),
-        volumeSlider(this),
-        progressBar(this) {
+        orderGroup(this),
+        loopingGroup(this) {
 
     ui->setupUi(this);
     
     loadActions();
     loadIcons();
-    createToolBars();
+
+    //api = new DBApi;
+
+    orderGroup.addAction(ui->actionLinearOrder);
+    orderGroup.addAction(ui->actionRandomOrder);
+    orderGroup.addAction(ui->actionShuffleOrder);
+
+    loopingGroup.addAction(ui->actionLoopAll);
+    loopingGroup.addAction(ui->actionLoopTrack);
+    loopingGroup.addAction(ui->actionLoopNothing);
+
+
+    ToolbarStack[0] = ui->PlaybackToolbar;
+    ToolbarStack[1] = ui->SeekToolbar;
+    ToolbarStack[2] = ui->VolumeToolbar;
+
+    ui->PlaybackToolbar->setIconSize(QSize(16, 16));
+    ui->PlaybackToolbar->setFixedHeight(39);
+    ui->PlaybackToolbar->setStyleSheet("QToolButton{padding: 6px;}");
+    ui->SeekToolbar->addWidget(&progressBar);
+    ui->VolumeToolbar->addWidget(&volumeSlider);
     
+    ToolbarStackCount = 3;
+
     trayIcon = NULL;
     trayMenu = NULL;
     
@@ -57,10 +74,14 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
+DBApi* MainWindow::Api() {
+    return &api;
+}
+
 void MainWindow::createConnections() {
-    connect(DBApiWrapper::Instance(), SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
+    connect(&api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
     connect(ui->actionNewPlaylist, SIGNAL(triggered()), ui->playList, SIGNAL(newPlaylist()));
-    connect(DBApiWrapper::Instance(), SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
+    connect(&api, SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
 }
 
 void MainWindow::loadIcons() {
@@ -111,9 +132,13 @@ void MainWindow::createTray() {
     QIcon icon(":/root/images/deadbeef.png");
     trayIcon->setIcon(icon);
 
-    connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(trayIcon_activated(QSystemTrayIcon::ActivationReason)));
-    connect(trayIcon, SIGNAL(wheeled(int)), this, SLOT(trayIcon_wheeled(int)));
-    
+    //connect(trayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(trayIcon_activated(QSystemTrayIcon::ActivationReason)));
+    //connect(trayIcon, SIGNAL(wheeled(int)), this, SLOT(trayIcon_wheeled(int)));
+    connect(trayIcon, SIGNAL(singleClick()), this, SLOT(windowActivate()));
+    connect(trayIcon, SIGNAL(doubleClick()), this, SLOT(windowShowHide()));
+    connect(trayIcon, SIGNAL(middleClick()), &api, SLOT(togglePause()));
+    connect(trayIcon, SIGNAL(wheelScroll(int)), &volumeSlider, SLOT(adjustVolume(int)));
+
     trayIcon->setVisible(true);
 }
 
@@ -160,7 +185,6 @@ void MainWindow::closeEvent(QCloseEvent *e) {
     switch (actionOnClose) {
     case Exit:
         e->accept();
-        WRAPPER->Destroy();
         break;
     case Hide:
         e->ignore();
@@ -197,18 +221,7 @@ void MainWindow::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
 
 
 void MainWindow::createToolBars() {
-    orderGroup.addAction(ui->actionLinearOrder);
-    orderGroup.addAction(ui->actionRandomOrder);
-    orderGroup.addAction(ui->actionShuffleOrder);
 
-    loopingGroup.addAction(ui->actionLoopAll);
-    loopingGroup.addAction(ui->actionLoopTrack);
-    loopingGroup.addAction(ui->actionLoopNothing);
-
-    //PlayBackToolBar->addAction(ui->actionStop);
-
-    ui->PlayBackToolBar->addWidget(&progressBar);
-    ui->PlayBackToolBar->addWidget(&volumeSlider);
 }
 
 QMenu *MainWindow::createPopupMenu() {
@@ -265,7 +278,7 @@ void MainWindow::loadConfig() {
 
     resize(size);
     move(point);
-    ui->actionBlockToolbarChanges->setChecked(tbIsLocked);
+    //ui->actionbarChanges->setChecked(tbIsLocked);
     menuBar()->setHidden(mmIsHidden);
     ui->actionHideMenuBar->setChecked(!menuBar()->isHidden());
 
@@ -276,21 +289,23 @@ void MainWindow::loadConfig() {
         createTray();
     }
     
-#ifdef ARTWORK_ENABLED
     bool caIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, false).toBool();
     ui->actionHideCoverArt->setChecked(!caIsHidden);
     if (ui->actionHideCoverArt->isChecked()) {
         addDockWidget(Qt::LeftDockWidgetArea, &coverArtWidget);
         connect(&coverArtWidget, SIGNAL(onCloseEvent()), this, SLOT(onCoverartClose()));
     }
-#else
-    ui->actionHideCoverArt->setVisible(false);
-#endif
+
+    // when no coverart make it not visible
+    //ui->actionHideCoverArt->setVisible(false);
 
     restoreState(state);
     configureActionOnClose(minimizeOnClose, trayIconIsHidden);
 
-    ui->PlayBackToolBar->setMovable(!ui->actionBlockToolbarChanges->isChecked());
+    int i;
+    for (i = 0; i < ToolbarStackCount; i++) {
+        ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
+    }
 
     switch (DBAPI->conf_get_int("playback.order", PLAYBACK_ORDER_LINEAR)) {
     case PLAYBACK_ORDER_LINEAR:
@@ -325,12 +340,26 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, saveState());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
-#ifdef ARTWORK_ENABLED
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, !ui->actionHideCoverArt->isChecked());
-#endif
     ui->playList->saveConfig();
 }
 
 void MainWindow::on_actionRemove_triggered() {
     ui->playList->deleteSelectedTracks();
+}
+
+void MainWindow::windowActivate() {
+    if (this->isHidden())
+        this->show();
+
+    this->setWindowState( (w->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+    this->raise();
+    this->activateWindow();
+}
+
+void MainWindow::windowShowHide() {
+    if (this->isHidden())
+        this->show();
+    else
+        this->hide();
 }

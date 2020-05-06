@@ -13,9 +13,7 @@ const QString QtGuiSettings::MinimizeOnClose = QString("MinimizeOnClose");
 const QString QtGuiSettings::RefreshRate = QString("RefreshRate");
 const QString QtGuiSettings::TitlebarPlaying = QString("TitlebarPlaying");
 const QString QtGuiSettings::TitlebarStopped = QString("TitlebarStopped");
-#ifdef ARTWORK_ENABLED
 const QString QtGuiSettings::CoverartIsHidden = QString("CoverartIsHidden");
-#endif
 const QString QtGuiSettings::TrayIcon = QString("TrayIcon");
 const QString QtGuiSettings::TrayIconIsHidden = QString("TrayIconIsHidden");
 const QString QtGuiSettings::ShowTrayTips = QString("ShowTrayTips");

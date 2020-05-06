@@ -1,3 +1,27 @@
+#include "MainWindow.h"
+#include "ui_MainWindow.h"
+
+#include <QSettings>
+#include <QMenu>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QFileDialog>
+#include <QToolBar>
+
+#include "QtGuiSettings.h"
+
+#include "QtGui.h"
+#include "DBApi.h"
+#include "AboutDialog.h"
+#include "PlayList.h"
+#include "PreferencesDialog.h"
+
+#include <include/callbacks.h>
+#include <QtConcurrent>
+#include <QFutureWatcher>
+#include "DBFileDialog.h"
+
+
 // PlayBack toolbar
 
 void MainWindow::on_actionStop_triggered() {
@@ -6,7 +30,7 @@ void MainWindow::on_actionStop_triggered() {
 }
 
 void MainWindow::on_actionPlay_triggered() {
-    DBApiWrapper::Instance()->sendPlayMessage(DB_EV_PLAY_CURRENT);
+    api.sendPlayMessage(DB_EV_PLAY_CURRENT);
 }
 
 void MainWindow::on_actionPause_triggered() {
@@ -14,11 +38,11 @@ void MainWindow::on_actionPause_triggered() {
 }
 
 void MainWindow::on_actionPrev_triggered() {
-    DBApiWrapper::Instance()->sendPlayMessage(DB_EV_PREV);
+    api.sendPlayMessage(DB_EV_PREV);
 }
 
 void MainWindow::on_actionNext_triggered() {
-    DBApiWrapper::Instance()->sendPlayMessage(DB_EV_NEXT);
+    api.sendPlayMessage(DB_EV_NEXT);
 }
 
 // menuBar -/ File
@@ -28,7 +52,7 @@ void MainWindow::on_actionAddFiles_triggered() {
                             tr("Add file(s) to playlist..."),
                             QStringList(),
                             QFileDialog::ExistingFiles,
-                            QFileDialog::DontUseNativeDialog | QFileDialog::ReadOnly);
+                            QFileDialog::ReadOnly);
     QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
@@ -41,7 +65,7 @@ void MainWindow::on_actionAddFolder_triggered() {
                             tr("Add folder(s) to playlist..."),
                             QStringList(),
                             QFileDialog::DirectoryOnly,
-                            QFileDialog::DontUseNativeDialog | QFileDialog::ShowDirsOnly | QFileDialog::ReadOnly);
+                            QFileDialog::ShowDirsOnly | QFileDialog::ReadOnly);
     QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
@@ -179,7 +203,10 @@ void MainWindow::onCoverartClose() {
 */
 
 void MainWindow::on_actionBlockToolbarChanges_triggered() {
-    ui->PlayBackToolBar->setMovable(!ui->actionBlockToolbarChanges->isChecked());
+    int i;
+    for (i = 0; i < ToolbarStackCount; i++) {
+        ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
+    }
 }
 
 // menu "Options" (called Playback)
@@ -220,26 +247,6 @@ void MainWindow::on_actionAbout_triggered() {
 
 void MainWindow::on_actionAboutQt_triggered() {
     QMessageBox::aboutQt(this);
-}
-
-
-// tray icon
-
-void MainWindow::trayIcon_activated(QSystemTrayIcon::ActivationReason reason) {
-    if (reason == QSystemTrayIcon::Trigger) {
-        if (isHidden())
-            show();
-        else
-            hide();
-    }
-    if (reason == QSystemTrayIcon::MiddleClick) {
-        DBAPI->sendmessage(DB_EV_TOGGLE_PAUSE, 0, 0, 0);
-    }
-
-}
-
-void MainWindow::trayIcon_wheeled(int delta) {
-    volumeSlider.setValue(volumeSlider.value() + SIGNUM(delta));
 }
 
 // misc

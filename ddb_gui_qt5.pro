@@ -2,7 +2,8 @@ TEMPLATE = lib
 TARGET = ddb_gui_qt5
 CONFIG += plugin
 
-SOURCES  =	include/callbacks.cpp \
+SOURCES  =          include/callbacks.cpp \
+                    DBApi.cpp \
 		    include/parser.cpp \
 		    include/qticonloader.cpp \
 		    preferencesWidgets/InterfacePreferencesWidget.cpp \
@@ -17,10 +18,10 @@ SOURCES  =	include/callbacks.cpp \
 		    plugins/Hotkeys/HotkeysTreeWidget.cpp \
 		    plugins/Hotkeys/HotkeysWidget.cpp \
 		    AboutDialog.cpp \
-		    DBApiWrapper.cpp \
 		    DBFileDialog.cpp \
 		    GuiUpdater.cpp \
 		    MainWindow.cpp \
+                    MainWindowActions.cpp \
 		    PlayList.cpp \
 		    PlayListModel.cpp \
 		    PlayListWidget.cpp \
@@ -34,7 +35,8 @@ SOURCES  =	include/callbacks.cpp \
 		    VolumeSlider.cpp
 
 
-HEADERS =	preferencesWidgets/InterfacePreferencesWidget.h \
+HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
+                        DBApi.h \
 			preferencesWidgets/NetworkPreferencesWidget.h \
 			preferencesWidgets/PluginsPreferencesWidget.h \
 			preferencesWidgets/PluginSettingsWidget.h \
@@ -42,11 +44,10 @@ HEADERS =	preferencesWidgets/InterfacePreferencesWidget.h \
 			plugins/CoverArt/CoverArtWrapper.h \
 			plugins/CoverArt/CoverArtWidget.h \
 			plugins/CoverArt/CoverArtCache.h \
-		    plugins/Hotkeys/HotkeyReadDialog.h \
-		    plugins/Hotkeys/HotkeysTreeWidget.h \
-		    plugins/Hotkeys/HotkeysWidget.h \
+                        plugins/Hotkeys/HotkeyReadDialog.h \
+                        plugins/Hotkeys/HotkeysTreeWidget.h \
+                        plugins/Hotkeys/HotkeysWidget.h \
 			AboutDialog.h \
-			DBApiWrapper.h \
 			DBFileDialog.h \
 			GuiUpdater.h \
 			MainWindow.h \
@@ -61,7 +62,7 @@ HEADERS =	preferencesWidgets/InterfacePreferencesWidget.h \
 			TabBar.h \
                         VolumeSlider.h
 
-FORMS =	preferencesWidgets/InterfacePreferencesWidget.ui \
+FORMS =         preferencesWidgets/InterfacePreferencesWidget.ui \
 		preferencesWidgets/NetworkPreferencesWidget.ui \
 		preferencesWidgets/PluginsPreferencesWidget.ui \
 		preferencesWidgets/SoundPreferencesWidget.ui \

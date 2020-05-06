@@ -3,6 +3,7 @@
 
 #include <QSlider>
 #include "QtGui.h"
+#include "DBApi.h"
 #include <QMouseEvent>
 
 
@@ -12,7 +13,7 @@ class SeekSlider : public QSlider {
     Q_OBJECT
 
 public:
-    SeekSlider(QWidget *parent = 0);
+    SeekSlider(QWidget *parent = 0, DBApi *api = 0);
     ~SeekSlider();
 
 protected slots:
@@ -26,6 +27,7 @@ private slots:
 private:
     int pos(QMouseEvent *ev) const;
     bool activateNow;
+    DBApi *Api;
 };
 
 #endif // SEEKSLIDER_H

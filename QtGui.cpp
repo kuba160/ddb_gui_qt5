@@ -3,7 +3,7 @@
     Copyright (C) 2010 Anton Novikov <tonn.post@gmail.com>
     Copyright (C) 2011 Semen Minyushov <semikmsv@gmail.com>
     Copyright (C) 2013 Karjavin Roman <redpunk231@gmail.com>
-    Copyright (C) 2019 Jakub Wasylków <kuba_160@protonmail.com>
+    Copyright (C) 2019-2020 Jakub Wasylków <kuba_160@protonmail.com>
 
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 
 #include <QApplication>
 
-#include "DBApiWrapper.h"
+#include "DBApi.h"
 #include "MainWindow.h"
 #include "QtGuiSettings.h"
 
@@ -31,7 +31,6 @@ static int pluginStart();
 static int pluginStop();
 static int pluginConnect();
 static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
-void MainThreadRun(void *);
 
 DB_functions_t *deadbeef;
 DB_gui_t plugin;
@@ -40,27 +39,21 @@ DB_gui_t plugin;
 DB_hotkeys_plugin_t *hotkeys_plugin;
 DB_artwork_plugin_t *coverart_plugin;
 
-static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
-    Q_UNUSED(p2);
-    switch (id) {
-    case DB_EV_SONGCHANGED:
-        WRAPPER->onSongChanged((ddb_event_trackchange_t *)ctx);
-        break;
-    case DB_EV_PAUSED:
-        WRAPPER->onPause(p1);
-        break;
-    case DB_EV_PLAYLISTCHANGED:
-        WRAPPER->onPlaylistChanged();
-        break;
-    case DB_EV_ACTIVATED:
-        WRAPPER->onDeadbeefActivated();
-        break;
-    }
-    return 0;
+MainWindow *w;
+
+static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
+    return w->api.pluginMessage(id, ctx, p1, p2);
 }
 
-static int pluginStart() {
-    MainThreadRun (NULL);
+static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
+    Q_UNUSED(id);
+    Q_UNUSED(ctx);
+    Q_UNUSED(p1);
+    Q_UNUSED(p2);
+    if (w && &(w->api)) {
+        // start using wrapper
+        plugin.plugin.message = pluginMessage_wrapper;
+    }
     return 0;
 }
 
@@ -70,12 +63,10 @@ static int pluginStop() {
     return 0;
 }
 static int pluginConnect() {
-#ifdef ARTWORK_ENABLED
     coverart_plugin = (DB_artwork_plugin_t *)DBAPI->plug_get_for_id("artwork");
     if (coverart_plugin)
         qDebug() << "qtui: found cover-art plugin";
 
-#endif
 
 #ifdef HOTKEYS_ENABLED
     hotkeys_plugin = (DB_hotkeys_plugin_t *)DBAPI->plug_get_for_id("hotkeys");
@@ -86,7 +77,7 @@ static int pluginConnect() {
 }
 
 
-void MainThreadRun(void *) {
+static int pluginStart() {
     // provide dummy args
     char argv0[] = "a.out";
     char *argv[] = {argv0, nullptr};
@@ -98,10 +89,10 @@ void MainThreadRun(void *) {
     QString locale = QLocale::system().name();
 
     //QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
-
-    MainWindow w;
-    w.show();
+    w = new MainWindow;
+    w->show();
     app.exec();
+    return 0;
 }
 
 extern "C" {
@@ -110,7 +101,7 @@ extern "C" {
         plugin.plugin.api_vmajor = 1;
         plugin.plugin.api_vminor = 9;
         plugin.plugin.version_major = 1;
-        plugin.plugin.version_minor = 0;
+        plugin.plugin.version_minor = 9;
         plugin.plugin.type = DB_PLUGIN_GUI;
         plugin.plugin.id = "qt5";
         plugin.plugin.name = "Qt user interface";

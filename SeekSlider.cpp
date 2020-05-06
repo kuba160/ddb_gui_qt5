@@ -3,10 +3,11 @@
 #include "QtGuiSettings.h"
 #include "GuiUpdater.h"
 
-SeekSlider::SeekSlider(QWidget *parent) : QSlider(parent) {
+SeekSlider::SeekSlider(QWidget *parent, DBApi *api) : QSlider(parent) {
     activateNow = false;
     setRange(0, 100 * SEEK_SCALE);
     setOrientation(Qt::Horizontal);
+    Api = api;
     connect(GuiUpdater::Instance(), SIGNAL(frameUpdate()), this, SLOT(onFrameUpdate()));
 }
 
@@ -36,8 +37,10 @@ void SeekSlider::onFrameUpdate() {
     if (activateNow) return;
     if (isHidden() || parentWidget()->isHidden())
         return;
-    if (DBAPI->get_output() && (DBAPI->get_output()->state() == DDB_PLAYBACK_STATE_PLAYING || DBAPI->get_output()->state() == DDB_PLAYBACK_STATE_PAUSED))
+    int output_state = Api->getOutputState();
+    if (output_state == DDB_PLAYBACK_STATE_PAUSED || output_state == DDB_PLAYBACK_STATE_PLAYING) {
         setValue(DBAPI->playback_get_pos() * SEEK_SCALE);
+    }
 }
 
 int SeekSlider::pos(QMouseEvent *ev) const {

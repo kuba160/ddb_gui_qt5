@@ -9,6 +9,7 @@
 #include <QEvent>
 
 #include "PluginLoader.h"
+#include "MainWindow.h"
 
 QtPlugin_t qtCoverart;
 
@@ -25,7 +26,7 @@ CoverArtWidget::CoverArtWidget(QWidget *parent):
     label.setContextMenuPolicy(Qt::ActionsContextMenu);
     label.addAction(&updateCoverAction);
     updateCoverAction.setIcon(getStockIcon(&label, "view-refresh", QStyle::SP_MediaPlay));
-    connect(DBApiWrapper::Instance(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
+    //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), w->Api(), SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
     connect(CoverArtCache::Instance(this), SIGNAL(coverIsReady(const QImage &)), SLOT(setCover(const QImage &)));
     connect(&updateCoverAction, SIGNAL(triggered(bool)), SLOT(reloadCover()));
     CACHE->getDefaultCoverArt();

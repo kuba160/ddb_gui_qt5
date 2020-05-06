@@ -16,6 +16,9 @@ public:
     QStringList exec2();
     //virtual int exec();
 
+public slots:
+    //void on_actionAddFiles_triggered();
+    //void on_actionAddFolder_triggered();
 };
 
 #endif // DBFILEDIALOG_H

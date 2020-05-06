@@ -5,7 +5,7 @@
 #include <QIcon>
 #include <QMimeData>
 
-#include "DBApiWrapper.h"
+#include "DBApi.h"
 
 class PlayListModel : public QAbstractItemModel {
     Q_OBJECT
