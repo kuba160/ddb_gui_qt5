@@ -16,6 +16,7 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent) {
 
     // DBApi links
     Volume = api->getVolume();
+    QSlider::setValue(Volume);
     // API -> SLIDER
     connect(api, SIGNAL(volumeChanged(int)), this, SLOT(onDeadbeefValueChanged(int)));
     // SLIDER -> API

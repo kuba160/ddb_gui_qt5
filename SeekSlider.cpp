@@ -14,6 +14,13 @@ SeekSlider::SeekSlider(QWidget *parent, DBApi *api) : QSlider(parent) {
 SeekSlider::~SeekSlider() {
 }
 
+bool SeekSlider::event(QEvent *event) {
+    if (event->type() == QEvent::Wheel) {
+            return true;
+    }
+    return QWidget::event(event);
+}
+
 void SeekSlider::mouseReleaseEvent(QMouseEvent *ev) {
     if (ev->button() == Qt::LeftButton) {
         DBAPI->playback_set_pos(value() / SEEK_SCALE);

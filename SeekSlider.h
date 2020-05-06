@@ -16,6 +16,9 @@ public:
     SeekSlider(QWidget *parent = 0, DBApi *api = 0);
     ~SeekSlider();
 
+protected:
+    bool event(QEvent *event);
+
 protected slots:
     void mouseReleaseEvent(QMouseEvent *ev);
     void mousePressEvent(QMouseEvent *ev);
