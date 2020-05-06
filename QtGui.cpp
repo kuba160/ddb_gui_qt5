@@ -92,6 +92,8 @@ static int pluginStart() {
     w = new MainWindow;
     w->show();
     app.exec();
+
+    DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     return 0;
 }
 

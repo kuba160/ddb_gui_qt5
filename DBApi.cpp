@@ -14,7 +14,6 @@ DBApi::DBApi(QWidget *parent) : QObject(parent) {
 
 DBApi::~DBApi() {
     plugin.plugin.message = nullptr;
-    //DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
 }
 
 int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {

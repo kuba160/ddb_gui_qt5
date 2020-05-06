@@ -1,6 +1,6 @@
 TEMPLATE = lib
 TARGET = ddb_gui_qt5
-CONFIG += plugin
+CONFIG += no_plugin_name_prefix plugin
 
 SOURCES  =          include/callbacks.cpp \
                     DBApi.cpp \
