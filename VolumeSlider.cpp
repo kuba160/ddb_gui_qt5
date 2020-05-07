@@ -6,7 +6,11 @@
 #include "DBApi.h"
 #include "MainWindow.h"
 
-VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent) {
+#include <QDebug>
+#include <QStyleOptionSlider>
+
+
+VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBToolbarWidget(parent, api) {
     setRange(-50, 0);
     setOrientation(Qt::Horizontal);
     setFixedWidth(80);
@@ -23,7 +27,13 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent) {
     connect(this, SIGNAL(volumeChanged(int)), api, SLOT(setVolume(int)));
     // SLIDER INTERNAL
     connect(this, SIGNAL(valueChanged(int)), this, SLOT(onSliderValueChanged(int)));
+}
 
+QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
+    if (!api) {
+        return nullptr;
+    }
+    return new VolumeSlider(parent,api);
 }
 
 void VolumeSlider::setValue(int value) {
@@ -33,14 +43,35 @@ void VolumeSlider::setValue(int value) {
 }
 
 void VolumeSlider::mousePressEvent ( QMouseEvent * event ) {
-    if (event->button() == Qt::LeftButton) {
-        if (orientation() == Qt::Vertical)
-            setValue(minimum() + ((maximum()-minimum()) * (height()-event->y())) / height() ) ;
-        else
-            setValue(minimum() + ((maximum()-minimum()) * event->x()) / width() ) ;
-        event->accept();
-        QSlider::mousePressEvent(event);
+    QStyleOptionSlider opt;
+    initStyleOption(&opt);
+    QRect sr = style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, this);
+
+    if (event->button() == Qt::LeftButton && sr.contains(event->pos()) == false) {
+    int newVal;
+    if (orientation() == Qt::Vertical) {
+        newVal = minimum() + ((maximum()-minimum()) * (height()-event->y())) / height();
     }
+    else {
+        double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
+        int adaptedPosX = event->x();
+        if (adaptedPosX < halfHandleWidth)
+            adaptedPosX = halfHandleWidth;
+        if (adaptedPosX > width() - halfHandleWidth)
+            adaptedPosX = width() - halfHandleWidth;
+        // get new dimensions accounting for slider handle width
+        double newWidth = (width() - halfHandleWidth) - halfHandleWidth;
+        double normalizedPosition = (adaptedPosX - halfHandleWidth)  / newWidth ;
+        newVal = minimum() + ((maximum()-minimum()) * normalizedPosition);
+    }
+    if (invertedAppearance() == true)
+      setValue( maximum() - newVal );
+    else
+      setValue(newVal);
+
+    event->accept();
+    }
+    QSlider::mousePressEvent(event);
 }
 
 void VolumeSlider::onSliderValueChanged(int value) {

@@ -6,15 +6,16 @@
 #include <QUrl>
 #include <QMenu>
 
+#include "DBApi.h"
 #include "PlayListModel.h"
 
 #include <QTreeView>
 
-class PlayList : public QTreeView {
+class PlayList : public QTreeView, public DBToolbarWidget {
     Q_OBJECT
 
 public:
-    PlayList(QWidget *parent = 0);
+    PlayList(QWidget *parent = nullptr, DBApi *Api = nullptr);
     ~PlayList();
     
     void saveConfig();

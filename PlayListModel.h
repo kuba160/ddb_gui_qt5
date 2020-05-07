@@ -7,11 +7,11 @@
 
 #include "DBApi.h"
 
-class PlayListModel : public QAbstractItemModel {
+class PlayListModel : public QAbstractItemModel, public DBToolbarWidget {
     Q_OBJECT
     
 public:
-    PlayListModel(QObject *parent = 0);
+    PlayListModel(QObject *parent = nullptr, DBApi *Api = nullptr);
     
     void loadConfig();
     void saveConfig();

@@ -2,7 +2,7 @@
 #define SEEKSLIDER_H
 
 #include <QSlider>
-#include "QtGui.h"
+//#include "QtGui.h"
 #include "DBApi.h"
 #include <QMouseEvent>
 
@@ -26,11 +26,13 @@ protected slots:
 
 private slots:
     void onFrameUpdate();
+    void onPlaybackStop();
+    void onPlaybackStart();
 
 private:
     int pos(QMouseEvent *ev) const;
     bool activateNow;
-    DBApi *Api;
+    DBApi *api;
 };
 
 #endif // SEEKSLIDER_H

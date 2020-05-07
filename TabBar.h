@@ -15,7 +15,7 @@ public:
         Left = 2,
         Right = 3,
     };
-    TabBar(QWidget *parent = 0);
+    TabBar(QWidget *parent = nullptr);
     ~TabBar();
     int selectTab(const QPoint &position) const;
     void setShape(Shape shape);

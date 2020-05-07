@@ -3,12 +3,19 @@
 #include "QtGuiSettings.h"
 #include "GuiUpdater.h"
 
-SeekSlider::SeekSlider(QWidget *parent, DBApi *api) : QSlider(parent) {
+#define DBAPI api->deadbeef
+
+SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent) {
     activateNow = false;
     setRange(0, 100 * SEEK_SCALE);
     setOrientation(Qt::Horizontal);
-    Api = api;
+    api = Api;
     connect(GuiUpdater::Instance(), SIGNAL(frameUpdate()), this, SLOT(onFrameUpdate()));
+
+    connect(api, SIGNAL(playbackStarted()),this,SLOT(onPlaybackStart()));
+    connect(api, SIGNAL(playbackStopped()),this,SLOT(onPlaybackStop()));
+    if (api->getInternalState() == DDB_PLAYBACK_STATE_STOPPED)
+        this->setEnabled(false);
 }
 
 SeekSlider::~SeekSlider() {
@@ -44,10 +51,18 @@ void SeekSlider::onFrameUpdate() {
     if (activateNow) return;
     if (isHidden() || parentWidget()->isHidden())
         return;
-    int output_state = Api->getOutputState();
+    int output_state = api->getOutputState();
     if (output_state == DDB_PLAYBACK_STATE_PAUSED || output_state == DDB_PLAYBACK_STATE_PLAYING) {
         setValue(DBAPI->playback_get_pos() * SEEK_SCALE);
     }
+}
+
+void SeekSlider::onPlaybackStop() {
+    this->setEnabled(false);
+}
+
+void SeekSlider::onPlaybackStart() {
+    this->setEnabled(true);
 }
 
 int SeekSlider::pos(QMouseEvent *ev) const {

@@ -11,7 +11,7 @@
 
 #include "MainWindow.h"
 
-PlayList::PlayList(QWidget *parent) : QTreeView(parent), playListModel(this) {
+PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), playListModel(this, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setDragEnabled(true);

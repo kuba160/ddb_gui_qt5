@@ -4,6 +4,7 @@ CONFIG += no_plugin_name_prefix plugin
 
 SOURCES  =          include/callbacks.cpp \
                     DBApi.cpp \
+    DefaultPlugins.cpp \
 		    include/parser.cpp \
 		    include/qticonloader.cpp \
 		    preferencesWidgets/InterfacePreferencesWidget.cpp \
@@ -37,6 +38,7 @@ SOURCES  =          include/callbacks.cpp \
 
 HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
                         DBApi.h \
+    DefaultPlugins.h \
 			preferencesWidgets/NetworkPreferencesWidget.h \
 			preferencesWidgets/PluginsPreferencesWidget.h \
 			preferencesWidgets/PluginSettingsWidget.h \

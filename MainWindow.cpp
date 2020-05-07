@@ -21,12 +21,15 @@
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
 
-MainWindow::MainWindow(QWidget *parent) :
+#include "PluginLoader.h"
+
+MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
+        DBToolbarWidget (parent, Api),
         ui(new Ui::MainWindow),
-        api(this),
-        volumeSlider(this, &api),
-        progressBar(this),
+        volumeSlider(this, api),
+        progressBar(this, api),
+        playList(this, api),
         coverArtWidget(this),
         orderGroup(this),
         loopingGroup(this) {
@@ -59,11 +62,37 @@ MainWindow::MainWindow(QWidget *parent) :
     
     ToolbarStackCount = 3;
 
-    trayIcon = NULL;
-    trayMenu = NULL;
+    ui->mainLayout->addWidget(&playList);
+
+    /*
+    connect (pl,SIGNAL(toolBarLoaded(QToolBar *)),this,SLOT(windowAddToolbar(QToolBar *)));
+    unsigned int i = 0;
+    while ((pl->widgetLibraryGetInfo(i))) {
+        if (pl->widgetLibraryGetInfo(i)->isToolbar) {
+            // load toolbar
+            //pl->widgetLibraryAdd(this, i);
+            //SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData()
+            //ToolbarStack[ToolbarStackCount] = new QToolBar(this);
+            //ToolbarStack[ToolbarStackCount]->addWidget(pl->widgetLibraryLoad(i));
+            //this->addToolBar(ToolbarStack[ToolbarStackCount]);
+            //QAction *action = ui->menuView->addAction()
+            //action->setCheckable(true);
+            // detect if enabled
+            //action->setChecked(true);
+            //connect(action,SIGNAL(ac))
+            ToolbarStackCount++;
+
+        }
+        i++;
+    }*/
+
+    //setLayout(mainLayout);
+
+    trayIcon = nullptr;
+    trayMenu = nullptr;
     
     createConnections();
-
+    volumeSlider.loadConfig(nullptr);
     loadConfig();
     updateTitle();
 }
@@ -75,13 +104,17 @@ MainWindow::~MainWindow() {
 }
 
 DBApi* MainWindow::Api() {
-    return &api;
+    return api;
+}
+
+void MainWindow::windowAddToolbar(QToolBar *toolbar) {
+    this->addToolBar(toolbar);
 }
 
 void MainWindow::createConnections() {
-    connect(&api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
-    connect(ui->actionNewPlaylist, SIGNAL(triggered()), ui->playList, SIGNAL(newPlaylist()));
-    connect(&api, SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
+    connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
+    //connect(ui->actionNewPlaylist, SIGNAL(triggered()), ui->playList, SIGNAL(newPlaylist()));
+    connect(api, SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
 }
 
 void MainWindow::loadIcons() {
@@ -136,7 +169,7 @@ void MainWindow::createTray() {
     //connect(trayIcon, SIGNAL(wheeled(int)), this, SLOT(trayIcon_wheeled(int)));
     connect(trayIcon, SIGNAL(singleClick()), this, SLOT(windowActivate()));
     connect(trayIcon, SIGNAL(doubleClick()), this, SLOT(windowShowHide()));
-    connect(trayIcon, SIGNAL(middleClick()), &api, SLOT(togglePause()));
+    connect(trayIcon, SIGNAL(middleClick()), api, SLOT(togglePause()));
     connect(trayIcon, SIGNAL(wheelScroll(int)), &volumeSlider, SLOT(adjustVolume(int)));
 
     trayIcon->setVisible(true);
@@ -147,27 +180,47 @@ void MainWindow::titleSettingChanged() {
 }
 
 void MainWindow::updateTitle(DB_playItem_t *it) {
-    char str[256];
-    const char *fmt;
 
-    if (!it)
-        it = DBAPI->streamer_get_playing_track();
+    DB_playItem_t* curr_track = DBAPI->streamer_get_playing_track ();
+    ddb_playlist_t *plt;
+    if (curr_track)
+        plt = DBAPI->pl_get_playlist (curr_track);
     else
-        DBAPI->pl_item_ref(it);
+        plt = DBAPI->plt_get_curr ();
+    ddb_tf_context_t context;
+    context._size = sizeof(ddb_tf_context_t);
+    context.flags = 0;
+    context.it = curr_track;
+    context.plt = plt;
+    context.idx = 0;
+    context.id = 0;
+    context.iter = PL_MAIN;
+    context.update = 0;
+    context.dimmed = 0;
 
-    if (it)
-        fmt = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarPlaying, "%a - %t - DeaDBeeF-%V").toString().toUtf8().constData();
+    // TODO: Make this customizable
+    const char * script;
+    if (api->getOutputState() == DDB_PLAYBACK_STATE_STOPPED)
+        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData();
     else
-        fmt = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF-%V").toString().toUtf8().constData();
+        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarPlaying, "%artist% - %title% -DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData();
 
-    DBAPI->pl_format_title(it, -1, str, sizeof(str), -1, fmt);
+    char * code_script = DBAPI->tf_compile (script);
+    char buffer[256];
 
-    setWindowTitle(QString::fromUtf8(str));
+    DBAPI->tf_eval (&context, code_script, buffer, 256);
+    DBAPI->tf_free (code_script);
+
+    setWindowTitle(QString::fromUtf8(buffer));
+
+
     if (trayIcon)
-        trayIcon->setToolTip(QString::fromUtf8(str));
+        trayIcon->setToolTip(QString::fromUtf8(buffer));
 
-    if (it)
-        DBAPI->pl_item_unref(it);
+    if (plt)
+        DBAPI->plt_unref (plt);
+    if (curr_track)
+        DBAPI->pl_item_unref (curr_track);
 }
 
 void MainWindow::changeEvent(QEvent *e) {
@@ -202,7 +255,7 @@ void MainWindow::closeEvent(QCloseEvent *e) {
 
 
 void MainWindow::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
-    if (to != NULL) {
+    if (to != nullptr) {
         char str[1024];
         const char *fmt = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::MessageFormat, "%a - %t").toString().toUtf8().constData();
         DBAPI->pl_item_ref(to);
@@ -341,11 +394,11 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, !ui->actionHideCoverArt->isChecked());
-    ui->playList->saveConfig();
+    playList.saveConfig();
 }
 
 void MainWindow::on_actionRemove_triggered() {
-    ui->playList->deleteSelectedTracks();
+    //playList.deleteSelectedTracks();
 }
 
 void MainWindow::windowActivate() {

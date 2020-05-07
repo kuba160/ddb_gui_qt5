@@ -21,28 +21,38 @@
 */
 #include "QtGui.h"
 
+
+#include <unistd.h>
 #include <QApplication>
 
 #include "DBApi.h"
 #include "MainWindow.h"
 #include "QtGuiSettings.h"
+#include <QStyleFactory>
+
+#include "PluginLoader.h"
+
 
 static int pluginStart();
 static int pluginStop();
 static int pluginConnect();
 static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
 
-DB_functions_t *deadbeef;
-DB_gui_t plugin;
 
+DB_functions_t *deadbeef_internal;
+DB_qtgui_t qt_plugin;
+DB_gui_t &plugin = qt_plugin.gui;
 // TODO make casual plugin list
 DB_hotkeys_plugin_t *hotkeys_plugin;
 DB_artwork_plugin_t *coverart_plugin;
 
-MainWindow *w;
+
+DBApi *api = nullptr;
+PluginLoader *pl = nullptr;
+MainWindow *w = nullptr;
 
 static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
-    return w->api.pluginMessage(id, ctx, p1, p2);
+    return api->pluginMessage(id, ctx, p1, p2);
 }
 
 static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
@@ -50,9 +60,29 @@ static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     Q_UNUSED(ctx);
     Q_UNUSED(p1);
     Q_UNUSED(p2);
-    if (w && &(w->api)) {
+    if (api) {
         // start using wrapper
         plugin.plugin.message = pluginMessage_wrapper;
+    }
+    return 0;
+}
+
+static int initializeApi() {
+    if (!api) {
+        while (!deadbeef_internal) {
+            usleep(10000);
+        }
+        api = new DBApi(nullptr, deadbeef_internal);
+    }
+    return 0;
+}
+
+static int initializePluginLoader() {
+    if (!api) {
+        initializeApi();
+    }
+    if (!pl) {
+        pl = new PluginLoader(api);
     }
     return 0;
 }
@@ -63,6 +93,8 @@ static int pluginStop() {
     return 0;
 }
 static int pluginConnect() {
+    initializeApi();
+
     coverart_plugin = (DB_artwork_plugin_t *)DBAPI->plug_get_for_id("artwork");
     if (coverart_plugin)
         qDebug() << "qtui: found cover-art plugin";
@@ -76,30 +108,45 @@ static int pluginConnect() {
     return 0;
 }
 
+static int registerWidget (DB_plugin_t *plugin, QWidget *(constructor)(QWidget *, DBApi *)) {
+    initializePluginLoader();
+    pl->widgetLibraryAppend(plugin, constructor);
+    return 0;
+}
+
 
 static int pluginStart() {
-    // provide dummy args
+    // provide dummy args for QApplication
     char argv0[] = "a.out";
     char *argv[] = {argv0, nullptr};
     int argc = sizeof(argv) / sizeof(char*) - 1;
     QApplication app(argc, argv);
     QApplication::setOrganizationName("deadbeef");
     QApplication::setApplicationName("DeaDBeeF");
+    //QApplication::setStyle(QStyleFactory::create("breeze"));
 
     QString locale = QLocale::system().name();
-
     //QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
-    w = new MainWindow;
+
+    // initialize api
+    initializeApi();
+    initializePluginLoader();
+
+    // initialize window
+    w = new MainWindow(nullptr, api);
     w->show();
     app.exec();
 
+    // shutdown
+    delete w;
+    delete api;
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     return 0;
 }
 
 extern "C" {
-    DB_plugin_t *ddb_gui_qt5_load(DB_functions_t *api) {
-        deadbeef = api;
+    DB_plugin_t *ddb_gui_qt5_load(DB_functions_t *dbapi) {
+        deadbeef_internal = dbapi;
         plugin.plugin.api_vmajor = 1;
         plugin.plugin.api_vminor = 9;
         plugin.plugin.version_major = 1;
@@ -133,7 +180,7 @@ extern "C" {
         plugin.plugin.stop = pluginStop;
         plugin.plugin.connect = pluginConnect;
         plugin.plugin.message = pluginMessage;
+        qt_plugin.register_widget = registerWidget;
         return DB_PLUGIN(&plugin);
     }
 }
-

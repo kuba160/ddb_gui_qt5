@@ -11,8 +11,7 @@
 #include "PluginLoader.h"
 #include "MainWindow.h"
 
-QtPlugin_t qtCoverart;
-
+DB_plugin_t qtCoverart;
 
 CoverArtWidget::CoverArtWidget(QWidget *parent):
         QDockWidget(parent),
@@ -31,8 +30,8 @@ CoverArtWidget::CoverArtWidget(QWidget *parent):
     connect(&updateCoverAction, SIGNAL(triggered(bool)), SLOT(reloadCover()));
     CACHE->getDefaultCoverArt();
 
-    qtCoverart.plugin.id = "coverart_qt";
-    qtCoverart.widget = this;
+    //qtCoverart.plugin.id = "coverart_qt";
+    //qtCoverart.widget = this;
 }
 
 CoverArtWidget::~CoverArtWidget() {

@@ -3,7 +3,10 @@
 #include "QtGui.h"
 #include "MainWindow.h"
 
-PlayListModel::PlayListModel(QObject *parent) : QAbstractItemModel(parent), playIcon(":/root/images/play_16.png"), pauseIcon(":/root/images/pause_16.png") {
+PlayListModel::PlayListModel(QObject *parent, DBApi *Api) : QAbstractItemModel(parent),
+                                                            DBToolbarWidget (nullptr, Api),
+                                                            playIcon(":/root/images/play_16.png"),
+                                                            pauseIcon(":/root/images/pause_16.png") {
     //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(trackChanged(DB_playItem_t*,DB_playItem_t*)));
     //connect(w->Api(), SIGNAL(playbackPaused()), this, SLOT(playerPaused()));
     columnNames.insert("%s", tr("Status"));
@@ -46,7 +49,7 @@ QVariant PlayListModel::data(const QModelIndex &index, int role = Qt::DisplayRol
         DB_playItem_t *currentDBItem = DBAPI->plt_get_item_for_idx(plt, index.row(), PL_MAIN);
         char title[1024];
         if (index.column() == status_column) {
-            DBAPI->pl_format_title(currentDBItem, 0, title, sizeof(title), DB_COLUMN_PLAYING, NULL);
+            DBAPI->pl_format_title(currentDBItem, 0, title, sizeof(title), DB_COLUMN_PLAYING, nullptr);
             DBAPI->pl_item_unref(currentDBItem);
             DBAPI->plt_unref(plt);
             return QString::fromUtf8(title);
@@ -63,7 +66,7 @@ QVariant PlayListModel::data(const QModelIndex &index, int role = Qt::DisplayRol
             if (DBAPI->plt_get_item_idx(plt, currentDBItem, PL_MAIN) == index.row()) {
                 DBAPI->pl_item_unref(currentDBItem);
                 DBAPI->plt_unref(plt);
-                if (w->api.isPaused())
+                if (api->isPaused())
                     return pauseIcon;
                 else
                     return playIcon;
@@ -168,7 +171,7 @@ void PlayListModel::clearPlayList() {
 void PlayListModel::insertByURLAtPosition(const QUrl &url, int position) {
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int prev_track_count = DBAPI->plt_get_item_count(plt, PL_MAIN);
-    w->api.addTracksByUrl(url, position);
+    api->addTracksByUrl(url, position);
     int count = DBAPI->plt_get_item_count(plt, PL_MAIN) - prev_track_count;
     DBAPI->plt_unref(plt);
     beginInsertRows(QModelIndex(), position, position + count - 1);
@@ -176,7 +179,8 @@ void PlayListModel::insertByURLAtPosition(const QUrl &url, int position) {
 }
 
 void PlayListModel::moveItems(QList<int> indices, int before) {
-    uint32_t inds[indices.length()];
+    uint32_t *inds = new uint32_t[indices.length()];
+    //uint32_t inds[indices.length()];
     int i;
     for (i = 0; i < indices.length(); i++) {
         inds[i] = indices[i];

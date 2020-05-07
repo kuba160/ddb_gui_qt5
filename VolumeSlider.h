@@ -4,12 +4,12 @@
 #include <QSlider>
 #include "DBApi.h"
 
-class VolumeSlider : public QSlider {
+class VolumeSlider : public QSlider, public DBToolbarWidget {
     Q_OBJECT
 
 public:
-    VolumeSlider(QWidget *parent = 0, DBApi *api = 0);
-
+    VolumeSlider(QWidget *parent = nullptr, DBApi *api = nullptr);
+    static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
     void setValue(int value);
 
 private:

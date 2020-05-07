@@ -1,3 +1,6 @@
+// This file defines class that allows interraction with deadbeef
+// TODO
+
 #ifndef DBAPIWRAPPER_H
 #define DBAPIWRAPPER_H
 
@@ -6,15 +9,21 @@
 #include <QUrl>
 #include <QObject>
 
+#include <QtGuiSettings.h>
+
+//#define DBAPI (this->api->deadbeef)
+
+#define DBAPI deadbeef_internal
+
 class DBApi : public QObject {
 
     Q_OBJECT
 
 public:
-    DBApi(QWidget *parent);
+    DBApi(QWidget *parent = nullptr, DB_functions_t *Api = nullptr);
     ~DBApi();
 
-
+    DB_functions_t *deadbeef = nullptr;
     bool isPaused();
 
 
@@ -23,12 +32,13 @@ public:
     int getVolume();
 
     ddb_playback_state_t getOutputState();
+    ddb_playback_state_t getInternalState();
 
     // plugin message handler
     int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
     
 private:
-    bool isPaused_val;
+    ddb_playback_state_t internal_state;
 
 // Signals are subscribed by different parts of gui
 signals:
@@ -36,6 +46,9 @@ signals:
     void playlistChanged();
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
     void playbackPaused();
+    void playbackUnPaused();
+    void playbackStarted();
+    void playbackStopped();
     void deadbeefActivated();
 
 // Slots redirect messages from qt gui to deadbeef internal system
@@ -43,11 +56,37 @@ public slots:
     // When user changed volume:
     void setVolume(int);
     //
-    void playTrackByIndex(int);
+    void playTrackByIndex(uint32_t);
     //
     void sendPlayMessage(uint32_t id);
     //
     void togglePause();
 };
+
+class DBWidgetInfo {
+public:
+    QString internalName;
+    QString friendlyName;
+    bool isToolbar;
+};
+
+class DBToolbarWidget {
+
+public:
+    DBToolbarWidget(QWidget *parent = nullptr, DBApi *api = nullptr);
+    ~DBToolbarWidget();
+
+    DBApi *api;
+    DBWidgetInfo info;
+    void loadConfig(QObject *settings);
+    void saveConfig(QObject *settings);
+
+    //virtual DBToolbarWidget *factory();
+};
+
+typedef struct DB_qtgui_s {
+    DB_gui_t gui;
+    int (*register_widget) (DB_plugin_t *plugin, QWidget *(*object_factory)(QWidget* parent, DBApi *api));
+} DB_qtgui_t;
 
 #endif // DBAPIWRAPPER_H

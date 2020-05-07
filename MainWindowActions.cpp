@@ -30,7 +30,7 @@ void MainWindow::on_actionStop_triggered() {
 }
 
 void MainWindow::on_actionPlay_triggered() {
-    api.sendPlayMessage(DB_EV_PLAY_CURRENT);
+    api->sendPlayMessage(DB_EV_PLAY_CURRENT);
 }
 
 void MainWindow::on_actionPause_triggered() {
@@ -38,11 +38,11 @@ void MainWindow::on_actionPause_triggered() {
 }
 
 void MainWindow::on_actionPrev_triggered() {
-    api.sendPlayMessage(DB_EV_PREV);
+    api->sendPlayMessage(DB_EV_PREV);
 }
 
 void MainWindow::on_actionNext_triggered() {
-    api.sendPlayMessage(DB_EV_NEXT);
+    api->sendPlayMessage(DB_EV_NEXT);
 }
 
 // menuBar -/ File
@@ -57,7 +57,7 @@ void MainWindow::on_actionAddFiles_triggered() {
     if (fileNames.isEmpty())
         return;
     foreach (QString localFile, fileNames)
-        ui->playList->insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
+        playList.insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
 }
 
 void MainWindow::on_actionAddFolder_triggered() {
@@ -70,16 +70,16 @@ void MainWindow::on_actionAddFolder_triggered() {
     if (fileNames.isEmpty())
         return;
     foreach (QString localFile, fileNames)
-        ui->playList->insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
+        playList.insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
 }
 
 void MainWindow::on_actionAddURL_triggered() {
-    ui->playList->insertByURLAtPosition(QUrl::fromUserInput(QInputDialog::getText(this, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)));
+    playList.insertByURLAtPosition(QUrl::fromUserInput(QInputDialog::getText(this, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)));
 }
 
 void MainWindow::on_actionAddAudioCD_triggered() {
     QFutureWatcher<void> *watcher = new QFutureWatcher<void>(this);
-    connect(watcher, SIGNAL(finished()), ui->playList, SLOT(refresh()));
+    connect(watcher, SIGNAL(finished()), &playList, SLOT(refresh()));
     watcher->setFuture(QtConcurrent::run(loadAudioCD));
 }
 
@@ -101,7 +101,7 @@ void MainWindow::on_actionLoadPlaylist_triggered() {
         return;
 
     QFutureWatcher<void> *watcher = new QFutureWatcher<void>(this);
-    connect(watcher, SIGNAL(finished()), ui->playList, SLOT(refresh()));
+    connect(watcher, SIGNAL(finished()), &playList, SLOT(refresh()));
     watcher->setFuture(QtConcurrent::run(loadPlaylist, fileNames.last()));
 }
 
@@ -109,7 +109,7 @@ void MainWindow::on_actionLoadPlaylist_triggered() {
 void MainWindow::on_actionSaveAsPlaylist_triggered() {
     QStringList filters;
     filters << tr("DeaDBeeF playlist files (*.dbpl)");
-    DB_playlist_t **plug = deadbeef->plug_get_playlist_list();
+    DB_playlist_t **plug = DBAPI->plug_get_playlist_list();
     for (int i = 0; plug[i]; i++) {
         if (plug[i]->extensions && plug[i]->load) {
             const char **exts = plug[i]->extensions;
@@ -129,10 +129,10 @@ void MainWindow::on_actionSaveAsPlaylist_triggered() {
     if (fileNames.isEmpty())
         return;
 
-    ddb_playlist_t *plt = deadbeef->plt_get_curr();
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     if (plt) {
-        int res = deadbeef->plt_save(plt, NULL, NULL, fileNames.last().toUtf8().constData(), NULL, NULL, NULL);
-        deadbeef->plt_unref(plt);
+        int res = DBAPI->plt_save(plt, NULL, NULL, fileNames.last().toUtf8().constData(), NULL, NULL, NULL);
+        DBAPI->plt_unref(plt);
     }
 }
 
@@ -147,16 +147,16 @@ void MainWindow::on_actionExit_triggered() {
 // menuEdit
 
 void MainWindow::on_actionClearAll_triggered() {
-    ui->playList->clearPlayList();
+    playList.clearPlayList();
 }
 
 
 void MainWindow::on_actionSelectAll_triggered() {
-    ui->playList->selectAll();
+    playList.selectAll();
 }
 
 void MainWindow::on_actionDeselectAll_triggered() {
-    ui->playList->deselectAll();
+    //playList.deselectAll();
 }
 
 // actionFind missing?
@@ -179,13 +179,13 @@ void MainWindow::on_actionHideMenuBar_triggered() {
 }
 
 void MainWindow::on_actionHideTabBar_triggered() {
-    ui->playList->hideTab();
+    //playList.hideTab();
 }
 
 
 
 void MainWindow::on_actionPlayListHeader_triggered() {
-    ui->playList->header();
+    playList.header();
 }
 
 /*

@@ -7,8 +7,6 @@
 #include <QFile>
 #include <QTextStream>
 
-extern DB_gui_t plugin;
-
 AboutDialog::AboutDialog(QWidget *parent) :
         QDialog(parent, Qt::WindowTitleHint),
         ui(new Ui::AboutDialog) {
@@ -16,10 +14,10 @@ AboutDialog::AboutDialog(QWidget *parent) :
     ui->setupUi(this);
 
     char str[64];
-    deadbeef->pl_format_title(NULL, -1, str, sizeof(str), -1, "DeaDBeeF-%V");
+    DBAPI->pl_format_title(nullptr, -1, str, sizeof(str), -1, "DeaDBeeF-%V");
     setWindowTitle(QString("%1 %2").arg(tr("About")).arg(QString::fromUtf8(str)));
 
-    QFile aboutDBFile(QString::fromUtf8(deadbeef->get_doc_dir()) + "/about.txt");
+    QFile aboutDBFile(QString::fromUtf8(DBAPI->get_doc_dir()) + "/about.txt");
 
     if (aboutDBFile.open(QFile::ReadOnly)) {
         QTextStream s(&aboutDBFile);

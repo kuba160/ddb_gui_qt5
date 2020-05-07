@@ -4,10 +4,12 @@
 #include <QMainWindow>
 #include <QActionGroup>
 #include <QToolBar>
+#include <QBoxLayout>
 
 #include "SystemTrayIcon.h"
 #include "VolumeSlider.h"
 #include "SeekSlider.h"
+#include "PlayList.h"
 
 #include <plugins/CoverArt/CoverArtWidget.h>
 
@@ -21,10 +23,10 @@ enum ActionOnClose {
     Minimize = 2,
 };
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow, DBToolbarWidget {
     Q_OBJECT
 public:
-    MainWindow(QWidget *parent = 0);
+    MainWindow(QWidget *parent = nullptr, DBApi *Api = nullptr);
     ~MainWindow();
 
     DBApi *Api();
@@ -46,13 +48,14 @@ private:
     Ui::MainWindow *ui;
 
 public:
-    DBApi api;
+//    DBApi *api;
 
 private:
     SystemTrayIcon *trayIcon;
     QMenu *trayMenu;
     VolumeSlider volumeSlider;
     SeekSlider progressBar;
+    PlayList playList;
 
 
     QToolBar *ToolbarStack[64];
@@ -69,7 +72,7 @@ private:
     void createTray();
     QMenu *createPopupMenu();
 
-    void updateTitle(DB_playItem_t *it = NULL);
+    void updateTitle(DB_playItem_t *it = nullptr);
     
     void loadActions();
 
@@ -120,6 +123,8 @@ public slots:
 
     void windowActivate();
     void windowShowHide();
+
+    void windowAddToolbar(QToolBar *);
 };
 
 extern MainWindow *w;
