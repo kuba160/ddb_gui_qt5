@@ -9,12 +9,13 @@
 
 #define SEEK_SCALE 10
 
-class SeekSlider : public QSlider {
+class SeekSlider : public QSlider, public DBToolbarWidget {
     Q_OBJECT
 
 public:
     SeekSlider(QWidget *parent = 0, DBApi *api = 0);
     ~SeekSlider();
+    static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
 
 protected:
     bool event(QEvent *event);

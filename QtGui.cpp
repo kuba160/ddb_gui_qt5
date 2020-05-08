@@ -108,10 +108,9 @@ static int pluginConnect() {
     return 0;
 }
 
-static int registerWidget (DB_plugin_t *plugin, QWidget *(constructor)(QWidget *, DBApi *)) {
+static int registerWidget (DBWidgetInfo *info, QWidget *(constructor)(QWidget *, DBApi *)) {
     initializePluginLoader();
-    pl->widgetLibraryAppend(plugin, constructor);
-    return 0;
+    return pl->widgetLibraryAppend(info, constructor);
 }
 
 
@@ -127,6 +126,12 @@ static int pluginStart() {
 
     QString locale = QLocale::system().name();
     //QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
+
+    //initialize settings
+    QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG)) .arg("qt5");
+    QtGuiSettings::setDefaultFormat(QSettings::IniFormat);
+    QtGuiSettings::setPath(QSettings::IniFormat, QSettings::UserScope, file);
+    settings = new QtGuiSettings(nullptr);
 
     // initialize api
     initializeApi();

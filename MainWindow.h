@@ -53,13 +53,12 @@ public:
 private:
     SystemTrayIcon *trayIcon;
     QMenu *trayMenu;
-    VolumeSlider volumeSlider;
-    SeekSlider progressBar;
+    //VolumeSlider volumeSlider;
+    //SeekSlider progressBar;
     PlayList playList;
 
 
-    QToolBar *ToolbarStack[64];
-    char ToolbarStackCount;
+    QMenu *new_plugins;
 
     CoverArtWidget coverArtWidget;
 
@@ -124,7 +123,13 @@ public slots:
     void windowActivate();
     void windowShowHide();
 
+
     void windowAddToolbar(QToolBar *);
+    void windowViewActionAdd(QAction *);
+    void windowViewActionCreate(QAction *);
+
+signals:
+    void configLoaded();
 };
 
 extern MainWindow *w;

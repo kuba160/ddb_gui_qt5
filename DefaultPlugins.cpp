@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "VolumeSlider.h"
+#include "SeekSlider.h"
 
 DefaultPlugins::DefaultPlugins() {
     widgetLibrary = new std::vector<ExternalWidget_t>();
@@ -12,7 +13,14 @@ DefaultPlugins::DefaultPlugins() {
     volumeSlider.info.friendlyName = QString("Volume Slider");
     volumeSlider.info.isToolbar = true;
     volumeSlider.constructor = VolumeSlider::constructor;
-    //widgetLibrary->push_back(volumeSlider);
+    widgetLibrary->push_back(volumeSlider);
+
+    ExternalWidget_t seekSlider;
+    seekSlider.info.internalName = QString("seekSlider");
+    seekSlider.info.friendlyName = QString("Seekbar");
+    seekSlider.info.isToolbar = true;
+    seekSlider.constructor = SeekSlider::constructor;
+    widgetLibrary->push_back(seekSlider);
 
 }
 
@@ -27,7 +35,7 @@ ExternalWidget_t *DefaultPlugins::WidgetReturn(unsigned long num) {
     return&widgetLibrary->at(num);
 };
 
-void DefaultPlugins::WidgetsInsert( void (*widgetLibraryAppend)(ExternalWidget_t *widget)) {
+void DefaultPlugins::WidgetsInsert( int (*widgetLibraryAppend)(ExternalWidget_t *widget)) {
     std::vector<ExternalWidget_t>::iterator it;
     int i = 0;
 

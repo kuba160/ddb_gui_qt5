@@ -67,6 +67,7 @@ class DBWidgetInfo {
 public:
     QString internalName;
     QString friendlyName;
+    DB_plugin_t *plugin;
     bool isToolbar;
 };
 
@@ -86,7 +87,7 @@ public:
 
 typedef struct DB_qtgui_s {
     DB_gui_t gui;
-    int (*register_widget) (DB_plugin_t *plugin, QWidget *(*object_factory)(QWidget* parent, DBApi *api));
+    int (*register_widget) (DBWidgetInfo *, QWidget *(*object_factory)(QWidget* parent, DBApi *api));
 } DB_qtgui_t;
 
 #endif // DBAPIWRAPPER_H

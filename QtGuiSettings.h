@@ -1,17 +1,18 @@
 #ifndef QTGUISETTINGS_H
 #define QTGUISETTINGS_H
 
-#define SETTINGS QtGuiSettings::Instance()
+#define SETTINGS settings
 
 #include <QVariant>
 #include <QString>
 #include <QSettings>
 
-class QtGuiSettings : public QObject {
+class QtGuiSettings : public QSettings {
     Q_OBJECT
 public:
-    static QtGuiSettings *Instance();
-    static void Destroy();
+    QtGuiSettings(QObject *parent);
+    //QtGuiSettings(const QString &fileName, QSettings::Format format, QObject *parent = nullptr);
+    //~QtGuiSettings();
 
     QVariant getValue(const QString &group, const QString &key, const QVariant &defaultValue);
     void setValue(const QString &group, const QString &key, const QVariant &value);
@@ -59,10 +60,11 @@ public:
     static const QString HeaderIsVisible;
 
 private:
-    QtGuiSettings();
-    static QtGuiSettings *instance;
+    //static QtGuiSettings *instance;
 
-    QSettings settings;
+    //QSettings settings;
 };
+
+extern QtGuiSettings *settings;
 
 #endif // QTGUISETTINGS_H

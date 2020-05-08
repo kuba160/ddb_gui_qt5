@@ -21,14 +21,14 @@
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
 
-#include "PluginLoader.h"
+//#include "PluginLoader.h"
 
 MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
         DBToolbarWidget (parent, Api),
         ui(new Ui::MainWindow),
-        volumeSlider(this, api),
-        progressBar(this, api),
+//        volumeSlider(this, api),
+//        progressBar(this, api),
         playList(this, api),
         coverArtWidget(this),
         orderGroup(this),
@@ -50,27 +50,41 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     loopingGroup.addAction(ui->actionLoopNothing);
 
 
-    ToolbarStack[0] = ui->PlaybackToolbar;
-    ToolbarStack[1] = ui->SeekToolbar;
-    ToolbarStack[2] = ui->VolumeToolbar;
-
     ui->PlaybackToolbar->setIconSize(QSize(16, 16));
     ui->PlaybackToolbar->setFixedHeight(39);
     ui->PlaybackToolbar->setStyleSheet("QToolButton{padding: 6px;}");
-    ui->SeekToolbar->addWidget(&progressBar);
-    ui->VolumeToolbar->addWidget(&volumeSlider);
+    //ui->SeekToolbar->addWidget(&progressBar);
+    //ui->VolumeToolbar->addWidget(&volumeSlider);
     
-    ToolbarStackCount = 3;
 
     ui->mainLayout->addWidget(&playList);
 
-    /*
-    connect (pl,SIGNAL(toolBarLoaded(QToolBar *)),this,SLOT(windowAddToolbar(QToolBar *)));
-    unsigned int i = 0;
+    new_plugins = ui->menuView->addMenu("New...");
+
+    connect (pl,SIGNAL(toolBarCreated(QToolBar *)),this,SLOT(windowAddToolbar(QToolBar *)));
+    connect (pl, SIGNAL(actionPluginCreated(QAction *)), this, SLOT(windowViewActionAdd(QAction *)));
+
+    //
+
+    {
+        unsigned int i = 0;
+        QAction *a;
+        for (i = 0; (a = pl->actionNewGet(i)); i++) {
+            new_plugins->addAction(a);
+        }
+    }
+    // subscribe for future actionsnew
+    connect (pl, SIGNAL(actionPluginAddCreated(QAction *)), this, SLOT(windowViewActionCreate(QAction *)));
+
+
+    connect (this, SIGNAL(configLoaded()), pl, SLOT(updateActionChecks()));
+
+/*
+    QStringList a = settings->getValue(QtGuiSettings::MainWindow, QString("PluginsLoaded"),QVariant(QStringList())).toStringList();
     while ((pl->widgetLibraryGetInfo(i))) {
         if (pl->widgetLibraryGetInfo(i)->isToolbar) {
             // load toolbar
-            //pl->widgetLibraryAdd(this, i);
+            pl->widgetLibraryAdd(this, i);
             //SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData()
             //ToolbarStack[ToolbarStackCount] = new QToolBar(this);
             //ToolbarStack[ToolbarStackCount]->addWidget(pl->widgetLibraryLoad(i));
@@ -80,19 +94,18 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
             // detect if enabled
             //action->setChecked(true);
             //connect(action,SIGNAL(ac))
-            ToolbarStackCount++;
+            //ToolbarStackCount++;
 
         }
         i++;
-    }*/
-
+    }
+*/
     //setLayout(mainLayout);
 
     trayIcon = nullptr;
     trayMenu = nullptr;
     
     createConnections();
-    volumeSlider.loadConfig(nullptr);
     loadConfig();
     updateTitle();
 }
@@ -109,6 +122,14 @@ DBApi* MainWindow::Api() {
 
 void MainWindow::windowAddToolbar(QToolBar *toolbar) {
     this->addToolBar(toolbar);
+}
+
+void MainWindow::windowViewActionAdd(QAction *action) {
+    this->ui->menuView->addAction(action);
+}
+
+void MainWindow::windowViewActionCreate(QAction *action) {
+    new_plugins->addAction(action);
 }
 
 void MainWindow::createConnections() {
@@ -170,7 +191,7 @@ void MainWindow::createTray() {
     connect(trayIcon, SIGNAL(singleClick()), this, SLOT(windowActivate()));
     connect(trayIcon, SIGNAL(doubleClick()), this, SLOT(windowShowHide()));
     connect(trayIcon, SIGNAL(middleClick()), api, SLOT(togglePause()));
-    connect(trayIcon, SIGNAL(wheelScroll(int)), &volumeSlider, SLOT(adjustVolume(int)));
+    //connect(trayIcon, SIGNAL(wheelScroll(int)), &volumeSlider, SLOT(adjustVolume(int)));
 
     trayIcon->setVisible(true);
 }
@@ -199,7 +220,7 @@ void MainWindow::updateTitle(DB_playItem_t *it) {
     context.dimmed = 0;
 
     // TODO: Make this customizable
-    const char * script;
+    const char * script = nullptr;
     if (api->getOutputState() == DDB_PLAYBACK_STATE_STOPPED)
         script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData();
     else
@@ -266,7 +287,7 @@ void MainWindow::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
         }
         DBAPI->pl_item_unref(to);
     } else {
-        progressBar.setValue(0);
+        //progressBar.setValue(0);
     }
     updateTitle(to);
 }
@@ -280,10 +301,10 @@ void MainWindow::createToolBars() {
 QMenu *MainWindow::createPopupMenu() {
     QMenu *popupMenu = new QMenu();
     popupMenu->addAction(ui->actionHideMenuBar);
-    popupMenu->addSeparator();
-    popupMenu->addSeparator();
-    popupMenu->addSeparator();
-    popupMenu->addAction(ui->actionBlockToolbarChanges);
+    //popupMenu->addSeparator();
+    //popupMenu->addSeparator();
+    //popupMenu->addSeparator();
+    //popupMenu->addAction(ui->actionBlockToolbarChanges);
     return popupMenu;
 }
 
@@ -348,17 +369,16 @@ void MainWindow::loadConfig() {
         addDockWidget(Qt::LeftDockWidgetArea, &coverArtWidget);
         connect(&coverArtWidget, SIGNAL(onCloseEvent()), this, SLOT(onCoverartClose()));
     }
-
     // when no coverart make it not visible
     //ui->actionHideCoverArt->setVisible(false);
 
     restoreState(state);
     configureActionOnClose(minimizeOnClose, trayIconIsHidden);
 
-    int i;
-    for (i = 0; i < ToolbarStackCount; i++) {
-        ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
-    }
+    //int i;
+    //for (i = 0; i < ToolbarStackCount; i++) {
+    //    ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
+    //}
 
     switch (DBAPI->conf_get_int("playback.order", PLAYBACK_ORDER_LINEAR)) {
     case PLAYBACK_ORDER_LINEAR:
@@ -384,7 +404,17 @@ void MainWindow::loadConfig() {
         break;
     }
 
-    qDebug() << QString::fromUtf8(DEADBEEF_PREFIX);
+    QStringList slist = settings->getValue(QtGuiSettings::MainWindow,
+                                           QString("PluginsLoaded"),
+                                           QVariant(QStringList()
+                                                    << QString("seekSlider")
+                                                    << QString("volumeSlider"))).toStringList();
+    int i;
+    for (i = 0; i < slist.size(); i++) {
+        pl->addWidget(this, &slist.at(i));
+    }
+    emit configLoaded();
+
 }
 
 void MainWindow::saveConfig() {
@@ -395,6 +425,7 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, !ui->actionHideCoverArt->isChecked());
     playList.saveConfig();
+    pl->actionChecksSave();
 }
 
 void MainWindow::on_actionRemove_triggered() {

@@ -204,9 +204,9 @@ void MainWindow::onCoverartClose() {
 
 void MainWindow::on_actionBlockToolbarChanges_triggered() {
     int i;
-    for (i = 0; i < ToolbarStackCount; i++) {
-        ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
-    }
+    //for (i = 0; i < ToolbarStackCount; i++) {
+    //    ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
+    //}
 }
 
 // menu "Options" (called Playback)

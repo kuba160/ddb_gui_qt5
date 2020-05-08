@@ -8,7 +8,7 @@ class DefaultPlugins {
 public:
     DefaultPlugins();
     ~DefaultPlugins();
-    void WidgetsInsert( void (*widgetLibraryAppend)(ExternalWidget_t *widget));
+    void WidgetsInsert( int (*widgetLibraryAppend)(ExternalWidget_t *widget));
     ExternalWidget_t *WidgetReturn(unsigned long);
 private:
     std::vector<ExternalWidget_t> *widgetLibrary;

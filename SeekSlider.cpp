@@ -5,7 +5,7 @@
 
 #define DBAPI api->deadbeef
 
-SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent) {
+SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent), DBToolbarWidget(parent, Api) {
     activateNow = false;
     setRange(0, 100 * SEEK_SCALE);
     setOrientation(Qt::Horizontal);
@@ -19,6 +19,10 @@ SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent) {
 }
 
 SeekSlider::~SeekSlider() {
+}
+
+QWidget * SeekSlider::constructor(QWidget *parent, DBApi *api) {
+    return new SeekSlider(parent, api);
 }
 
 bool SeekSlider::event(QEvent *event) {
