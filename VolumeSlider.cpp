@@ -12,6 +12,7 @@
 
 VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBToolbarWidget(parent, api) {
     setRange(-50, 0);
+    //setOrientation(Qt::Vertical);
     setOrientation(Qt::Horizontal);
     setFixedWidth(80);
     setSingleStep(1);
@@ -31,6 +32,7 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBToo
 
 QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
     VolumeSlider *vslider = new VolumeSlider(parent, api);
+    //vslider->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
     vslider->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     return new VolumeSlider(parent,api);
 }

@@ -40,6 +40,8 @@ PluginLoader::PluginLoader(DBApi* Api) : QObject(nullptr), DBToolbarWidget (null
 
 PluginLoader::~PluginLoader() {
     qDebug() << "qt5: PluginLoader cleaning" << endl;
+// TODO??
+    //this->actionChecksSave();
     delete widgetLibrary;
 
     while(widgetLibraryLoaded->size()) {
@@ -225,7 +227,8 @@ int PluginLoader::widgetLibraryAddInternal(QWidget *parent, unsigned long num) {
     // todo: detect if enabled
     action->setChecked(toolbar->isVisible());
 
-    toolbar->setContextMenuPolicy(Qt::CustomContextMenu);
+    // todo: custom menu
+    //toolbar->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(toolbar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(headerContextMenuBuilder(QPoint)));
 
     connect(action, SIGNAL(toggled(bool)), this, SLOT(actionHandlerCheckable(bool)));
@@ -317,13 +320,12 @@ void PluginLoader::updateActionChecks() {
 
 void PluginLoader::actionChecksSave() {
     // all widgets become invisible?
-/*
+
     unsigned long i;
     for (i = 0; i < actions->size(); i++) {
             QString key = QString("%1.visible") .arg(*widgetLibraryLoaded->at(i).internalName);
             settings->setValue(QString("PluginLoader"), key,toolbars->at(i)->isVisible());
     }
-    */
 }
 
 int PluginLoader::addWidget(QWidget *parent, const QString *name) {
@@ -334,6 +336,14 @@ int PluginLoader::addWidget(QWidget *parent, const QString *name) {
             }
     }
     return -1;
+}
+
+void PluginLoader::lockWidgets(bool lock) {
+    //for
+    unsigned long i;
+    for (i = 0; i < widgetLibraryLoaded->size(); i++) {
+        toolbars->at(i)->setMovable(!lock);
+    }
 }
 
 QAction *PluginLoader::actionNewGet(unsigned long num) {

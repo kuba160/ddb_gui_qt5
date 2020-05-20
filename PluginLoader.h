@@ -82,6 +82,9 @@ public slots:
     //
     int addWidget(QWidget *parent, const QString *);
     //void widgetLoaded(unsigned long num);
+    // lock widgets toggle
+    void lockWidgets(bool lock);
+
 
     // get action New
     QAction *actionNewGet(unsigned long);

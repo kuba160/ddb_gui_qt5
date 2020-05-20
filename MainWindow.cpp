@@ -76,9 +76,11 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     // subscribe for future actionsnew
     connect (pl, SIGNAL(actionPluginAddCreated(QAction *)), this, SLOT(windowViewActionCreate(QAction *)));
 
-
     connect (this, SIGNAL(configLoaded()), pl, SLOT(updateActionChecks()));
 
+    connect (this->ui->actionBlockToolbarChanges, SIGNAL(toggled(bool)), pl, SLOT(lockWidgets(bool)));
+
+    connect (this->ui->actionExit, SIGNAL(triggered()), pl, SLOT(actionChecksSave()));
 /*
     QStringList a = settings->getValue(QtGuiSettings::MainWindow, QString("PluginsLoaded"),QVariant(QStringList())).toStringList();
     while ((pl->widgetLibraryGetInfo(i))) {
@@ -429,7 +431,7 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, !ui->actionHideCoverArt->isChecked());
     playList.saveConfig();
-    pl->actionChecksSave();
+    //pl->actionChecksSave();
 }
 
 void MainWindow::on_actionRemove_triggered() {
