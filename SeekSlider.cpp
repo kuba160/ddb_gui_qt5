@@ -26,14 +26,8 @@ SeekSlider::~SeekSlider() {
 
 QWidget * SeekSlider::constructor(QWidget *parent, DBApi *api) {
     SeekSlider *slider = new SeekSlider(parent, api);
-    slider->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
+    slider->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
     return slider;
-}
-
-QToolBar * SeekSlider::constructorToolbar(QWidget *parent, DBApi *api) {
-    //QToolBar *tbar = new QToolBar(constructor(parent, api));
-    //tbar->setSizePolicy(QSizePolicy::MinimumExpanding);
-
 }
 
 bool SeekSlider::event(QEvent *event) {

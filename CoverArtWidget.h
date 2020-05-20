@@ -14,6 +14,7 @@ public:
     CoverArtWidget(QWidget *parent = 0);
     ~CoverArtWidget();
 
+    static QDockWidget *constructorDockWidget(QWidget *parent = 0, DBApi *api = 0);
     void updateCover(DB_playItem_t *track = NULL);
 
 private:

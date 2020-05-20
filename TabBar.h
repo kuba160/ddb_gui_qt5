@@ -3,6 +3,9 @@
 
 #include <QTabBar>
 #include <QMenu>
+#include <QDockWidget>
+
+#include "DBApi.h"
 
 #define DRAG_DELAY 5
 
@@ -17,6 +20,9 @@ public:
     };
     TabBar(QWidget *parent = nullptr);
     ~TabBar();
+
+    static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
+    static QDockWidget *constructorDockable(QWidget *parent = nullptr, DBApi *Api = nullptr);
     int selectTab(const QPoint &position) const;
     void setShape(Shape shape);
     

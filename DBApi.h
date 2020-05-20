@@ -9,6 +9,7 @@
 #include <QUrl>
 #include <QObject>
 #include <QToolBar>
+#include <QDockWidget>
 #include <QtGuiSettings.h>
 
 //#define DBAPI (this->api->deadbeef)
@@ -77,11 +78,20 @@ public:
     QString internalName;
     QString friendlyName;
     DB_plugin_t *plugin;
-    bool isToolbar;
-    bool toolbarConstructor;
+
+    enum DBWidgetType {
+        TypeDummy = 0,
+        TypeWidgetToolbar,
+        TypeToolbar,
+        TypeDockable,
+    };
+    // type and constructor to it
+    DBWidgetType type;
     QWidget *(*constructor)(QWidget *parent, DBApi *api);
     // optional, if you want to control toolbar, constructor is ommited then
     QToolBar *(*constructorToolbar)(QWidget *parent, DBApi *api);
+    QDockWidget *(*constructorDockWidget)(QWidget *parent, DBApi *api);
+
 };
 
 class DBToolbarWidget {

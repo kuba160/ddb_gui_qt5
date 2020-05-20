@@ -6,7 +6,7 @@
 #include "QtGui.h"
 #include "qticonloader.h"
 
-#include <plugins/CoverArt/CoverArtWrapper.h>
+#include "CoverArtWrapper.h"
 
 void cover_avail_callback(const char *fname, const char *artist, const char *album, void *user_data) {
     if (!fname && !artist && !album) {

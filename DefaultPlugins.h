@@ -8,10 +8,10 @@ class DefaultPlugins {
 public:
     DefaultPlugins();
     ~DefaultPlugins();
-    void WidgetsInsert( int (*widgetLibraryAppend)(ExternalWidget_t *widget));
-    ExternalWidget_t *WidgetReturn(unsigned long);
+    DBWidgetInfo *WidgetReturn(unsigned long);
 private:
-    std::vector<ExternalWidget_t> *widgetLibrary;
+    std::vector<DBWidgetInfo> *widgetLibrary;
+    DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget, playlistWidget, tabBar, tabBarD;
 };
 
 //}

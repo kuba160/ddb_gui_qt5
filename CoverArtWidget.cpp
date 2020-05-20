@@ -38,6 +38,11 @@ CoverArtWidget::~CoverArtWidget() {
     CACHE->Destroy();
 }
 
+QDockWidget * CoverArtWidget::constructorDockWidget(QWidget *parent, DBApi *api) {
+    QDockWidget *n = new CoverArtWidget(parent);
+    return n;
+}
+
 void CoverArtWidget::trackChanged(DB_playItem_t *, DB_playItem_t *to) {
     if (isVisible())
         updateCover(to);

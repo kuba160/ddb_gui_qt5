@@ -27,6 +27,12 @@
    <set>QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::VerticalTabs</set>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <property name="leftMargin">
      <number>0</number>
@@ -40,9 +46,6 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <item>
-     <layout class="QHBoxLayout" name="mainLayout"/>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -54,7 +57,7 @@
      <x>0</x>
      <y>0</y>
      <width>348</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="Options">
@@ -121,7 +124,6 @@
     <addaction name="actionHideMenuBar"/>
     <addaction name="actionHideTabBar"/>
     <addaction name="actionPlayListHeader"/>
-    <addaction name="actionHideCoverArt"/>
     <addaction name="separator"/>
     <addaction name="actionBlockToolbarChanges"/>
    </widget>
@@ -130,53 +132,6 @@
    <addaction name="menuView"/>
    <addaction name="Options"/>
    <addaction name="Help"/>
-  </widget>
-  <widget class="QToolBar" name="PlaybackToolbar">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>0</width>
-     <height>0</height>
-    </size>
-   </property>
-   <property name="windowTitle">
-    <string>Playback control</string>
-   </property>
-   <property name="statusTip">
-    <string notr="true"/>
-   </property>
-   <property name="movable">
-    <bool>true</bool>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::LeftToolBarArea|Qt::TopToolBarArea</set>
-   </property>
-   <property name="iconSize">
-    <size>
-     <width>16</width>
-     <height>16</height>
-    </size>
-   </property>
-   <property name="floatable">
-    <bool>false</bool>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionStop"/>
-   <addaction name="actionPlay"/>
-   <addaction name="actionPause"/>
-   <addaction name="actionPrev"/>
-   <addaction name="actionNext"/>
-   <addaction name="separator"/>
   </widget>
   <action name="actionAddFolder">
    <property name="text">

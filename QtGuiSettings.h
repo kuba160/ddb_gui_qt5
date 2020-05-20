@@ -17,6 +17,8 @@ public:
     QVariant getValue(const QString &group, const QString &key, const QVariant &defaultValue);
     void setValue(const QString &group, const QString &key, const QVariant &value);
 
+    void removeValue(const QString &group, const QString &key);
+
 //     MainWindow Group
     static const QString MainWindow;
     

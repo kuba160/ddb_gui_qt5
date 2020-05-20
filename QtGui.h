@@ -9,7 +9,7 @@
 #include "PluginLoader.h"
 #include "MainWindow.h"
 
-#include <plugins/CoverArt/include/artwork.h>
+#include "include/artwork.h"
 
 
 #define COVERART coverart_plugin

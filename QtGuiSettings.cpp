@@ -57,3 +57,9 @@ void QtGuiSettings::setValue(const QString &group, const QString &key, const QVa
     QSettings::setValue(key, value);
     endGroup();
 }
+
+void QtGuiSettings::removeValue(const QString &group, const QString &key) {
+    beginGroup(group);
+    QSettings::remove(key);
+    endGroup();
+}

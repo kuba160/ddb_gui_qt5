@@ -110,7 +110,7 @@ static int pluginConnect() {
 
 static int registerWidget (DBWidgetInfo *info) {
     initializePluginLoader();
-    return pl->widgetLibraryAppend(info, info->constructor);
+    return pl->widgetLibraryAppend(info);
 }
 
 

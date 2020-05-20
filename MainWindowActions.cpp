@@ -56,8 +56,8 @@ void MainWindow::on_actionAddFiles_triggered() {
     QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
-    foreach (QString localFile, fileNames)
-        playList.insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
+    //foreach (QString localFile, fileNames)
+        //playList.insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
 }
 
 void MainWindow::on_actionAddFolder_triggered() {
@@ -69,17 +69,17 @@ void MainWindow::on_actionAddFolder_triggered() {
     QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())
         return;
-    foreach (QString localFile, fileNames)
-        playList.insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
+    //foreach (QString localFile, fileNames)
+        //playList.insertByURLAtPosition(QUrl::fromLocalFile(localFile), DBAPI->pl_getcount(PL_MAIN) - 1);
 }
 
 void MainWindow::on_actionAddURL_triggered() {
-    playList.insertByURLAtPosition(QUrl::fromUserInput(QInputDialog::getText(this, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)));
+    //playList.insertByURLAtPosition(QUrl::fromUserInput(QInputDialog::getText(this, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)));
 }
 
 void MainWindow::on_actionAddAudioCD_triggered() {
     QFutureWatcher<void> *watcher = new QFutureWatcher<void>(this);
-    connect(watcher, SIGNAL(finished()), &playList, SLOT(refresh()));
+    //connect(watcher, SIGNAL(finished()), &playList, SLOT(refresh()));
     watcher->setFuture(QtConcurrent::run(loadAudioCD));
 }
 
@@ -101,7 +101,7 @@ void MainWindow::on_actionLoadPlaylist_triggered() {
         return;
 
     QFutureWatcher<void> *watcher = new QFutureWatcher<void>(this);
-    connect(watcher, SIGNAL(finished()), &playList, SLOT(refresh()));
+    //connect(watcher, SIGNAL(finished()), &playList, SLOT(refresh()));
     watcher->setFuture(QtConcurrent::run(loadPlaylist, fileNames.last()));
 }
 
@@ -147,12 +147,12 @@ void MainWindow::on_actionExit_triggered() {
 // menuEdit
 
 void MainWindow::on_actionClearAll_triggered() {
-    playList.clearPlayList();
+    //playList.clearPlayList();
 }
 
 
 void MainWindow::on_actionSelectAll_triggered() {
-    playList.selectAll();
+    //playList.selectAll();
 }
 
 void MainWindow::on_actionDeselectAll_triggered() {
@@ -185,7 +185,7 @@ void MainWindow::on_actionHideTabBar_triggered() {
 
 
 void MainWindow::on_actionPlayListHeader_triggered() {
-    playList.header();
+    //playList.header();
 }
 
 /*

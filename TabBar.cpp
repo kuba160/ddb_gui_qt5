@@ -25,6 +25,21 @@ TabBar::~TabBar() {
     delete addPlaylist;
 }
 
+QWidget *TabBar::constructor(QWidget *parent, DBApi *Api) {
+    Q_UNUSED(Api);
+    QWidget *widget = new TabBar(parent);
+    return widget;
+}
+
+QDockWidget *TabBar::constructorDockable(QWidget *parent, DBApi *Api) {
+    Q_UNUSED(Api);
+    QWidget *widget = new TabBar(parent);
+    QDockWidget *dock = new QDockWidget(parent);
+    dock->setWindowTitle(QString("Tab Bar"));
+    dock->setWidget(widget);
+    return dock;
+}
+
 void TabBar::createConnections() {
     connect(this, SIGNAL(tabCloseRequested(int)), SLOT(closeTab(int)));
     connect(this, SIGNAL(tabContextMenuRequested(int, QPoint)), SLOT(showTabContextMenu(int, QPoint)));

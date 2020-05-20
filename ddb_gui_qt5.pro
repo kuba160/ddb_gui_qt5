@@ -13,9 +13,9 @@ SOURCES  =          include/callbacks.cpp \
 		    preferencesWidgets/PluginsPreferencesWidget.cpp \
 		    preferencesWidgets/PluginSettingsWidget.cpp \
 		    preferencesWidgets/SoundPreferencesWidget.cpp \
-		    plugins/CoverArt/CoverArtWidget.cpp \
-		    plugins/CoverArt/CoverArtWrapper.cpp \
-		    plugins/CoverArt/CoverArtCache.cpp \
+                    CoverArtWidget.cpp \
+                    CoverArtWrapper.cpp \
+                    CoverArtCache.cpp \
 		    plugins/Hotkeys/HotkeyReadDialog.cpp \
 		    plugins/Hotkeys/HotkeysTreeWidget.cpp \
 		    plugins/Hotkeys/HotkeysWidget.cpp \
@@ -45,9 +45,9 @@ HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
 			preferencesWidgets/PluginsPreferencesWidget.h \
 			preferencesWidgets/PluginSettingsWidget.h \
 			preferencesWidgets/SoundPreferencesWidget.h \
-			plugins/CoverArt/CoverArtWrapper.h \
-			plugins/CoverArt/CoverArtWidget.h \
-			plugins/CoverArt/CoverArtCache.h \
+                        CoverArtWrapper.h \
+                        CoverArtWidget.h \
+                        CoverArtCache.h \
                         plugins/Hotkeys/HotkeyReadDialog.h \
                         plugins/Hotkeys/HotkeysTreeWidget.h \
                         plugins/Hotkeys/HotkeysWidget.h \

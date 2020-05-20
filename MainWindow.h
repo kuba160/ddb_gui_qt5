@@ -11,8 +11,6 @@
 #include "SeekSlider.h"
 #include "PlayList.h"
 
-#include <plugins/CoverArt/CoverArtWidget.h>
-
 namespace Ui {
 class MainWindow;
 }
@@ -55,12 +53,10 @@ private:
     QMenu *trayMenu;
     //VolumeSlider volumeSlider;
     //SeekSlider progressBar;
-    PlayList playList;
 
 
     QMenu *new_plugins;
-
-    CoverArtWidget coverArtWidget;
+    QMenu *remove_plugins;
 
     QActionGroup orderGroup;
     QActionGroup loopingGroup;
@@ -125,8 +121,11 @@ public slots:
 
 
     void windowAddToolbar(QToolBar *);
+    void windowAddDockable(QDockWidget *);
     void windowViewActionAdd(QAction *);
     void windowViewActionCreate(QAction *);
+    void windowViewActionRemove(QAction *);
+    void windowViewActionRemoveToggleHide(bool visible);
 
 signals:
     void configLoaded();

@@ -5,33 +5,55 @@
 #include "VolumeSlider.h"
 #include "SeekSlider.h"
 #include "PlaybackButtons.h"
+#include "CoverArtWidget.h"
+#include "PlayListWidget.h"
+#include "TabBar.h"
 
 DefaultPlugins::DefaultPlugins() {
-    widgetLibrary = new std::vector<ExternalWidget_t>();
+    widgetLibrary = new std::vector<DBWidgetInfo>();
 
-    ExternalWidget_t volumeSlider;
-    volumeSlider.info.internalName = QString("volumeSlider");
-    volumeSlider.info.friendlyName = QString("Volume Slider");
-    volumeSlider.info.isToolbar = true;
-    volumeSlider.info.toolbarConstructor = false;
+    volumeSlider.internalName = QString("volumeSlider");
+    volumeSlider.friendlyName = QString("Volume Slider");
+    volumeSlider.type = DBWidgetInfo::TypeWidgetToolbar;
     volumeSlider.constructor = VolumeSlider::constructor;
     widgetLibrary->push_back(volumeSlider);
 
-    ExternalWidget_t seekSlider;
-    seekSlider.info.internalName = QString("seekSlider");
-    seekSlider.info.friendlyName = QString("Seekbar");
-    seekSlider.info.isToolbar = true;
-    seekSlider.info.toolbarConstructor = false;
+    seekSlider.internalName = QString("seekSlider");
+    seekSlider.friendlyName = QString("Seekbar");
+    seekSlider.type = DBWidgetInfo::TypeWidgetToolbar;
     seekSlider.constructor = SeekSlider::constructor;
     widgetLibrary->push_back(seekSlider);
 
-    ExternalWidget_t playbackButtons;
-    playbackButtons.info.internalName = QString("playbackButtons");
-    playbackButtons.info.friendlyName = QString("Playback Buttons");
-    playbackButtons.info.isToolbar = true;
-    playbackButtons.info.toolbarConstructor = true;
+    playbackButtons.internalName = QString("playbackButtons");
+    playbackButtons.friendlyName = QString("Playback Buttons");
+    playbackButtons.type = DBWidgetInfo::TypeToolbar;
     playbackButtons.constructorToolbar = PlaybackButtons::constructorToolbar;
     widgetLibrary->push_back(playbackButtons);
+
+    artworkWidget.internalName = QString("artwork");
+    artworkWidget.friendlyName = QString("Coverart");
+    artworkWidget.type = DBWidgetInfo::TypeDockable;
+    artworkWidget.constructorDockWidget = CoverArtWidget::constructorDockWidget;
+    widgetLibrary->push_back(artworkWidget);
+
+    playlistWidget.internalName = QString("playlist");
+    playlistWidget.friendlyName = QString("Playlist");
+    playlistWidget.type = DBWidgetInfo::TypeDockable;
+    playlistWidget.constructorDockWidget = PlayListWidget::constructorDockable;
+    widgetLibrary->push_back(playlistWidget);
+
+    tabBar.internalName = QString("tabBar");
+    tabBar.friendlyName = QString("Tab Bar");
+    tabBar.type = DBWidgetInfo::TypeWidgetToolbar;
+    tabBar.constructor = TabBar::constructor;
+    widgetLibrary->push_back(tabBar);
+
+    tabBarD.internalName = QString("tabBarDock");
+    tabBarD.friendlyName = QString("Tab Bar (Dock)");
+    tabBarD.type = DBWidgetInfo::TypeDockable;
+    tabBarD.constructorDockWidget = TabBar::constructorDockable;
+    widgetLibrary->push_back(tabBarD);
+
 
 }
 
@@ -39,18 +61,9 @@ DefaultPlugins::~DefaultPlugins() {
     delete widgetLibrary;
 }
 
-ExternalWidget_t *DefaultPlugins::WidgetReturn(unsigned long num) {
+DBWidgetInfo *DefaultPlugins::WidgetReturn(unsigned long num) {
     if (num>= widgetLibrary->size()) {
         return nullptr;
     }
-    return&widgetLibrary->at(num);
-};
-
-void DefaultPlugins::WidgetsInsert( int (*widgetLibraryAppend)(ExternalWidget_t *widget)) {
-    std::vector<ExternalWidget_t>::iterator it;
-    int i = 0;
-
-    for(it = widgetLibrary->begin(); it != widgetLibrary->end(); it++,i++ ) {
-        widgetLibraryAppend(&it[i]);
-    }
+    return &widgetLibrary->at(num);
 };

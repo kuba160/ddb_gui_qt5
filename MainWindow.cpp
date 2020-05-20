@@ -27,10 +27,6 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
         DBToolbarWidget (parent, Api),
         ui(new Ui::MainWindow),
-//        volumeSlider(this, api),
-//        progressBar(this, api),
-        playList(this, api),
-        coverArtWidget(this),
         orderGroup(this),
         loopingGroup(this) {
 
@@ -49,77 +45,58 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     loopingGroup.addAction(ui->actionLoopTrack);
     loopingGroup.addAction(ui->actionLoopNothing);
 
-
-    ui->PlaybackToolbar->setIconSize(QSize(16, 16));
-    ui->PlaybackToolbar->setFixedHeight(39);
-    ui->PlaybackToolbar->setStyleSheet("QToolButton{padding: 6px;}");
+    ui->centralwidget->hide();
     //ui->SeekToolbar->addWidget(&progressBar);
     //ui->VolumeToolbar->addWidget(&volumeSlider);
-    
-
-    ui->mainLayout->addWidget(&playList);
+    //QWidget *empty = new QWidget(this);
+    //empty->setVisible(false);
+    //this->setCentralWidget(empty);
+    //ui->mainLayout->addWidget(&playList);
 
     new_plugins = ui->menuView->addMenu("New...");
+    remove_plugins = ui->menuView->addMenu("Remove...");
+    remove_plugins->menuAction()->setVisible(false);
 
+    //// PluginLoader
+    // Create links for widget creation
     connect (pl,SIGNAL(toolBarCreated(QToolBar *)),this,SLOT(windowAddToolbar(QToolBar *)));
-    connect (pl, SIGNAL(actionPluginCreated(QAction *)), this, SLOT(windowViewActionAdd(QAction *)));
+    connect (pl, SIGNAL(dockableWidgetCreated(QDockWidget *)), this, SLOT(windowAddDockable(QDockWidget *)));
 
-    //
+    connect (pl, SIGNAL(actionToggleVisibleCreated(QAction *)), this, SLOT(windowViewActionAdd(QAction *)));
 
+    // New widget creation
     {
+        // add already loaded widgets
         unsigned int i = 0;
         QAction *a;
         for (i = 0; (a = pl->actionNewGet(i)); i++) {
             new_plugins->addAction(a);
         }
+        // subscribe for future actions
+        connect (pl, SIGNAL(actionPluginAddCreated(QAction *)), this, SLOT(windowViewActionCreate(QAction *)));
     }
-    // subscribe for future actionsnew
-    connect (pl, SIGNAL(actionPluginAddCreated(QAction *)), this, SLOT(windowViewActionCreate(QAction *)));
+
+    // Deletion of existent plugins
+    {
+        // subscribe for future actions
+        connect (pl, SIGNAL(actionPluginRemoveCreated(QAction *)), this, SLOT(windowViewActionRemove(QAction *)));
+    }
 
     connect (this, SIGNAL(configLoaded()), pl, SLOT(updateActionChecks()));
 
     connect (this->ui->actionBlockToolbarChanges, SIGNAL(toggled(bool)), pl, SLOT(lockWidgets(bool)));
 
     connect (this->ui->actionExit, SIGNAL(triggered()), pl, SLOT(actionChecksSave()));
-/*
-    QStringList a = settings->getValue(QtGuiSettings::MainWindow, QString("PluginsLoaded"),QVariant(QStringList())).toStringList();
-    while ((pl->widgetLibraryGetInfo(i))) {
-        if (pl->widgetLibraryGetInfo(i)->isToolbar) {
-            // load toolbar
-            pl->widgetLibraryAdd(this, i);
-            //SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData()
-            //ToolbarStack[ToolbarStackCount] = new QToolBar(this);
-            //ToolbarStack[ToolbarStackCount]->addWidget(pl->widgetLibraryLoad(i));
-            //this->addToolBar(ToolbarStack[ToolbarStackCount]);
-            //QAction *action = ui->menuView->addAction()
-            //action->setCheckable(true);
-            // detect if enabled
-            //action->setChecked(true);
-            //connect(action,SIGNAL(ac))
-            //ToolbarStackCount++;
-
-        }
-        i++;
-    }
-*/
-    //setLayout(mainLayout);
 
     trayIcon = nullptr;
     trayMenu = nullptr;
     
     createConnections();
 
-    QStringList slist = settings->getValue(QString("PluginLoader"),
-                                           QString("PluginsLoaded"),
-                                           QVariant(QStringList()
-                                                    << QString("seekSlider")
-                                                    << QString("volumeSlider"))).toStringList();
-    int i;
-    for (i = 0; i < slist.size(); i++) {
-        pl->addWidget(this, &slist.at(i));
-    }
+    pl->RestoreWidgets(this);
 
     loadConfig();
+    pl->lockWidgets(ui->actionBlockToolbarChanges->isChecked());
     updateTitle();
 }
 
@@ -140,6 +117,10 @@ void MainWindow::windowAddToolbar(QToolBar *toolbar) {
     //loadConfig();
 }
 
+void MainWindow::windowAddDockable(QDockWidget *dock) {
+    addDockWidget(Qt::LeftDockWidgetArea, dock);
+}
+
 void MainWindow::windowViewActionAdd(QAction *action) {
     this->ui->menuView->addAction(action);
 }
@@ -147,6 +128,16 @@ void MainWindow::windowViewActionAdd(QAction *action) {
 void MainWindow::windowViewActionCreate(QAction *action) {
     new_plugins->addAction(action);
 }
+
+void MainWindow::windowViewActionRemove(QAction *action) {
+    remove_plugins->addAction(action);
+    remove_plugins->menuAction()->setVisible(true);
+}
+
+void MainWindow::windowViewActionRemoveToggleHide(bool visible) {
+    remove_plugins->menuAction()->setVisible(visible);
+}
+
 
 void MainWindow::createConnections() {
     connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
@@ -368,7 +359,7 @@ void MainWindow::loadConfig() {
 
     resize(size);
     move(point);
-    //ui->actionbarChanges->setChecked(tbIsLocked);
+    ui->actionBlockToolbarChanges->setChecked(tbIsLocked);
     menuBar()->setHidden(mmIsHidden);
     ui->actionHideMenuBar->setChecked(!menuBar()->isHidden());
 
@@ -381,10 +372,10 @@ void MainWindow::loadConfig() {
     
     bool caIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, false).toBool();
     ui->actionHideCoverArt->setChecked(!caIsHidden);
-    if (ui->actionHideCoverArt->isChecked()) {
-        addDockWidget(Qt::LeftDockWidgetArea, &coverArtWidget);
-        connect(&coverArtWidget, SIGNAL(onCloseEvent()), this, SLOT(onCoverartClose()));
-    }
+   // if (ui->actionHideCoverArt->isChecked()) {
+    //    addDockWidget(Qt::LeftDockWidgetArea, &coverArtWidget);
+        //connect(&coverArtWidget, SIGNAL(onCloseEvent()), this, SLOT(onCoverartClose()));
+   // }
     // when no coverart make it not visible
     //ui->actionHideCoverArt->setVisible(false);
 
@@ -430,7 +421,7 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, !ui->actionHideCoverArt->isChecked());
-    playList.saveConfig();
+    //playList.saveConfig();
     //pl->actionChecksSave();
 }
 
