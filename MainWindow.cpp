@@ -106,6 +106,17 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     trayMenu = nullptr;
     
     createConnections();
+
+    QStringList slist = settings->getValue(QString("PluginLoader"),
+                                           QString("PluginsLoaded"),
+                                           QVariant(QStringList()
+                                                    << QString("seekSlider")
+                                                    << QString("volumeSlider"))).toStringList();
+    int i;
+    for (i = 0; i < slist.size(); i++) {
+        pl->addWidget(this, &slist.at(i));
+    }
+
     loadConfig();
     updateTitle();
 }
@@ -121,7 +132,10 @@ DBApi* MainWindow::Api() {
 }
 
 void MainWindow::windowAddToolbar(QToolBar *toolbar) {
+    toolbar->setParent(this);
     this->addToolBar(toolbar);
+    // reload config
+    //loadConfig();
 }
 
 void MainWindow::windowViewActionAdd(QAction *action) {
@@ -402,16 +416,6 @@ void MainWindow::loadConfig() {
     case PLAYBACK_MODE_NOLOOP:
         ui->actionLoopNothing->setChecked(true);
         break;
-    }
-
-    QStringList slist = settings->getValue(QtGuiSettings::MainWindow,
-                                           QString("PluginsLoaded"),
-                                           QVariant(QStringList()
-                                                    << QString("seekSlider")
-                                                    << QString("volumeSlider"))).toStringList();
-    int i;
-    for (i = 0; i < slist.size(); i++) {
-        pl->addWidget(this, &slist.at(i));
     }
     emit configLoaded();
 

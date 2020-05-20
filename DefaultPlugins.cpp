@@ -4,6 +4,7 @@
 
 #include "VolumeSlider.h"
 #include "SeekSlider.h"
+#include "PlaybackButtons.h"
 
 DefaultPlugins::DefaultPlugins() {
     widgetLibrary = new std::vector<ExternalWidget_t>();
@@ -21,6 +22,13 @@ DefaultPlugins::DefaultPlugins() {
     seekSlider.info.isToolbar = true;
     seekSlider.constructor = SeekSlider::constructor;
     widgetLibrary->push_back(seekSlider);
+
+    ExternalWidget_t playbackButtons;
+    playbackButtons.info.internalName = QString("playbackButtons");
+    playbackButtons.info.friendlyName = QString("Playback Buttons");
+    playbackButtons.info.isToolbar = true;
+    playbackButtons.constructorToolbar = PlaybackButtons::constructor;
+    widgetLibrary->push_back(playbackButtons);
 
 }
 

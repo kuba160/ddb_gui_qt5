@@ -43,7 +43,8 @@ PluginLoader::~PluginLoader() {
     delete widgetLibrary;
 
     while(widgetLibraryLoaded->size()) {
-        delete widgetLibraryLoaded->at(0).widget;
+        // widgets are passed and adopted by mainwindow
+        //delete widgetLibraryLoaded->at(0).widget;
         widgetLibraryLoaded->erase(widgetLibraryLoaded->begin());
     }
     delete widgetLibraryLoaded;
@@ -138,9 +139,9 @@ int PluginLoader::widgetLibraryAdd(QWidget *parent, unsigned long num) {
     }
     unsigned long loaded_num = static_cast<unsigned long>(ret);
 
-    QStringList slist = settings->getValue(QtGuiSettings::MainWindow, QString("PluginsLoaded"),QVariant(QStringList())).toStringList();
+    QStringList slist = settings->getValue(QString("PluginLoader"), QString("PluginsLoaded"),QVariant(QStringList())).toStringList();
     slist.append(widgetLibraryLoaded->at(loaded_num).header->info.internalName);
-    settings->setValue(QtGuiSettings::MainWindow, QString("PluginsLoaded"),QVariant(slist));
+    settings->setValue(QString("PluginLoader"), QString("PluginsLoaded"),QVariant(slist));
 
 
     // Toolbar placeholder for widget

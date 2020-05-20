@@ -135,6 +135,22 @@ void DBApi::togglePause() {
     DBAPI->sendmessage(DB_EV_TOGGLE_PAUSE, 0, 0, 0);
 }
 
+void DBApi::play() {
+    DBAPI->sendmessage(DB_EV_PLAY_CURRENT, 0, 0, 0);
+}
+
+void DBApi::stop() {
+    DBAPI->sendmessage(DB_EV_STOP, 0, 0, 0);
+}
+
+void DBApi::playNext() {
+    DBAPI->sendmessage(DB_EV_NEXT, 0, 0, 0);
+}
+
+void DBApi::playPrev() {
+    DBAPI->sendmessage(DB_EV_PREV, 0, 0, 0);
+}
+
 DBToolbarWidget::DBToolbarWidget(QWidget *parent, DBApi *api_a) {
     Q_UNUSED(parent);
     Q_UNUSED(api);

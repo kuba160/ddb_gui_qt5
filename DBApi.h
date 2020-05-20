@@ -8,7 +8,7 @@
 
 #include <QUrl>
 #include <QObject>
-
+#include <QToolBar>
 #include <QtGuiSettings.h>
 
 //#define DBAPI (this->api->deadbeef)
@@ -39,6 +39,7 @@ public:
     
 private:
     ddb_playback_state_t internal_state;
+    QtGuiSettings *qt_settings;
 
 // Signals are subscribed by different parts of gui
 signals:
@@ -61,6 +62,14 @@ public slots:
     void sendPlayMessage(uint32_t id);
     //
     void togglePause();
+    //
+    void play();
+    //
+    void stop();
+    //
+    void playNext();
+    //
+    void playPrev();
 };
 
 class DBWidgetInfo {
@@ -69,6 +78,9 @@ public:
     QString friendlyName;
     DB_plugin_t *plugin;
     bool isToolbar;
+    QWidget *(*constructor)(QWidget *parent, DBApi *api);
+    // optional, if you want to control toolbar, constructor is ommited then
+    QToolBar *(*constructorToolbar)(QWidget *parent, DBApi *api);
 };
 
 class DBToolbarWidget {
@@ -87,7 +99,7 @@ public:
 
 typedef struct DB_qtgui_s {
     DB_gui_t gui;
-    int (*register_widget) (DBWidgetInfo *, QWidget *(*object_factory)(QWidget* parent, DBApi *api));
+    int (*register_widget) (DBWidgetInfo *);
 } DB_qtgui_t;
 
 #endif // DBAPIWRAPPER_H

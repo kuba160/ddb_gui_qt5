@@ -15,8 +15,8 @@ class SeekSlider : public QSlider, public DBToolbarWidget {
 public:
     SeekSlider(QWidget *parent = 0, DBApi *api = 0);
     ~SeekSlider();
-    static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
-
+    static QWidget  *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
+    static QToolBar *constructorToolbar(QWidget *parent, DBApi *api);
 protected:
     bool event(QEvent *event);
 

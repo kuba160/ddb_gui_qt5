@@ -30,9 +30,8 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBToo
 }
 
 QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
-    if (!api) {
-        return nullptr;
-    }
+    VolumeSlider *vslider = new VolumeSlider(parent, api);
+    vslider->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     return new VolumeSlider(parent,api);
 }
 

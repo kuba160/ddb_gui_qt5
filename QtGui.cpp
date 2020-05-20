@@ -108,9 +108,9 @@ static int pluginConnect() {
     return 0;
 }
 
-static int registerWidget (DBWidgetInfo *info, QWidget *(constructor)(QWidget *, DBApi *)) {
+static int registerWidget (DBWidgetInfo *info) {
     initializePluginLoader();
-    return pl->widgetLibraryAppend(info, constructor);
+    return pl->widgetLibraryAppend(info, info->constructor);
 }
 
 
@@ -145,6 +145,9 @@ static int pluginStart() {
     // shutdown
     delete w;
     delete api;
+    delete pl;
+    delete settings;
+
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     return 0;
 }

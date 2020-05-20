@@ -5,6 +5,7 @@ CONFIG += no_plugin_name_prefix plugin
 SOURCES  =          include/callbacks.cpp \
                     DBApi.cpp \
     DefaultPlugins.cpp \
+    PlaybackButtons.cpp \
 		    include/parser.cpp \
 		    include/qticonloader.cpp \
 		    preferencesWidgets/InterfacePreferencesWidget.cpp \
@@ -39,6 +40,7 @@ SOURCES  =          include/callbacks.cpp \
 HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
                         DBApi.h \
     DefaultPlugins.h \
+    PlaybackButtons.h \
 			preferencesWidgets/NetworkPreferencesWidget.h \
 			preferencesWidgets/PluginsPreferencesWidget.h \
 			preferencesWidgets/PluginSettingsWidget.h \
@@ -65,6 +67,7 @@ HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
                         VolumeSlider.h
 
 FORMS =         preferencesWidgets/InterfacePreferencesWidget.ui \
+		PlaybackButtons.ui \
 		preferencesWidgets/NetworkPreferencesWidget.ui \
 		preferencesWidgets/PluginsPreferencesWidget.ui \
 		preferencesWidgets/SoundPreferencesWidget.ui \

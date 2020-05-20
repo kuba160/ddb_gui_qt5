@@ -39,7 +39,15 @@ QtGuiSettings::QtGuiSettings(QObject *parent) : QSettings(parent) {
 
 QVariant QtGuiSettings::getValue(const QString &group, const QString &key, const QVariant &defaultValue) {
     beginGroup(group);
-    QVariant result = value(key, defaultValue);
+    QVariant result;
+    if (contains(key)) {
+        result = value(key, defaultValue);
+    }
+    else {
+        // save default value keys
+        QSettings::setValue(key, defaultValue);
+        result = defaultValue;
+    }
     endGroup();
     return result;
 }

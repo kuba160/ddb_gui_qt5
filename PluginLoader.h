@@ -13,6 +13,7 @@ extern DBApi *api;
 typedef struct ExternalWidget_s{
     DBWidgetInfo info;
     QWidget *(*constructor)(QWidget *, DBApi *);
+    QToolBar *(*constructorToolbar)(QWidget *, DBApi *);
 } ExternalWidget_t;
 
 typedef struct LoadedWidget_s{

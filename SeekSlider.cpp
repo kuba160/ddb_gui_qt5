@@ -3,6 +3,9 @@
 #include "QtGuiSettings.h"
 #include "GuiUpdater.h"
 
+#include <QSizePolicy>
+
+#undef DBAPI
 #define DBAPI api->deadbeef
 
 SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent), DBToolbarWidget(parent, Api) {
@@ -22,7 +25,15 @@ SeekSlider::~SeekSlider() {
 }
 
 QWidget * SeekSlider::constructor(QWidget *parent, DBApi *api) {
-    return new SeekSlider(parent, api);
+    SeekSlider *slider = new SeekSlider(parent, api);
+    slider->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
+    return slider;
+}
+
+QToolBar * SeekSlider::constructorToolbar(QWidget *parent, DBApi *api) {
+    //QToolBar *tbar = new QToolBar(constructor(parent, api));
+    //tbar->setSizePolicy(QSizePolicy::MinimumExpanding);
+
 }
 
 bool SeekSlider::event(QEvent *event) {
