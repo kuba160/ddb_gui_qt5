@@ -121,9 +121,20 @@ long PluginLoader::widgetLibraryLoad(unsigned long num) {
 
 
     // todo fix pointers
-    temp.widget = p->constructor(nullptr, api);
-    if (!temp.widget) {
-        return -1;
+    if (!p->info.toolbarConstructor) {
+        // kinda bad fix
+        // toolbar gonna load in widgetlibraryadd
+        temp.widget = p->constructor(nullptr, api);
+        if (!temp.widget) {
+            return -1;
+        }
+    }
+    else {
+        if (!p->constructorToolbar) {
+            // TODO leak error - temp.fname and iname are leaked
+            return -1;
+        }
+        temp.widget = nullptr;
     }
     widgetLibraryLoaded->push_back(temp);
     return widgetLibraryLoaded->size() - 1;
@@ -145,9 +156,16 @@ int PluginLoader::widgetLibraryAdd(QWidget *parent, unsigned long num) {
 
 
     // Toolbar placeholder for widget
-    QToolBar *toolbar = new QToolBar(parent);
+    QToolBar *toolbar;
+    if (widgetLibraryLoaded->at(ret).header->info.toolbarConstructor) {
+        toolbar = widgetLibraryLoaded->at(ret).header->constructorToolbar (nullptr, api);
+    }
+    else {
+        toolbar = new QToolBar(parent);
+        toolbar->addWidget(widgetLibraryLoaded->at(loaded_num).widget);
+    }
+
     toolbar->setObjectName(*widgetLibraryLoaded->at(loaded_num).internalName);
-    toolbar->addWidget(widgetLibraryLoaded->at(loaded_num).widget);
 
     // plugin loaded, create action that shows it
     QAction *action = new QAction(*widgetFriendlyName(loaded_num));
@@ -190,9 +208,16 @@ int PluginLoader::widgetLibraryAddInternal(QWidget *parent, unsigned long num) {
     unsigned long loaded_num = static_cast<unsigned long>(ret);
 
     // Toolbar placeholder for widget
-    QToolBar *toolbar = new QToolBar(parent);
+    QToolBar *toolbar;
+    if (widgetLibraryLoaded->at(ret).header->info.toolbarConstructor) {
+        toolbar = widgetLibraryLoaded->at(ret).header->constructorToolbar (nullptr, api);
+    }
+    else {
+        toolbar = new QToolBar(parent);
+        toolbar->addWidget(widgetLibraryLoaded->at(loaded_num).widget);
+    }
     toolbar->setObjectName(*widgetLibraryLoaded->at(loaded_num).internalName);
-    toolbar->addWidget(widgetLibraryLoaded->at(loaded_num).widget);
+    //toolbar->addWidget(widgetLibraryLoaded->at(loaded_num).widget);
 
     // plugin loaded, create action that shows it
     QAction *action = new QAction(*widgetFriendlyName(loaded_num));

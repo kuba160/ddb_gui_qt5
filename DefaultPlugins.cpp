@@ -13,6 +13,7 @@ DefaultPlugins::DefaultPlugins() {
     volumeSlider.info.internalName = QString("volumeSlider");
     volumeSlider.info.friendlyName = QString("Volume Slider");
     volumeSlider.info.isToolbar = true;
+    volumeSlider.info.toolbarConstructor = false;
     volumeSlider.constructor = VolumeSlider::constructor;
     widgetLibrary->push_back(volumeSlider);
 
@@ -20,6 +21,7 @@ DefaultPlugins::DefaultPlugins() {
     seekSlider.info.internalName = QString("seekSlider");
     seekSlider.info.friendlyName = QString("Seekbar");
     seekSlider.info.isToolbar = true;
+    seekSlider.info.toolbarConstructor = false;
     seekSlider.constructor = SeekSlider::constructor;
     widgetLibrary->push_back(seekSlider);
 
@@ -27,7 +29,8 @@ DefaultPlugins::DefaultPlugins() {
     playbackButtons.info.internalName = QString("playbackButtons");
     playbackButtons.info.friendlyName = QString("Playback Buttons");
     playbackButtons.info.isToolbar = true;
-    playbackButtons.constructorToolbar = PlaybackButtons::constructor;
+    playbackButtons.info.toolbarConstructor = true;
+    playbackButtons.constructorToolbar = PlaybackButtons::constructorToolbar;
     widgetLibrary->push_back(playbackButtons);
 
 }

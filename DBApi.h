@@ -78,6 +78,7 @@ public:
     QString friendlyName;
     DB_plugin_t *plugin;
     bool isToolbar;
+    bool toolbarConstructor;
     QWidget *(*constructor)(QWidget *parent, DBApi *api);
     // optional, if you want to control toolbar, constructor is ommited then
     QToolBar *(*constructorToolbar)(QWidget *parent, DBApi *api);
