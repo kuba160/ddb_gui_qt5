@@ -59,7 +59,9 @@ void SeekSlider::mousePressEvent(QMouseEvent *ev) {
 }
 
 void SeekSlider::mouseMoveEvent(QMouseEvent *ev) {
-    setValue(pos(ev));
+    if (ev->button() == Qt::LeftButton) {
+        setValue(pos(ev));
+    }
 }
 
 void SeekSlider::onFrameUpdate() {
