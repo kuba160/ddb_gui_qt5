@@ -11,7 +11,7 @@
 
 #include "MainWindow.h"
 
-PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), playListModel(this, Api) {
+PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBToolbarWidget(this, Api), playListModel(this, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setDragEnabled(true);
@@ -75,6 +75,7 @@ void PlayList::createConnections() {
     connect(header(), SIGNAL(sectionClicked(int)), SLOT(saveHeaderState()));
     //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(onTrackChanged(DB_playItem_t *, DB_playItem_t *)));
     //connect(w->Api(), SIGNAL(playlistChanged()), SLOT(refresh()));
+    connect(api, SIGNAL(playlistChanged()), this, SLOT(refresh()));
 }
 
 void PlayList::refresh() {

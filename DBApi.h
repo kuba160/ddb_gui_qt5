@@ -37,15 +37,25 @@ public:
 
     // plugin message handler
     int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
+
+
+    QString const& playlistNameByIdx(int idx);
+    unsigned long getPlaylistCount();
     
 private:
     ddb_playback_state_t internal_state;
     QtGuiSettings *qt_settings;
 
+    QStringList playlistNames;
+    int playlistCount;
+
+
+
 // Signals are subscribed by different parts of gui
 signals:
     void volumeChanged(int);
     void playlistChanged();
+    void playlistChanged(int);
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
     void playbackPaused();
     void playbackUnPaused();
@@ -71,6 +81,8 @@ public slots:
     void playNext();
     //
     void playPrev();
+    //
+    void changePlaylist(int);
 };
 
 class DBWidgetInfo {

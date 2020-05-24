@@ -18,6 +18,21 @@ DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent) {
         // can be playing or stopped
         internal_state = DDB_PLAYBACK_STATE_PLAYING;
     }
+
+
+    // playlists
+    {
+        playlistCount = DBAPI->plt_get_count();
+        char title[100];
+        for (int i = 0; i < playlistCount; i++) {
+            DBAPI->pl_lock();
+            DBAPI->plt_get_title(DBAPI->plt_get_for_idx(i), title, sizeof(title));
+            DBAPI->pl_unlock();
+            playlistNames.push_back(QString::fromUtf8(title));
+            strcpy(title, "");
+        }
+    }
+
 }
 
 DBApi::~DBApi() {
@@ -85,6 +100,17 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     return 0;
 }
 
+QString const& DBApi::playlistNameByIdx(int idx) {
+    static QString empty;
+    if (idx >= playlistNames.size()) {
+        return empty;
+    }
+    return playlistNames.at(idx);
+}
+
+unsigned long DBApi::getPlaylistCount() {
+    return playlistCount;
+}
 
 bool DBApi::isPaused() {
     return (internal_state == DDB_PLAYBACK_STATE_PAUSED) ? true : false;
@@ -149,6 +175,15 @@ void DBApi::playNext() {
 
 void DBApi::playPrev() {
     DBAPI->sendmessage(DB_EV_PREV, 0, 0, 0);
+}
+
+void DBApi::changePlaylist(int idx) {
+    if (idx < playlistCount) {
+        DBAPI->plt_set_curr_idx(idx);
+        DBAPI->conf_set_int("playlist.current", idx);
+        emit playlistChanged(idx);
+        emit playlistChanged();
+    }
 }
 
 DBToolbarWidget::DBToolbarWidget(QWidget *parent, DBApi *api_a) {

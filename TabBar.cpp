@@ -44,17 +44,14 @@ void TabBar::createConnections() {
     connect(this, SIGNAL(tabCloseRequested(int)), SLOT(closeTab(int)));
     connect(this, SIGNAL(tabContextMenuRequested(int, QPoint)), SLOT(showTabContextMenu(int, QPoint)));
     connect(this, SIGNAL(tabMoved(int,int)), SLOT(moveTab(int,int)));
+    connect(this, SIGNAL(tabSelected(int)), api, SLOT(changePlaylist(int)));
+    connect(api, SIGNAL(playlistChanged(int)), this, SLOT(setCurrentIndex(int)));
 }
 
 void TabBar::fillTabs() {
-    int cnt = DBAPI->plt_get_count();
-    char title[100];
+    int cnt = api->getPlaylistCount();
     for (int i = 0; i < cnt; i++) {
-        DBAPI->pl_lock();
-        DBAPI->plt_get_title(DBAPI->plt_get_for_idx(i), title, sizeof(title));
-        DBAPI->pl_unlock();
-        addTab(QString::fromUtf8(title));
-        strcpy(title, "");
+        addTab(api->playlistNameByIdx(i));
     }
 }
 
