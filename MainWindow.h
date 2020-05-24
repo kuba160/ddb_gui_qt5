@@ -127,6 +127,8 @@ public slots:
     void windowViewActionRemove(QAction *);
     void windowViewActionRemoveToggleHide(bool visible);
 
+    void windowSetCentralWidget(QWidget *);
+
 signals:
     void configLoaded();
 };

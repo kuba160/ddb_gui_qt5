@@ -6,6 +6,7 @@ SOURCES  =          include/callbacks.cpp \
                     DBApi.cpp \
     DefaultPlugins.cpp \
     PlaybackButtons.cpp \
+    PlaylistBrowser.cpp \
 		    include/parser.cpp \
 		    include/qticonloader.cpp \
 		    preferencesWidgets/InterfacePreferencesWidget.cpp \
@@ -41,6 +42,7 @@ HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
                         DBApi.h \
     DefaultPlugins.h \
     PlaybackButtons.h \
+    PlaylistBrowser.h \
 			preferencesWidgets/NetworkPreferencesWidget.h \
 			preferencesWidgets/PluginsPreferencesWidget.h \
 			preferencesWidgets/PluginSettingsWidget.h \

@@ -93,7 +93,16 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     
     createConnections();
 
+
     pl->RestoreWidgets(this);
+
+    // HACK? set playlist as central widget
+    {
+        QWidget *mw = pl->getMainWidget();
+        if (mw) {
+            setCentralWidget(mw);
+        }
+    }
 
     loadConfig();
     pl->lockWidgets(ui->actionBlockToolbarChanges->isChecked());
@@ -118,7 +127,7 @@ void MainWindow::windowAddToolbar(QToolBar *toolbar) {
 }
 
 void MainWindow::windowAddDockable(QDockWidget *dock) {
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
 void MainWindow::windowViewActionAdd(QAction *action) {
@@ -136,6 +145,10 @@ void MainWindow::windowViewActionRemove(QAction *action) {
 
 void MainWindow::windowViewActionRemoveToggleHide(bool visible) {
     remove_plugins->menuAction()->setVisible(visible);
+}
+
+void MainWindow::windowSetCentralWidget(QWidget *widget) {
+    setCentralWidget(widget);
 }
 
 

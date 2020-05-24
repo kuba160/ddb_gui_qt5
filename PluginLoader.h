@@ -90,6 +90,8 @@ public:
 
     void RestoreWidgets(QWidget *parent);
 
+    QWidget *getMainWidget();
+
 private:
     // list of widgets that can be added
     std::vector<ExternalWidget_t> *widgetLibrary;
@@ -97,6 +99,8 @@ private:
     std::vector<LoadedWidget_t> *loadedWidgets;
 
     bool areWidgetsLocked;
+
+    QWidget *mainWidget = nullptr;
 
 public slots:
     // handle widget actions (menu etc.)

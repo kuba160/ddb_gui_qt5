@@ -51,11 +51,11 @@ protected:
     void wheelEvent(QWheelEvent *event);
     QSize tabSizeHint(int index) const;
 
-public Q_SLOTS:
+public slots:
     void newPlaylist();
     
 
-private Q_SLOTS:
+private slots:
     void moveTab(int, int);
     void showTabContextMenu(int, QPoint);
     void renamePlaylist();
@@ -66,7 +66,7 @@ private Q_SLOTS:
     void setRightPosition();
     void setLeftPosition();
 
-Q_SIGNALS:
+signals:
     void tabContextMenuRequested(int index, const QPoint &globalPos);
     void emptyAreaContextMenuRequested(const QPoint &globalPos);
 

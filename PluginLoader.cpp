@@ -166,6 +166,11 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         temp.dockWidget->setObjectName(*temp.internalName);
         temp.dockWidget->setVisible(true);
         break;
+    case DBWidgetInfo::TypeMainWidget:
+        temp.widget = p->info.constructor(nullptr, api);
+        temp.dockWidget = nullptr;
+        mainWidget = temp.widget;
+        break;
     default:
         qDebug() << "qt5: PluginLoader: Unknown widget type?";
         break;
@@ -192,7 +197,8 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
     }
     else if (p->info.type == DBWidgetInfo::TypeDockable) {
         temp.dockWidget->setVisible(isEnabled);
-        emit dockableWidgetCreated(temp.dockWidget);
+        if (temp.internalName != QString("playlist"))
+            emit dockableWidgetCreated(temp.dockWidget);
     }
 
     // Expect our internal value to match reality
@@ -214,7 +220,6 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
             qDebug() << "qt5: PluginLoader: Unknown widget type?";
         }
     }
-
     loadedWidgets->push_back(temp);
     return 0;
 }
@@ -259,6 +264,10 @@ void PluginLoader::removeWidget(unsigned long num) {
     delete w->actionDestroy;
     w->actionToggleVisible->setVisible(false);
     delete w->actionToggleVisible;
+}
+
+QWidget *PluginLoader::getMainWidget() {
+    return mainWidget;
 }
 
 int PluginLoader::loadFromWidgetLibraryNew(unsigned long num) {

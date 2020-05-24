@@ -14,13 +14,14 @@ PlayListWidget::PlayListWidget(QWidget *parent) :
     createConnections();
 }
 
-QDockWidget * PlayListWidget::constructorDockable(QWidget *parent, DBApi *Api) {
-    QDockWidget *dw = new QDockWidget();
-    dw->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-    dw->setWindowTitle(QString("Playlist"));
+QWidget * PlayListWidget::constructor(QWidget *parent, DBApi *Api) {
+    //QDockWidget *dw = new QDockWidget();
+    //dw->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
+    //dw->setWindowTitle(QString("Playlist"));
     QWidget *playlist = new PlayList(parent, Api);
-    dw->setWidget(playlist);
-    return dw;
+    return playlist;
+    //dw->setWidget(playlist);
+    //return dw;
 }
 
 void PlayListWidget::createConnections() {

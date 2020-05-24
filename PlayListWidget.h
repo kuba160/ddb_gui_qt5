@@ -16,7 +16,7 @@ class PlayListWidget : public QWidget {
 public:
     PlayListWidget(QWidget *parent = 0);
 
-    static QDockWidget *constructorDockable(QWidget *parent, DBApi *Api);
+    static QWidget *constructor(QWidget *parent, DBApi *Api);
     void loadConfig();
     void saveConfig();
     

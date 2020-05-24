@@ -12,6 +12,7 @@ public:
 private:
     std::vector<DBWidgetInfo> *widgetLibrary;
     DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget, playlistWidget, tabBar, tabBarD;
+    DBWidgetInfo playlistBrowser;
 };
 
 //}

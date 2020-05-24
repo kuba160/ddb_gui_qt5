@@ -26,6 +26,7 @@
 #include "CoverArtWidget.h"
 #include "PlayListWidget.h"
 #include "TabBar.h"
+#include "PlaylistBrowser.h"
 
 DefaultPlugins::DefaultPlugins() {
     widgetLibrary = new std::vector<DBWidgetInfo>();
@@ -56,8 +57,8 @@ DefaultPlugins::DefaultPlugins() {
 
     playlistWidget.internalName = QString("playlist");
     playlistWidget.friendlyName = QString("Playlist");
-    playlistWidget.type = DBWidgetInfo::TypeDockable;
-    playlistWidget.constructorDockWidget = PlayListWidget::constructorDockable;
+    playlistWidget.type = DBWidgetInfo::TypeMainWidget;
+    playlistWidget.constructor = PlayListWidget::constructor;
     widgetLibrary->push_back(playlistWidget);
 
     tabBar.internalName = QString("tabBar");
@@ -71,6 +72,12 @@ DefaultPlugins::DefaultPlugins() {
     tabBarD.type = DBWidgetInfo::TypeDockable;
     tabBarD.constructorDockWidget = TabBar::constructorDockable;
     widgetLibrary->push_back(tabBarD);
+
+    playlistBrowser.internalName = QString("playlistBrowser");
+    playlistBrowser.friendlyName = QString("Playlist Browser");
+    playlistBrowser.type = DBWidgetInfo::TypeDockable;
+    playlistBrowser.constructorDockWidget = PlaylistBrowser::constructorDockWidget;
+    widgetLibrary->push_back(playlistBrowser);
 
 
 }

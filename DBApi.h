@@ -96,6 +96,7 @@ public:
         TypeWidgetToolbar   = 1<<0,
         TypeToolbar         = 1<<1,
         TypeDockable        = 1<<2,
+        TypeMainWidget      = 1<<3
     };
     // type and constructor to it
     DBWidgetType type;
