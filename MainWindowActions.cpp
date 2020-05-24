@@ -140,6 +140,7 @@ void MainWindow::on_actionSaveAsPlaylist_triggered() {
 
 void MainWindow::on_actionExit_triggered() {
     actionOnClose = Exit;
+    DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     close();
 }
 
