@@ -14,6 +14,7 @@ public:
 
 private:
     void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *ev);
     int Volume;
 
 public slots:

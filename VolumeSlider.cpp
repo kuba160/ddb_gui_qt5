@@ -22,12 +22,14 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBToo
     // DBApi links
     Volume = api->getVolume();
     QSlider::setValue(Volume);
+    setToolTip(QString("%1dB") .arg (Volume));
     // API -> SLIDER
     connect(api, SIGNAL(volumeChanged(int)), this, SLOT(onDeadbeefValueChanged(int)));
     // SLIDER -> API
     connect(this, SIGNAL(volumeChanged(int)), api, SLOT(setVolume(int)));
     // SLIDER INTERNAL
     connect(this, SIGNAL(valueChanged(int)), this, SLOT(onSliderValueChanged(int)));
+
 }
 
 QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
@@ -40,6 +42,7 @@ QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
 void VolumeSlider::setValue(int value) {
     QSlider::setValue(value);
     Volume = value;
+    setToolTip(QString("%1dB") .arg (Volume));
     emit volumeChanged(value);
 }
 
@@ -66,13 +69,20 @@ void VolumeSlider::mousePressEvent ( QMouseEvent * event ) {
         newVal = minimum() + ((maximum()-minimum()) * normalizedPosition);
     }
     if (invertedAppearance() == true)
-      setValue( maximum() - newVal );
+      VolumeSlider::setValue( maximum() - newVal );
     else
-      setValue(newVal);
+      VolumeSlider::setValue(newVal);
 
     event->accept();
     }
     QSlider::mousePressEvent(event);
+}
+
+void VolumeSlider::mouseReleaseEvent ( QMouseEvent * event ) {
+    if (event->button() == Qt::LeftButton) {
+        setToolTip(QString("%1dB") .arg (Volume));
+    }
+    QSlider::mouseReleaseEvent(event);
 }
 
 void VolumeSlider::onSliderValueChanged(int value) {
