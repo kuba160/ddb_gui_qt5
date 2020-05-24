@@ -67,7 +67,6 @@ HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
                         VolumeSlider.h
 
 FORMS =         preferencesWidgets/InterfacePreferencesWidget.ui \
-		PlaybackButtons.ui \
 		preferencesWidgets/NetworkPreferencesWidget.ui \
 		preferencesWidgets/PluginsPreferencesWidget.ui \
 		preferencesWidgets/SoundPreferencesWidget.ui \
