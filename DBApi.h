@@ -81,9 +81,9 @@ public:
 
     enum DBWidgetType {
         TypeDummy = 0,
-        TypeWidgetToolbar,
-        TypeToolbar,
-        TypeDockable,
+        TypeWidgetToolbar   = 1<<0,
+        TypeToolbar         = 1<<1,
+        TypeDockable        = 1<<2,
     };
     // type and constructor to it
     DBWidgetType type;
