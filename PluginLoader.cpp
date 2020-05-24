@@ -95,14 +95,29 @@ int PluginLoader::widgetLibraryAppend(DBWidgetInfo *info) {
         emit actionPluginAddCreated(action_create);
         // Add to library
         widgetLibrary->push_back(temp);
+        widgetLibrarySort();
         return 0;
     }
     return -1;
 }
 
+void PluginLoader::widgetLibrarySort() {
+    std::sort(widgetLibrary->begin(), widgetLibrary->end());
+}
+
 LoadedWidget_t * PluginLoader::widgetByNum(unsigned long num) {
     if (num < loadedWidgets->size()) {
         return &loadedWidgets->at(num);
+    }
+    return nullptr;
+}
+
+LoadedWidget_t * PluginLoader::widgetByName(QString *name) {
+    unsigned long i;
+    for (i = 0; i < loadedWidgets->size(); i++) {
+        if (loadedWidgets->at(i).internalName == *name) {
+            return &loadedWidgets->at(i);
+        }
     }
     return nullptr;
 }
@@ -253,6 +268,7 @@ int PluginLoader::loadFromWidgetLibraryNew(unsigned long num) {
         unsigned long num_loaded = loadedWidgets->size() - 1;
 
         slist.append(loadedWidgets->at(num_loaded).header->info.internalName);
+        slist.sort();
         settings->setValue(QString("PluginLoader"), QString("PluginsLoaded"),QVariant(slist));
     }
     return ret;
@@ -318,6 +334,7 @@ void PluginLoader::actionHandlerRemove(bool check) {
             int j = slist.indexOf(wi->header->info.internalName);
             if (j != -1) {
                 slist.removeAt(j);
+                slist.sort();
                 settings->setValue(QString("PluginLoader"), QString("PluginsLoaded"),QVariant(slist));
 
                 settings->removeValue(QString("PluginLoader"), *wi->internalName);

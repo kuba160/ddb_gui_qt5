@@ -17,6 +17,15 @@ typedef struct ExternalWidget_s{
     DBWidgetInfo info;
     // action we created to create this widget
     QAction *actionCreateWidget;
+
+    bool operator < (const ExternalWidget_s& str) const
+        {
+            return (info.friendlyName < str.info.friendlyName);
+        }
+    bool operator > (const ExternalWidget_s& str) const
+        {
+            return (info.friendlyName > str.info.friendlyName);
+        }
 } ExternalWidget_t;
 
 typedef struct LoadedWidget_s{
@@ -54,6 +63,8 @@ public:
     // Called by every external plugin
     int widgetLibraryAppend(DBWidgetInfo *);
 
+    void widgetLibrarySort();
+
     // internal, create widget
     int loadFromWidgetLibrary(unsigned long num);
 
@@ -72,6 +83,8 @@ public:
 
     // loaded widgets
     LoadedWidget_t *widgetByNum(unsigned long num);
+    LoadedWidget_t *widgetByName(QString *);
+
     QString *widgetName(unsigned long num);
     QString *widgetFriendlyName(unsigned long num);
 
