@@ -20,8 +20,8 @@ DefaultPlugins::DefaultPlugins() {
 
     seekSlider.internalName = QString("seekSlider");
     seekSlider.friendlyName = QString("Seekbar");
-    seekSlider.type = DBWidgetInfo::TypeWidgetToolbar;
-    seekSlider.constructor = SeekSlider::constructor;
+    seekSlider.type = DBWidgetInfo::TypeToolbar;
+    seekSlider.constructorToolbar = SeekSlider::constructorToolbar;
     widgetLibrary->push_back(seekSlider);
 
     playbackButtons.internalName = QString("playbackButtons");

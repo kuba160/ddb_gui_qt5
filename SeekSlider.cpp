@@ -4,6 +4,8 @@
 #include "GuiUpdater.h"
 
 #include <QSizePolicy>
+#include <QStyleOptionSlider>
+#include <QLabel>
 
 #undef DBAPI
 #define DBAPI api->deadbeef
@@ -12,7 +14,6 @@ SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent), DBToolbar
     activateNow = false;
     setRange(0, 100 * SEEK_SCALE);
     setOrientation(Qt::Horizontal);
-    api = Api;
     connect(GuiUpdater::Instance(), SIGNAL(frameUpdate()), this, SLOT(onFrameUpdate()));
 
     connect(api, SIGNAL(playbackStarted()),this,SLOT(onPlaybackStart()));
@@ -24,10 +25,13 @@ SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent), DBToolbar
 SeekSlider::~SeekSlider() {
 }
 
-QWidget * SeekSlider::constructor(QWidget *parent, DBApi *api) {
-    SeekSlider *slider = new SeekSlider(parent, api);
-    slider->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-    return slider;
+QToolBar *SeekSlider::constructorToolbar(QWidget *parent, DBApi *api) {
+    QToolBar *tb = new QToolBar(parent);
+    SeekSlider *slider = new SeekSlider(tb, api);
+    tb->addWidget(slider);
+    tb->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
+    tb->setContextMenuPolicy(Qt::PreventContextMenu);
+    return tb;
 }
 
 bool SeekSlider::event(QEvent *event) {
@@ -37,25 +41,45 @@ bool SeekSlider::event(QEvent *event) {
     return QWidget::event(event);
 }
 
+
 void SeekSlider::mouseReleaseEvent(QMouseEvent *ev) {
-    if (ev->button() == Qt::LeftButton) {
-        DBAPI->playback_set_pos(value() / SEEK_SCALE);
+    if (ev->button() == Qt::LeftButton || ev->button() == Qt::RightButton) {
+        DBAPI->playback_set_pos(((float)value() / (float)SEEK_SCALE));
         activateNow = false;
     }
 }
 
+void SeekSlider::mousePressEvent ( QMouseEvent * event ) {
+    QStyleOptionSlider opt;
+    initStyleOption(&opt);
+    QRect sr = style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, this);
 
-void SeekSlider::mousePressEvent(QMouseEvent *ev) {
-    if (ev->button() == Qt::LeftButton) {
+    if ((event->button() == Qt::LeftButton || event->button() == Qt::RightButton) && sr.contains(event->pos()) == false) {
+        int newVal;
+        if (orientation() == Qt::Vertical) {
+            newVal = minimum() + ((maximum()-minimum()) * (height()-event->y())) / height();
+        }
+        else {
+            double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
+            int adaptedPosX = event->x();
+            if (adaptedPosX < halfHandleWidth)
+                adaptedPosX = halfHandleWidth;
+            if (adaptedPosX > width() - halfHandleWidth)
+                adaptedPosX = width() - halfHandleWidth;
+            // get new dimensions accounting for slider handle width
+            double newWidth = (width() - halfHandleWidth) - halfHandleWidth;
+            double normalizedPosition = (adaptedPosX - halfHandleWidth)  / newWidth ;
+            newVal = minimum() + ((maximum()-minimum()) * normalizedPosition);
+        }
+        if (invertedAppearance() == true)
+          QSlider::setValue( maximum() - newVal );
+        else
+          QSlider::setValue(newVal);
+
         activateNow = true;
-        setValue(pos(ev));
+        event->accept();
     }
-}
-
-void SeekSlider::mouseMoveEvent(QMouseEvent *ev) {
-    if (ev->button() == Qt::LeftButton) {
-        setValue(pos(ev));
-    }
+    QSlider::mousePressEvent(event);
 }
 
 void SeekSlider::onFrameUpdate() {
@@ -64,7 +88,7 @@ void SeekSlider::onFrameUpdate() {
         return;
     int output_state = api->getOutputState();
     if (output_state == DDB_PLAYBACK_STATE_PAUSED || output_state == DDB_PLAYBACK_STATE_PLAYING) {
-        setValue(DBAPI->playback_get_pos() * SEEK_SCALE);
+        QSlider::setValue(DBAPI->playback_get_pos() * SEEK_SCALE);
     }
 }
 
