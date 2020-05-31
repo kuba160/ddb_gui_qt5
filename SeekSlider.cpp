@@ -47,6 +47,7 @@ void SeekSlider::mouseReleaseEvent(QMouseEvent *ev) {
         DBAPI->playback_set_pos(((float)value() / (float)SEEK_SCALE));
         activateNow = false;
     }
+    QSlider::mouseReleaseEvent(ev);
 }
 
 void SeekSlider::mousePressEvent ( QMouseEvent * event ) {
