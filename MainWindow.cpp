@@ -110,7 +110,6 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
 }
 
 MainWindow::~MainWindow() {
-    saveConfig();
     delete trayIcon;
     delete ui;
 }
@@ -279,6 +278,7 @@ void MainWindow::closeEvent(QCloseEvent *e) {
     switch (actionOnClose) {
     case Exit:
         e->accept();
+        on_actionExit_triggered();
         break;
     case Hide:
         e->ignore();
@@ -430,8 +430,9 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, saveState());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
+
     //playList.saveConfig();
-    //pl->actionChecksSave();
+    pl->actionChecksSave();
 }
 
 void MainWindow::on_actionRemove_triggered() {

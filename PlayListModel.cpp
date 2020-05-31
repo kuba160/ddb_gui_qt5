@@ -97,9 +97,11 @@ QModelIndex PlayListModel::parent(const QModelIndex &child) const {
 }
 
 int PlayListModel::rowCount(const QModelIndex &parent) const {
+    DBAPI->pl_lock ();
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int rowCount = DBAPI->plt_get_item_count(plt, PL_MAIN);
     DBAPI->plt_unref(plt);
+    DBAPI->pl_unlock ();
     return rowCount;
 }
 

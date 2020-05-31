@@ -19,6 +19,7 @@ TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBToolbarWidget(p
     createConnections();
 
     connect (api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
+    connect (this, SIGNAL(tabRenamed(int, QString *)), api, SLOT(renamePlaylist(int, QString *)));
 }
 
 TabBar::~TabBar() {
@@ -258,7 +259,7 @@ void TabBar::renamePlaylist() {
     QString newName = QInputDialog::getText(this, tr("Choose new name"), tr("Enter new playlist name: "), QLineEdit::Normal, tabText(indexForAction), &ok);
     if (ok && !newName.isEmpty()) {
         setTabText(indexForAction, newName);
-        emit tabRenamed(indexForAction, newName);
+        emit tabRenamed(indexForAction, &newName);
     }
 }
 

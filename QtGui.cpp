@@ -31,6 +31,7 @@
 #include <QStyleFactory>
 
 #include "PluginLoader.h"
+#include "DeadbeefTranslator.h"
 
 
 static int pluginStart();
@@ -124,9 +125,11 @@ static int pluginStart() {
     QApplication::setApplicationName("DeaDBeeF");
     //QApplication::setStyle(QStyleFactory::create("breeze"));
 
+    //DeadbeefTranslator *tr = new DeadbeefTranslator();
+    //app.installTranslator(tr);
+
     QString locale = QLocale::system().name();
     //QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
-
     //initialize settings
     QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG)) .arg("qt5");
     QtGuiSettings::setDefaultFormat(QSettings::IniFormat);

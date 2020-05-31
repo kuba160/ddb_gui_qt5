@@ -36,6 +36,9 @@ public slots:
     void selectPlaylist(int);
     // move playlist pl to before
     void playlistOrderChanged(int pl, int before);
+    //
+    void playlistRenamed(int pl);
+
 };
 
 #endif // PLAYLISTBROWSER_H

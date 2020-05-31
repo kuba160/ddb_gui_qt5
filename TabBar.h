@@ -82,7 +82,7 @@ signals:
 
     void tabClosed(int);
     void tabSelected(int);
-    void tabRenamed(int, const QString &);
+    void tabRenamed(int, QString *);
 
     void changeTabPosition(TabBar::TabBarPosition);
 };

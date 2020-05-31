@@ -63,6 +63,7 @@ signals:
     void deadbeefActivated();
     void playlistMoved(int plt, int before);
     void playlistCreated();
+    void playlistRenamed(int plt);
 
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
@@ -88,6 +89,8 @@ public slots:
     void movePlaylist(int plt, int before);
     //
     void newPlaylist(QString *);
+    //
+    void renamePlaylist(int plt, QString *name);
 };
 
 class DBWidgetInfo {

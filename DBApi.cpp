@@ -204,6 +204,19 @@ void DBApi::newPlaylist(QString *name) {
     emit playlistCreated();
 }
 
+void DBApi::renamePlaylist(int plt, QString *name) {
+    if (plt < playlistNames.size()) {
+        DBAPI->pl_lock ();
+        ddb_playlist_t *plt_p = DBAPI->plt_get_for_idx(plt);
+        DBAPI->plt_set_title (plt_p, name->toUtf8());
+        DBAPI->plt_unref (plt_p);
+        DBAPI->pl_unlock ();
+        playlistNames.insert(plt, *name);
+        playlistNames.removeAt(plt+1);
+        emit playlistRenamed(plt);
+    }
+}
+
 DBToolbarWidget::DBToolbarWidget(QWidget *parent, DBApi *api_a) {
     Q_UNUSED(parent);
     Q_UNUSED(api);

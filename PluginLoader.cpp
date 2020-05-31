@@ -401,11 +401,15 @@ void PluginLoader::updateActionChecks() {
         if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeWidgetToolbar || loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
             loadedWidgets->at(i).toolbar->setVisible(value);
         }
+        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable) {
+            loadedWidgets->at(i).dockWidget->setVisible(value);
+        }
     }
 }
 
 void PluginLoader::actionChecksSave() {
     // all widgets become invisible?
+    qDebug() << "PluginLoader: saving widget status";
 
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {

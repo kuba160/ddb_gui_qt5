@@ -4,6 +4,7 @@ CONFIG += no_plugin_name_prefix plugin
 
 SOURCES  =          include/callbacks.cpp \
                     DBApi.cpp \
+    DeadbeefTranslator.cpp \
     DefaultPlugins.cpp \
     PlaybackButtons.cpp \
     PlaylistBrowser.cpp \
@@ -40,6 +41,7 @@ SOURCES  =          include/callbacks.cpp \
 
 HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
                         DBApi.h \
+    DeadbeefTranslator.h \
     DefaultPlugins.h \
     PlaybackButtons.h \
     PlaylistBrowser.h \
@@ -80,5 +82,7 @@ RESOURCES = Resources.qrc
 QT += gui widgets concurrent
 
 DEFINES += ARTWORK_ENABLED HOTKEYS_ENABLED "DEADBEEF_PREFIX=\\\"donotuse\\\""
+
+# LIBS += -lintl
 
 INCLUDEPATH += "./include"
