@@ -10,7 +10,7 @@ PlayListModel::PlayListModel(QObject *parent, DBApi *Api) : QAbstractItemModel(p
     //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(trackChanged(DB_playItem_t*,DB_playItem_t*)));
     //connect(w->Api(), SIGNAL(playbackPaused()), this, SLOT(playerPaused()));
     columnNames.insert("%s", tr("Status"));
-    columnNames.insert("%n", tr("№"));
+    columnNames.insert("%n", tr("Track number"));
     columnNames.insert("%t", tr("Title"));
     columnNames.insert("%a", tr("Artist"));
     columnNames.insert("%b", tr("Album"));

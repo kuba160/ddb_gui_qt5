@@ -19,4 +19,6 @@ public:
     QString translate(const char *context, const char *sourceText, const char *disambiguation = nullptr, int n = -1) const;
 };
 
+extern DeadbeefTranslator *dbtr;
+
 #endif // DEADBEEFTRANSLATOR_H

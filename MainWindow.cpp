@@ -26,9 +26,7 @@
 MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
         DBToolbarWidget (parent, Api),
-        ui(new Ui::MainWindow),
-        orderGroup(this),
-        loopingGroup(this) {
+        ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
     
@@ -37,13 +35,13 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
 
     //api = new DBApi;
 
-    orderGroup.addAction(ui->actionLinearOrder);
-    orderGroup.addAction(ui->actionRandomOrder);
-    orderGroup.addAction(ui->actionShuffleOrder);
+    //orderGroup.addAction(ui->actionLinearOrder);
+    //orderGroup.addAction(ui->actionRandomOrder);
+    //orderGroup.addAction(ui->actionShuffleOrder);
 
-    loopingGroup.addAction(ui->actionLoopAll);
-    loopingGroup.addAction(ui->actionLoopTrack);
-    loopingGroup.addAction(ui->actionLoopNothing);
+    //loopingGroup.addAction(ui->actionLoopAll);
+    //loopingGroup.addAction(ui->actionLoopTrack);
+    //loopingGroup.addAction(ui->actionLoopNothing);
 
     ui->centralwidget->hide();
     //ui->SeekToolbar->addWidget(&progressBar);
@@ -53,9 +51,35 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     //this->setCentralWidget(empty);
     //ui->mainLayout->addWidget(&playList);
 
-    new_plugins = ui->menuView->addMenu("New...");
-    remove_plugins = ui->menuView->addMenu("Remove...");
+    new_plugins = ui->menuView->addMenu(QString("%1...") .arg(dbtr->translate(nullptr,"Add")));
+    remove_plugins = ui->menuView->addMenu(QString("%1...") .arg(dbtr->translate(nullptr,"Remove")));
     remove_plugins->menuAction()->setVisible(false);
+
+    // Shuffle/Repeat connections
+    {
+        shuffleGroup = new QActionGroup(this);
+        repeatGroup  = new QActionGroup(this);
+        shuffle[0] = ui->actionNoShuffle;
+        shuffle[1] = ui->actionTrackShuffle;
+        shuffle[2] = ui->actionAlbumShuffle;
+        shuffle[3] = ui->actionRandomTrackShuffle;
+        repeat[0]  = ui->actionLoopAll;
+        repeat[1]  = ui->actionLoopTrack;
+        repeat[2]  = ui->actionLoopNothing;
+        int i;
+        for (i = 0; i < 4; i++) {
+            connect(shuffle[i],SIGNAL(triggered()),this, SLOT(shuffleRepeatHandler()));
+            shuffleGroup->addAction(shuffle[i]);
+        }
+        for (i = 0; i < 3; i++) {
+            connect(repeat[i],SIGNAL(triggered()),this, SLOT(shuffleRepeatHandler()));
+            repeatGroup->addAction(repeat[i]);
+        }
+        // Restore
+        shuffle[DBAPI->streamer_get_shuffle()]->setChecked(true);
+        repeat[DBAPI->streamer_get_repeat()]->setChecked(true);
+    }
+
 
     //// PluginLoader
     // Create links for widget creation
@@ -399,13 +423,13 @@ void MainWindow::loadConfig() {
 
     switch (DBAPI->conf_get_int("playback.order", PLAYBACK_ORDER_LINEAR)) {
     case PLAYBACK_ORDER_LINEAR:
-        ui->actionLinearOrder->setChecked(true);
+        //ui->actionLinearOrder->setChecked(true);
         break;
     case PLAYBACK_ORDER_RANDOM:
-        ui->actionRandomOrder->setChecked(true);
+        //ui->actionRandomOrder->setChecked(true);
         break;
     case PLAYBACK_ORDER_SHUFFLE_TRACKS:
-        ui->actionShuffleOrder->setChecked(true);
+        //ui->actionShuffleOrder->setChecked(true);
         break;
     }
 
@@ -422,6 +446,24 @@ void MainWindow::loadConfig() {
     }
     emit configLoaded();
 
+}
+
+void MainWindow::shuffleRepeatHandler() {
+    QObject *s = sender();
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (s == shuffle[i]) {
+            api->setShuffle(static_cast<ddb_shuffle_t>(i));
+            return;
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        if (s == repeat[i]) {
+            api->setRepeat(static_cast<ddb_repeat_t>(i));
+            return;
+        }
+    }
+    qDebug() << "MainWindow: shuffleRepeatHandler failed!";
 }
 
 void MainWindow::saveConfig() {

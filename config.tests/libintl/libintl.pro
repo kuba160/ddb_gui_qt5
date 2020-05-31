@@ -2,4 +2,6 @@ TEMPLATE = app
 QT = 
 SOURCES += test_libintl.c
 
-LIBS += -lintl
+win32 {
+	LIBS += -lintl
+}

@@ -11,6 +11,7 @@
 #include "SeekSlider.h"
 #include "PlayList.h"
 
+
 namespace Ui {
 class MainWindow;
 }
@@ -58,8 +59,11 @@ private:
     QMenu *new_plugins;
     QMenu *remove_plugins;
 
-    QActionGroup orderGroup;
-    QActionGroup loopingGroup;
+
+    QActionGroup *repeatGroup;
+    QAction *repeat[3];
+    QActionGroup *shuffleGroup;
+    QAction *shuffle[4];
 
     void createConnections();
 
@@ -128,6 +132,8 @@ public slots:
     void windowViewActionRemoveToggleHide(bool visible);
 
     void windowSetCentralWidget(QWidget *);
+
+    void shuffleRepeatHandler();
 
 signals:
     void configLoaded();

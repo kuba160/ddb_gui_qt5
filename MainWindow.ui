@@ -57,10 +57,10 @@
      <x>0</x>
      <y>0</y>
      <width>348</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="Options">
+   <widget class="QMenu" name="menuPlayback">
     <property name="title">
      <string>Playback</string>
     </property>
@@ -72,15 +72,16 @@
      <addaction name="actionLoopTrack"/>
      <addaction name="actionLoopNothing"/>
     </widget>
-    <widget class="QMenu" name="orderMenu">
+    <widget class="QMenu" name="shuffleMenu">
      <property name="title">
-      <string>Order</string>
+      <string>Shuffle</string>
      </property>
-     <addaction name="actionLinearOrder"/>
-     <addaction name="actionRandomOrder"/>
-     <addaction name="actionShuffleOrder"/>
+     <addaction name="actionNoShuffle"/>
+     <addaction name="actionTrackShuffle"/>
+     <addaction name="actionAlbumShuffle"/>
+     <addaction name="actionRandomTrackShuffle"/>
     </widget>
-    <addaction name="orderMenu"/>
+    <addaction name="shuffleMenu"/>
     <addaction name="loopingMenu"/>
    </widget>
    <widget class="QMenu" name="Help">
@@ -128,7 +129,7 @@
    <addaction name="menu"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
-   <addaction name="Options"/>
+   <addaction name="menuPlayback"/>
    <addaction name="Help"/>
   </widget>
   <action name="actionAddFolder">
@@ -207,28 +208,28 @@
     <string>About</string>
    </property>
   </action>
-  <action name="actionLinearOrder">
+  <action name="actionNoShuffle">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Linear</string>
+    <string>Off</string>
    </property>
   </action>
-  <action name="actionRandomOrder">
+  <action name="actionTrackShuffle">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Random</string>
+    <string>Tracks</string>
    </property>
   </action>
-  <action name="actionShuffleOrder">
+  <action name="actionAlbumShuffle">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Shuffle</string>
+    <string>Albums</string>
    </property>
   </action>
   <action name="actionLoopAll">
@@ -236,7 +237,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Repeat all</string>
+    <string>All Tracks</string>
    </property>
   </action>
   <action name="actionLoopTrack">
@@ -244,7 +245,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Repeat track</string>
+    <string>One Track</string>
    </property>
   </action>
   <action name="actionLoopNothing">
@@ -252,7 +253,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Don't repeat</string>
+    <string>Off</string>
    </property>
   </action>
   <action name="actionAboutQt">
@@ -344,7 +345,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Block toolbar changes</string>
+    <string>Design mode</string>
    </property>
   </action>
   <action name="actionHideStatusbar">
@@ -449,6 +450,11 @@
   <action name="actionOpenFiles">
    <property name="text">
     <string>Open file(s)</string>
+   </property>
+  </action>
+  <action name="actionRandomTrackShuffle">
+   <property name="text">
+    <string>Random Tracks</string>
    </property>
   </action>
  </widget>

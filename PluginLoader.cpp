@@ -88,8 +88,9 @@ int PluginLoader::widgetLibraryAppend(DBWidgetInfo *info) {
     if (info && info->friendlyName.size() && info->internalName.size()) {
         ExternalWidget_t temp;
         temp.info = *info;
+        temp.info.friendlyName = dbtr->translate(nullptr, temp.info.friendlyName.toUtf8());
         // Create new action for creating that widget
-        QAction *action_create = new QAction(info->friendlyName);
+        QAction *action_create = new QAction(temp.info.friendlyName);
         action_create->setCheckable(false);
         connect(action_create, SIGNAL(triggered(bool)), this, SLOT(actionHandler(bool)));
         temp.actionCreateWidget = action_create;
@@ -134,13 +135,14 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
     temp.instance = getTotalInstances(p->info.internalName);
     temp.empty_titlebar_toolbar = nullptr;
 
+    QString frname = dbtr->translate(nullptr, p->info.friendlyName.toUtf8());
     if (temp.instance) {
         qDebug() << "qt5: PluginLoader: Loading new instance of plugin" << p->info.internalName;
-        temp.friendlyName = new QString(QString("%1 (%2)") .arg(p->info.friendlyName) .arg(temp.instance));
+        temp.friendlyName = new QString(QString("%1 (%2)") .arg(frname) .arg(temp.instance));
         temp.internalName = new QString(QString("%1_%2") .arg(p->info.internalName) .arg(temp.instance));
     }
     else {
-        temp.friendlyName = new QString(p->info.friendlyName);
+        temp.friendlyName = new QString(frname);
         temp.internalName = new QString(p->info.internalName);
     }
 
@@ -438,7 +440,8 @@ int PluginLoader::addWidget(QWidget *parent, const QString *name) {
 }
 
 void PluginLoader::lockWidgets(bool lock) {
-    areWidgetsLocked = lock;
+    areWidgetsLocked = !lock;
+    lock = !lock;
     //for
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {

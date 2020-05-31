@@ -32,7 +32,7 @@ DefaultPlugins::DefaultPlugins() {
     widgetLibrary = new std::vector<DBWidgetInfo>();
 
     volumeSlider.internalName = QString("volumeSlider");
-    volumeSlider.friendlyName = QString("Volume Slider");
+    volumeSlider.friendlyName = QString("Volume bar");
     volumeSlider.type = DBWidgetInfo::TypeWidgetToolbar;
     volumeSlider.constructor = VolumeSlider::constructor;
     widgetLibrary->push_back(volumeSlider);
@@ -44,13 +44,13 @@ DefaultPlugins::DefaultPlugins() {
     widgetLibrary->push_back(seekSlider);
 
     playbackButtons.internalName = QString("playbackButtons");
-    playbackButtons.friendlyName = QString("Playback Buttons");
+    playbackButtons.friendlyName = QString("Playback controls");
     playbackButtons.type = DBWidgetInfo::TypeToolbar;
     playbackButtons.constructorToolbar = PlaybackButtons::constructorToolbar;
     widgetLibrary->push_back(playbackButtons);
 
     artworkWidget.internalName = QString("artwork");
-    artworkWidget.friendlyName = QString("Coverart");
+    artworkWidget.friendlyName = QString("Album Art");
     artworkWidget.type = DBWidgetInfo::TypeDockable;
     artworkWidget.constructorDockWidget = CoverArtWidget::constructorDockWidget;
     widgetLibrary->push_back(artworkWidget);
@@ -62,7 +62,7 @@ DefaultPlugins::DefaultPlugins() {
     widgetLibrary->push_back(playlistWidget);
 
     tabBar.internalName = QString("tabBar");
-    tabBar.friendlyName = QString("Tab Bar");
+    tabBar.friendlyName = QString("Tab strip");
     tabBar.type = DBWidgetInfo::TypeWidgetToolbar;
     tabBar.constructor = TabBar::constructor;
     widgetLibrary->push_back(tabBar);
@@ -74,7 +74,7 @@ DefaultPlugins::DefaultPlugins() {
     widgetLibrary->push_back(tabBarD);
 
     playlistBrowser.internalName = QString("playlistBrowser");
-    playlistBrowser.friendlyName = QString("Playlist Browser");
+    playlistBrowser.friendlyName = QString("Playlist browser");
     playlistBrowser.type = DBWidgetInfo::TypeDockable;
     playlistBrowser.constructorDockWidget = PlaylistBrowser::constructorDockWidget;
     widgetLibrary->push_back(playlistBrowser);

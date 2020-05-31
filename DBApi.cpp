@@ -33,6 +33,10 @@ DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent) {
         }
     }
 
+    // shuffle/repeat
+    currShuffle = DBAPI->streamer_get_shuffle();
+    currRepeat = DBAPI->streamer_get_repeat();
+
 }
 
 DBApi::~DBApi() {
@@ -216,6 +220,19 @@ void DBApi::renamePlaylist(int plt, QString *name) {
         emit playlistRenamed(plt);
     }
 }
+
+void DBApi::setShuffle(ddb_shuffle_t i) {
+    DBAPI->streamer_set_shuffle(i);
+    currShuffle = i;
+    emit shuffleChanged();
+}
+
+void DBApi::setRepeat(ddb_repeat_t i) {
+    DBAPI->streamer_set_repeat(i);
+    currRepeat = i;
+    emit repeatChanged();
+}
+
 
 DBToolbarWidget::DBToolbarWidget(QWidget *parent, DBApi *api_a) {
     Q_UNUSED(parent);

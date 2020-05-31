@@ -11,6 +11,7 @@
 #include <QToolBar>
 #include <QDockWidget>
 #include <QtGuiSettings.h>
+#include "DeadbeefTranslator.h"
 
 //#define DBAPI (this->api->deadbeef)
 
@@ -50,6 +51,9 @@ private:
 
     int playlist_internal = -1;
 
+    ddb_repeat_t currRepeat;
+    ddb_shuffle_t currShuffle;
+
 // Signals are subscribed by different parts of gui
 signals:
     void volumeChanged(int);
@@ -64,6 +68,8 @@ signals:
     void playlistMoved(int plt, int before);
     void playlistCreated();
     void playlistRenamed(int plt);
+    void shuffleChanged();
+    void repeatChanged();
 
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
@@ -91,6 +97,10 @@ public slots:
     void newPlaylist(QString *);
     //
     void renamePlaylist(int plt, QString *name);
+    //
+    void setShuffle(ddb_shuffle_t);
+    //
+    void setRepeat(ddb_repeat_t);
 };
 
 class DBWidgetInfo {

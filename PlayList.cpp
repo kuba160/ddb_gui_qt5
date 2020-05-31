@@ -190,7 +190,7 @@ void PlayList::trackDoubleClicked(QModelIndex index) {
 
 void PlayList::createContextMenu() {
     setContextMenuPolicy(Qt::CustomContextMenu);
-    QAction *delTrack = new QAction(tr("Remove track(s)"), this);
+    QAction *delTrack = new QAction(tr("Remove Track(s) From Playlist"), this);
     delTrack->setShortcut(Qt::Key_Delete);
     connect(delTrack, SIGNAL(triggered()), this, SLOT(delSelectedTracks()));
     addAction(delTrack);

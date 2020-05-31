@@ -126,6 +126,7 @@ static int pluginStart() {
     //QApplication::setStyle(QStyleFactory::create("breeze"));
 
     DeadbeefTranslator *tr = new DeadbeefTranslator();
+    dbtr = tr;
     app.installTranslator(tr);
 
     QString locale = QLocale::system().name();

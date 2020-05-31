@@ -87,7 +87,9 @@ load(configure)
 if (qtCompileTest(libintl)) {
     !build_pass:warning("includes gettext")
     DEFINES += USE_GETTEXT
-    LIBS += -lintl
+    win32 {
+        LIBS += -lintl
+    }
 }
 else {
     !build_pass:warning("compiling without gettext support")
