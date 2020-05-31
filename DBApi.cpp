@@ -178,7 +178,8 @@ void DBApi::playPrev() {
 }
 
 void DBApi::changePlaylist(int idx) {
-    if (idx < playlistNames.size()) {
+    if (idx < playlistNames.size() && playlist_internal != idx) {
+        playlist_internal = idx;
         DBAPI->plt_set_curr_idx(idx);
         DBAPI->conf_set_int("playlist.current", idx);
         emit playlistChanged(idx);
@@ -190,6 +191,9 @@ void DBApi::movePlaylist(int plt, int before) {
     if (plt != before) {
        DBAPI->plt_move(plt, before);
        playlistNames.move(plt, before);
+       if (plt == playlist_internal) {
+           playlist_internal = before;
+       }
        emit playlistMoved(plt, before);
     }
 }

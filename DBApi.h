@@ -48,6 +48,7 @@ private:
 
     QStringList playlistNames;
 
+    int playlist_internal = -1;
 
 // Signals are subscribed by different parts of gui
 signals:
