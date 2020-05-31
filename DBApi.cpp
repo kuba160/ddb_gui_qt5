@@ -186,6 +186,20 @@ void DBApi::changePlaylist(int idx) {
     }
 }
 
+void DBApi::movePlaylist(int plt, int before) {
+    if (plt != before) {
+       DBAPI->plt_move(plt, before);
+       playlistNames.move(plt, before);
+       emit playlistMoved(plt, before);
+    }
+}
+
+void DBApi::newPlaylist(QString *name) {
+    DBAPI->plt_add (-1, name->toUtf8());
+    playlistNames.append(*name);
+    emit playlistCreated();
+}
+
 DBToolbarWidget::DBToolbarWidget(QWidget *parent, DBApi *api_a) {
     Q_UNUSED(parent);
     Q_UNUSED(api);
