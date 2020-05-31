@@ -376,15 +376,12 @@ void MainWindow::loadConfig() {
     menuBar()->setHidden(mmIsHidden);
     ui->actionHideMenuBar->setChecked(!menuBar()->isHidden());
 
-    ui->actionPlayListHeader->setChecked(headerIsVisible);
-    ui->actionHideTabBar->setChecked(tbIsVisible);
 
     if (!trayIconIsHidden) {
         createTray();
     }
     
     bool caIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, false).toBool();
-    ui->actionHideCoverArt->setChecked(!caIsHidden);
    // if (ui->actionHideCoverArt->isChecked()) {
     //    addDockWidget(Qt::LeftDockWidgetArea, &coverArtWidget);
         //connect(&coverArtWidget, SIGNAL(onCloseEvent()), this, SLOT(onCoverartClose()));
@@ -433,7 +430,6 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, saveState());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
-    SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, !ui->actionHideCoverArt->isChecked());
     //playList.saveConfig();
     //pl->actionChecksSave();
 }

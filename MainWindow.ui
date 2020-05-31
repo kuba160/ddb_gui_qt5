@@ -121,9 +121,6 @@
     <property name="title">
      <string>View</string>
     </property>
-    <addaction name="actionHideMenuBar"/>
-    <addaction name="actionHideTabBar"/>
-    <addaction name="actionPlayListHeader"/>
     <addaction name="separator"/>
     <addaction name="actionBlockToolbarChanges"/>
    </widget>
@@ -446,39 +443,6 @@
    </property>
    <property name="shortcut">
     <string notr="true"/>
-   </property>
-  </action>
-  <action name="actionHideCoverArt">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cover Art</string>
-   </property>
-  </action>
-  <action name="actionPlayListHeader">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>PlayList Header</string>
-   </property>
-  </action>
-  <action name="actionHideTabBar">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Tab bar</string>
-   </property>
-   <property name="toolTip">
-    <string>Shou/hide tabbar</string>
    </property>
   </action>
  </widget>
