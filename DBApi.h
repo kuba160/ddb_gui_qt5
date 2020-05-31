@@ -47,8 +47,6 @@ private:
     QtGuiSettings *qt_settings;
 
     QStringList playlistNames;
-    int playlistCount;
-
 
 
 // Signals are subscribed by different parts of gui

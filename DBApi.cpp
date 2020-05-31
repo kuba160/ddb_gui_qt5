@@ -22,7 +22,7 @@ DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent) {
 
     // playlists
     {
-        playlistCount = DBAPI->plt_get_count();
+        int playlistCount = DBAPI->plt_get_count();
         char title[100];
         for (int i = 0; i < playlistCount; i++) {
             DBAPI->pl_lock();
@@ -109,7 +109,7 @@ QString const& DBApi::playlistNameByIdx(int idx) {
 }
 
 unsigned long DBApi::getPlaylistCount() {
-    return playlistCount;
+    return playlistNames.size();
 }
 
 bool DBApi::isPaused() {
@@ -178,7 +178,7 @@ void DBApi::playPrev() {
 }
 
 void DBApi::changePlaylist(int idx) {
-    if (idx < playlistCount) {
+    if (idx < playlistNames.size()) {
         DBAPI->plt_set_curr_idx(idx);
         DBAPI->conf_set_int("playlist.current", idx);
         emit playlistChanged(idx);
