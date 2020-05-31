@@ -11,12 +11,14 @@
 #define strcasecmp _stricmp
 #endif
 
-TabBar::TabBar(QWidget *parent) : QTabBar(parent), tabContextMenu(this) {
+TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBToolbarWidget(parent, Api), tabContextMenu(this)  {
     configure();
     fillTabs();
     buildTabContextMenu();
     selectLastTab();
     createConnections();
+
+    connect (api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
 }
 
 TabBar::~TabBar() {
@@ -26,14 +28,12 @@ TabBar::~TabBar() {
 }
 
 QWidget *TabBar::constructor(QWidget *parent, DBApi *Api) {
-    Q_UNUSED(Api);
-    QWidget *widget = new TabBar(parent);
+    QWidget *widget = new TabBar(parent, Api);
     return widget;
 }
 
 QDockWidget *TabBar::constructorDockable(QWidget *parent, DBApi *Api) {
-    Q_UNUSED(Api);
-    QWidget *widget = new TabBar(parent);
+    QWidget *widget = new TabBar(parent, Api);
     QDockWidget *dock = new QDockWidget(parent);
     dock->setWindowTitle(QString("Tab Bar"));
     dock->setWidget(widget);
@@ -187,7 +187,24 @@ void TabBar::showTabContextMenu(int index, QPoint globalPos) {
 }
 
 void TabBar::moveTab(int to, int from) {
-    DBAPI->plt_move(from, to);
+    if (our_external) {
+        our_external = false;
+        return;
+    }
+    our_pl = from;
+    our_before = to;
+    api->movePlaylist(from, to);
+}
+
+void TabBar::playlistOrderChanged(int plt, int before) {
+    if (plt == our_pl && before == our_before) {
+        // Ignore order change done by this widget
+        our_pl = -1;
+        our_before = -1;
+        return;
+    }
+    our_external = true;
+    QTabBar::moveTab(plt, before);
 }
 
 void TabBar::newPlaylist() {

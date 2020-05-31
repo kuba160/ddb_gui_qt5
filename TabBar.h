@@ -9,7 +9,7 @@
 
 #define DRAG_DELAY 5
 
-class TabBar: public QTabBar {
+class TabBar: public QTabBar, public DBToolbarWidget {
     Q_OBJECT
 public:
     enum TabBarPosition {
@@ -18,7 +18,7 @@ public:
         Left = 2,
         Right = 3,
     };
-    TabBar(QWidget *parent = nullptr);
+    TabBar(QWidget *parent = nullptr, DBApi *Api = nullptr);
     ~TabBar();
 
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
@@ -45,6 +45,10 @@ private:
     
     int indexForAction;
 
+
+    int our_pl = -1;
+    int our_before = -1;
+    bool our_external = false;
 protected:
     void mouseDoubleClickEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
@@ -65,6 +69,8 @@ private slots:
     void setBottomPosition();
     void setRightPosition();
     void setLeftPosition();
+    void playlistOrderChanged(int to, int from);
+
 
 signals:
     void tabContextMenuRequested(int index, const QPoint &globalPos);
