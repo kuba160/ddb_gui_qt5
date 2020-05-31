@@ -88,9 +88,11 @@ public:
     QString *widgetName(unsigned long num);
     QString *widgetFriendlyName(unsigned long num);
 
-    void RestoreWidgets(QWidget *parent);
+    void RestoreWidgets(QMainWindow *parent);
 
     QWidget *getMainWidget();
+
+    void setMainWindow(QMainWindow *);
 
 private:
     // list of widgets that can be added
@@ -101,6 +103,8 @@ private:
     bool areWidgetsLocked;
 
     QWidget *mainWidget = nullptr;
+
+    QMainWindow *mainWindow = nullptr;
 
 public slots:
     // handle widget actions (menu etc.)

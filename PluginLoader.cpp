@@ -70,13 +70,14 @@ PluginLoader::~PluginLoader() {
     // todo clean actions, actions create, toolbars
 }
 
-void PluginLoader::RestoreWidgets(QWidget *parent) {
+void PluginLoader::RestoreWidgets(QMainWindow *parent) {
     QStringList slist = settings->getValue(QString("PluginLoader"),
                                            QString("PluginsLoaded"),
                                            QVariant(QStringList()
                                                     << QString("playbackButtons")
                                                     << QString("seekSlider")
                                                     << QString("volumeSlider"))).toStringList();
+    mainWindow = parent;
     int i;
     for (i = 0; i < slist.size(); i++) {
         pl->addWidget(parent, &slist.at(i));
@@ -148,26 +149,26 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
     switch (p->info.type) {
     case DBWidgetInfo::TypeWidgetToolbar:
         temp.widget = p->info.constructor(nullptr, api);
-        temp.toolbar = new QToolBar(nullptr);
+        temp.toolbar = new QToolBar(mainWindow);
         temp.toolbar->setObjectName(*temp.internalName);
         temp.toolbar->addWidget(temp.widget);
         temp.dockWidget = nullptr;
         break;
     case DBWidgetInfo::TypeToolbar:
         temp.widget = nullptr;
-        temp.toolbar = p->info.constructorToolbar(nullptr, api);
+        temp.toolbar = p->info.constructorToolbar(mainWindow, api);
         temp.toolbar->setObjectName(*temp.internalName);
         temp.dockWidget = nullptr;
         break;
     case DBWidgetInfo::TypeDockable:
         temp.widget = nullptr;
         temp.toolbar = nullptr;
-        temp.dockWidget = p->info.constructorDockWidget(nullptr, api);
+        temp.dockWidget = p->info.constructorDockWidget(mainWindow, api);
         temp.dockWidget->setObjectName(*temp.internalName);
         temp.dockWidget->setVisible(true);
         break;
     case DBWidgetInfo::TypeMainWidget:
-        temp.widget = p->info.constructor(nullptr, api);
+        temp.widget = p->info.constructor(mainWindow, api);
         temp.dockWidget = nullptr;
         mainWidget = temp.widget;
         break;
@@ -196,9 +197,9 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         emit toolBarCreated(temp.toolbar);
     }
     else if (p->info.type == DBWidgetInfo::TypeDockable) {
-        temp.dockWidget->setVisible(isEnabled);
         if (temp.internalName != QString("playlist"))
             emit dockableWidgetCreated(temp.dockWidget);
+        temp.dockWidget->setVisible(isEnabled);
     }
 
     // Expect our internal value to match reality
@@ -270,6 +271,10 @@ QWidget *PluginLoader::getMainWidget() {
     return mainWidget;
 }
 
+void PluginLoader::setMainWindow(QMainWindow *mw) {
+    mainWindow = mw;
+}
+
 int PluginLoader::loadFromWidgetLibraryNew(unsigned long num) {
     int ret = loadFromWidgetLibrary(num);
     if (!ret) {
@@ -332,6 +337,7 @@ void PluginLoader::actionHandler(bool check) {
 }
 
 void PluginLoader::actionHandlerRemove(bool check) {
+    Q_UNUSED(check);
     QObject *s = sender();
 
     unsigned long i;
