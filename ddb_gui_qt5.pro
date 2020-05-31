@@ -83,6 +83,14 @@ QT += gui widgets concurrent
 
 DEFINES += ARTWORK_ENABLED HOTKEYS_ENABLED "DEADBEEF_PREFIX=\\\"donotuse\\\""
 
-# LIBS += -lintl
+load(configure)
+if (qtCompileTest(libintl)) {
+    !build_pass:warning("includes gettext")
+    DEFINES += USE_GETTEXT
+    LIBS += -lintl
+}
+else {
+    !build_pass:warning("compiling without gettext support")
+}
 
 INCLUDEPATH += "./include"

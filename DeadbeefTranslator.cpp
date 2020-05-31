@@ -4,7 +4,6 @@ DeadbeefTranslator::DeadbeefTranslator(QObject *parent) : QTranslator(parent) {
 
 }
 
-
-QString translate(const char *context, const char *sourceText, const char *disambiguation, int n) {
+QString DeadbeefTranslator::translate(const char *context, const char *sourceText, const char *disambiguation, int n) const {
     return QString(_(sourceText));
 }
