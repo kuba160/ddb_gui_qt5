@@ -51,6 +51,7 @@ DB_artwork_plugin_t *coverart_plugin;
 DBApi *api = nullptr;
 PluginLoader *pl = nullptr;
 MainWindow *w = nullptr;
+DeadbeefTranslator *tr = nullptr;
 
 static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     return api->pluginMessage(id, ctx, p1, p2);
@@ -74,6 +75,9 @@ static int initializeApi() {
             usleep(10000);
         }
         api = new DBApi(nullptr, deadbeef_internal);
+    }
+    if (!dbtr) {
+        dbtr = new DeadbeefTranslator();
     }
     return 0;
 }
@@ -125,9 +129,8 @@ static int pluginStart() {
     QApplication::setApplicationName("DeaDBeeF");
     //QApplication::setStyle(QStyleFactory::create("breeze"));
 
-    DeadbeefTranslator *tr = new DeadbeefTranslator();
-    dbtr = tr;
-    app.installTranslator(tr);
+    initializeApi();
+    app.installTranslator(dbtr);
 
     QString locale = QLocale::system().name();
     //QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
@@ -138,7 +141,7 @@ static int pluginStart() {
     settings = new QtGuiSettings(nullptr);
 
     // initialize api
-    initializeApi();
+
     initializePluginLoader();
 
     // initialize window
