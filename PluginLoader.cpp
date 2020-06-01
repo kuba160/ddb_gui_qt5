@@ -318,7 +318,7 @@ void PluginLoader::actionHandlerCheckable(bool check) {
         }
     }
     // toolbar not found
-    qDebug() << "qt5: PluginLoader: Widget toggled but no pointer available!" << endl;
+    qDebug() << "qt5: PluginLoader: Widget toggled but no pointer available!" << Qt::endl;
 
 }
 
@@ -335,7 +335,7 @@ void PluginLoader::actionHandler(bool check) {
         }
     }
     // toolbar not found
-    qDebug() << "qt5: PluginLoader: Widget could not be found, adding failed!" << endl;
+    qDebug() << "qt5: PluginLoader: Widget could not be found, adding failed!" << Qt::endl;
 }
 
 void PluginLoader::actionHandlerRemove(bool check) {
@@ -365,7 +365,7 @@ void PluginLoader::actionHandlerRemove(bool check) {
         }
     }
     // toolbar not found
-    qDebug() << "qt5: PluginLoader: Widget could not be found, removing failed!" << endl;
+    qDebug() << "qt5: PluginLoader: Widget could not be found, removing failed!" << Qt::endl;
 }
 
 DBWidgetInfo *PluginLoader::widgetLibraryGetInfo(unsigned long num) {
