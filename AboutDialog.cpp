@@ -8,7 +8,7 @@
 #include <QTextStream>
 
 AboutDialog::AboutDialog(QWidget *parent) :
-        QDialog(parent, Qt::WindowTitleHint),
+        QDialog(parent, Qt::Dialog),
         ui(new Ui::AboutDialog) {
 
     ui->setupUi(this);
@@ -16,6 +16,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
     char str[64];
     DBAPI->pl_format_title(nullptr, -1, str, sizeof(str), -1, "DeaDBeeF-%V");
     setWindowTitle(QString("%1 %2").arg(tr("About")).arg(QString::fromUtf8(str)));
+    setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
     QFile aboutDBFile(QString::fromUtf8(DBAPI->get_doc_dir()) + "/about.txt");
 
@@ -35,15 +36,4 @@ AboutDialog::AboutDialog(QWidget *parent) :
 
 AboutDialog::~AboutDialog() {
     delete ui;
-}
-
-void AboutDialog::changeEvent(QEvent *e) {
-    QDialog::changeEvent(e);
-    switch (e->type()) {
-    case QEvent::LanguageChange:
-        ui->retranslateUi(this);
-        break;
-    default:
-        break;
-    }
 }
