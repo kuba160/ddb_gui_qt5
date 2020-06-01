@@ -95,6 +95,7 @@ void SeekSlider::onFrameUpdate() {
 
 void SeekSlider::onPlaybackStop() {
     this->setEnabled(false);
+    this->setValue(0);
 }
 
 void SeekSlider::onPlaybackStart() {
