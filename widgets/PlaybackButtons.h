@@ -11,7 +11,7 @@ typedef struct button_s{
     const char *slot;
 } button_t;
 
-class PlaybackButtons : public QToolBar, public DBToolbarWidget {
+class PlaybackButtons : public QToolBar, public DBWidget {
     Q_OBJECT
 public:
     PlaybackButtons(QWidget *parent = nullptr, DBApi *Api = nullptr);

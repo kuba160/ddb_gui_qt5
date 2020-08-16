@@ -6,7 +6,7 @@
 #include <QMouseEvent>
 #include "DBApi.h"
 
-class PlaylistBrowser : public QListWidget, public DBToolbarWidget
+class PlaylistBrowser : public QListWidget, public DBWidget
 {
     Q_OBJECT
 public:

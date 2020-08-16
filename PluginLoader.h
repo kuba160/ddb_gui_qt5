@@ -10,14 +10,14 @@
 
 extern DBApi *api;
 
-//typedef DBWidgetInfo ExternalWidget_t;
-
+// Internal header for a plugin/widget
 typedef struct ExternalWidget_s{
     // widget info passed from widget source
     DBWidgetInfo info;
     // action we created to create this widget
     QAction *actionCreateWidget;
 
+    // operators used to sort widgets by name
     bool operator < (const ExternalWidget_s& str) const
         {
             return (info.friendlyName < str.info.friendlyName);
@@ -49,78 +49,94 @@ typedef struct LoadedWidget_s{
     QAction *actionToggleVisible;
     // Action to destroy this widget
     QAction *actionDestroy;
+    // Action to select this widget as mainwidget
+    QAction *actionMainWidget;
 
 } LoadedWidget_t;
 
 
-class PluginLoader : public QObject, public DBToolbarWidget{
+class PluginLoader : public QObject, public DBWidget{
     Q_OBJECT
 public:
     PluginLoader (DBApi *Api);
     ~PluginLoader();
 
-    // Add new widget to database
-    // Called by every external plugin
-    int widgetLibraryAppend(DBWidgetInfo *);
-
-    void widgetLibrarySort();
-
-    // internal, create widget
-    int loadFromWidgetLibrary(unsigned long num);
-
-    // new plugin, add new to settings to load at startup
-    int loadFromWidgetLibraryNew(unsigned long num);
-
-    // get total amount of specific widget
-    unsigned char getTotalInstances(QString name);
-
+    //// widgetLibrary
     //
-    void removeWidget(unsigned long num);
-
-
+    // Add new widget to database
+    // Called by every external plugin (registerWidget function)
+    int widgetLibraryAppend(DBWidgetInfo *);
+    // Sorts widgetLibrary in alphabetic order
+    void widgetLibrarySort();
     // get widget info from database
     DBWidgetInfo *widgetLibraryGetInfo(unsigned long num);
+    // get widget number by name
+    unsigned long widgetLibraryGetNum(const QString *);
 
-    // loaded widgets
-    LoadedWidget_t *widgetByNum(unsigned long num);
-    LoadedWidget_t *widgetByName(QString *);
-
-    QString *widgetName(unsigned long num);
-    QString *widgetFriendlyName(unsigned long num);
-
+    //// loadedWidgets
+    //
+    // loads Widget from library
+    // supports multiple instances
+    int loadFromWidgetLibrary(unsigned long num);
+    // same as above, but also adds widget to list of loaded widgets (in config)
+    int loadFromWidgetLibraryNew(unsigned long num);
+    // unload widget
+    void removeWidget(unsigned long num);
+    // loads all widgets from config
+    // to be called by MainWindow
     void RestoreWidgets(QMainWindow *parent);
 
-    QWidget *getMainWidget();
 
+    //// Various widget functions
+    //
+    // get total amount of instances for a specific widget
+    unsigned char getTotalInstances(QString name);
+    // get total amount of mainwidget widgets (loaded)
+    unsigned long getTotalMainWidgets();
+    // get LoadedWidget_t by num
+    LoadedWidget_t *widgetByNum(unsigned long num);
+    // get LoadedWidget_t by name (multiple instances support)
+    LoadedWidget_t *widgetByName(QString *);
+    // get widget internal name
+    QString *widgetName(unsigned long num);
+    // get widget friendly name
+    QString *widgetFriendlyName(unsigned long num);
+
+    // get current mainwidget (can be nullptr)
+    QWidget *getMainWidget();
+    // when mainwidget changes
+    void setMainWidget(LoadedWidget_t *);
+    // ?
     void setMainWindow(QMainWindow *);
 
 private:
     // list of widgets that can be added
     std::vector<ExternalWidget_t> *widgetLibrary;
-
+    // list of widgets that have been loaded
     std::vector<LoadedWidget_t> *loadedWidgets;
-
+    // design mode on/off
     bool areWidgetsLocked;
-
+    // current main widget selected
     QWidget *mainWidget = nullptr;
-
+    // pointer to mainWindow, if needed
     QMainWindow *mainWindow = nullptr;
 
 public slots:
-    // handle widget actions (menu etc.)
+    // Show/Hide widget handler
     void actionHandlerCheckable(bool);
+    // New widget handler
     void actionHandler(bool);
+    // Delete widget handler
     void actionHandlerRemove(bool);
-    // todo rename to conf-load or something
+    // Main Widget chooser handler
+    void actionHandlerMainWidget(bool);
+    // slightly misleading name
+    // synchronizes Show/Hide actions together with widgets
     void updateActionChecks();
-    // conf-save
+    // save information if the widgets are visible
     void actionChecksSave();
-    // context menu
+    // context menu TODO
     void contextMenuBuilder(QPoint &pos);
-
-    // add widget from name (without adding to PluginsLoaded)
-    int addWidget(QWidget *parent, const QString *);
-    //void widgetLoaded(unsigned long num);
     // lock widgets toggle
     void lockWidgets(bool lock);
 
@@ -139,8 +155,13 @@ signals:
     void actionPluginAddCreated(QAction *);
     //
     void actionPluginRemoveCreated(QAction *);
+    // mainwidget has been registered
+    void actionPluginMainWidgetCreated(QAction *);
+
     // there are no plugins loaded, hide "Remove..." option
     void loadedWidgetsEmpty();
+    //
+    void centralWidgetChanged(QWidget *);
 };
 
 //}

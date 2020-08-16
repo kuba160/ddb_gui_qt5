@@ -6,7 +6,7 @@ SOURCES  =          include/callbacks.cpp \
                     DBApi.cpp \
     DeadbeefTranslator.cpp \
     DefaultPlugins.cpp \
-    PlaybackButtons.cpp \
+    widgets/PlaybackButtons.cpp \
     PlaylistBrowser.cpp \
 		    include/parser.cpp \
 		    include/qticonloader.cpp \
@@ -33,17 +33,17 @@ SOURCES  =          include/callbacks.cpp \
 		    PreferencesDialog.cpp \
 		    QtGui.cpp \
 		    QtGuiSettings.cpp \
-		    SeekSlider.cpp \
+                    widgets/SeekSlider.cpp \
 		    SystemTrayIcon.cpp \
 		    TabBar.cpp \
-		    VolumeSlider.cpp
+                    widgets/VolumeSlider.cpp
 
 
 HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
                         DBApi.h \
     DeadbeefTranslator.h \
     DefaultPlugins.h \
-    PlaybackButtons.h \
+    widgets/PlaybackButtons.h \
     PlaylistBrowser.h \
 			preferencesWidgets/NetworkPreferencesWidget.h \
 			preferencesWidgets/PluginsPreferencesWidget.h \
@@ -65,10 +65,10 @@ HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
 			PluginLoader.h \
 			PreferencesDialog.h \
 			QtGuiSettings.h \
-			SeekSlider.h \
+                        widgets/SeekSlider.h \
 			SystemTrayIcon.h \
 			TabBar.h \
-                        VolumeSlider.h
+                        widgets/VolumeSlider.h
 
 FORMS =         preferencesWidgets/InterfacePreferencesWidget.ui \
 		preferencesWidgets/NetworkPreferencesWidget.ui \

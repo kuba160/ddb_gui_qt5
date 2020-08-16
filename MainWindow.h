@@ -7,8 +7,8 @@
 #include <QBoxLayout>
 
 #include "SystemTrayIcon.h"
-#include "VolumeSlider.h"
-#include "SeekSlider.h"
+#include "widgets/VolumeSlider.h"
+#include "widgets/SeekSlider.h"
 #include "PlayList.h"
 
 
@@ -22,7 +22,7 @@ enum ActionOnClose {
     Minimize = 2,
 };
 
-class MainWindow : public QMainWindow, DBToolbarWidget {
+class MainWindow : public QMainWindow, DBWidget {
     Q_OBJECT
 public:
     MainWindow(QWidget *parent = nullptr, DBApi *Api = nullptr);
@@ -55,7 +55,8 @@ private:
     //VolumeSlider volumeSlider;
     //SeekSlider progressBar;
 
-
+    QMenu *main_widgets;
+    QActionGroup *main_widgets_list;
     QMenu *new_plugins;
     QMenu *remove_plugins;
 
@@ -130,6 +131,7 @@ public slots:
     void windowViewActionCreate(QAction *);
     void windowViewActionRemove(QAction *);
     void windowViewActionRemoveToggleHide(bool visible);
+    void windowViewActionMainWidget(QAction *);
 
     void windowSetCentralWidget(QWidget *);
 

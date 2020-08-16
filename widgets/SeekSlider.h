@@ -9,7 +9,7 @@
 
 #define SEEK_SCALE 10
 
-class SeekSlider : public QSlider, public DBToolbarWidget {
+class SeekSlider : public QSlider, public DBWidget {
     Q_OBJECT
 
 public:

@@ -9,7 +9,7 @@
 
 #define DRAG_DELAY 5
 
-class TabBar: public QTabBar, public DBToolbarWidget {
+class TabBar: public QTabBar, public DBWidget {
     Q_OBJECT
 public:
     enum TabBarPosition {

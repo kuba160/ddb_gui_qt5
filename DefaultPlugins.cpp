@@ -20,9 +20,9 @@
 
 #include <vector>
 
-#include "VolumeSlider.h"
-#include "SeekSlider.h"
-#include "PlaybackButtons.h"
+#include "widgets/VolumeSlider.h"
+#include "widgets/SeekSlider.h"
+#include "widgets/PlaybackButtons.h"
 #include "CoverArtWidget.h"
 #include "PlayListWidget.h"
 #include "TabBar.h"

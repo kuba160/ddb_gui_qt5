@@ -4,7 +4,7 @@
 #include <QSlider>
 #include "DBApi.h"
 
-class VolumeSlider : public QSlider, public DBToolbarWidget {
+class VolumeSlider : public QSlider, public DBWidget {
     Q_OBJECT
 
 public:

@@ -32,7 +32,7 @@
 extern MainWindow *w;
 extern DBApi *api;
 
-PluginLoader::PluginLoader(DBApi* Api) : QObject(nullptr), DBToolbarWidget (nullptr, Api) {
+PluginLoader::PluginLoader(DBApi* Api) : QObject(nullptr), DBWidget (nullptr, Api) {
     qDebug() << "qt5: PluginLoader initialized";
     // List of plugins that can be loaded
     widgetLibrary = new std::vector<ExternalWidget_t>();
@@ -80,7 +80,13 @@ void PluginLoader::RestoreWidgets(QMainWindow *parent) {
     mainWindow = parent;
     int i;
     for (i = 0; i < slist.size(); i++) {
-        pl->addWidget(parent, &slist.at(i));
+        unsigned long wl_num = widgetLibraryGetNum(&slist.at(i));
+        if (wl_num != static_cast<unsigned long>(-1)) {
+            pl->loadFromWidgetLibrary(wl_num);
+        }
+        else {
+            qDebug() << "qt5: PluginLoader: request to load plugin" + slist.at(i) + "but it is not available!";
+        }
     }
 }
 
@@ -105,6 +111,16 @@ int PluginLoader::widgetLibraryAppend(DBWidgetInfo *info) {
 
 void PluginLoader::widgetLibrarySort() {
     std::sort(widgetLibrary->begin(), widgetLibrary->end());
+}
+
+unsigned long PluginLoader::widgetLibraryGetNum(const QString *name) {
+    unsigned long i;
+    for (i = 0; i < widgetLibrary->size(); i++) {
+            if(name->compare(widgetLibrary->at(i).info.internalName) == 0) {
+                return i;
+            }
+    }
+    return static_cast<unsigned long>(-1);
 }
 
 LoadedWidget_t * PluginLoader::widgetByNum(unsigned long num) {
@@ -170,9 +186,26 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         temp.dockWidget->setVisible(true);
         break;
     case DBWidgetInfo::TypeMainWidget:
-        temp.widget = p->info.constructor(mainWindow, api);
-        temp.dockWidget = nullptr;
-        mainWidget = temp.widget;
+        temp.actionMainWidget = new QAction(*temp.friendlyName);
+        temp.actionMainWidget->setCheckable(true);
+        // if widget of TypeMainWidget is not selected as main widget, make it as dockwidget
+        if (temp.internalName->compare(settings->getValue(QString("PluginLoader"), QString("MainWidget"), QString("playlist")).toString()) == 0 || \
+                QString("").compare(settings->getValue(QString("PluginLoader"), QString("MainWidget"), QString("")).toString()) == 0) {
+            temp.widget = p->info.constructor(mainWindow, api);
+            temp.dockWidget = nullptr;
+            setMainWidget(&temp);
+            temp.actionMainWidget->setChecked(true);
+
+        }
+        else {
+            temp.widget = p->info.constructor(nullptr, api);
+            temp.dockWidget = new QDockWidget(*temp.friendlyName, mainWindow);
+            temp.dockWidget->setWidget(temp.widget);
+            temp.actionMainWidget->setChecked(false);
+        }
+        // Add widget to list
+        connect(temp.actionMainWidget, SIGNAL(triggered(bool)), this, SLOT(actionHandlerMainWidget(bool)));
+        emit actionPluginMainWidgetCreated(temp.actionMainWidget);
         break;
     default:
         qDebug() << "qt5: PluginLoader: Unknown widget type?";
@@ -198,9 +231,9 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         temp.toolbar->setVisible(isEnabled);
         emit toolBarCreated(temp.toolbar);
     }
-    else if (p->info.type == DBWidgetInfo::TypeDockable) {
-        if (temp.internalName != QString("playlist"))
-            emit dockableWidgetCreated(temp.dockWidget);
+    else if (p->info.type == DBWidgetInfo::TypeDockable || \
+            (p->info.type == DBWidgetInfo::TypeMainWidget && temp.dockWidget)) {
+        emit dockableWidgetCreated(temp.dockWidget);
         temp.dockWidget->setVisible(isEnabled);
     }
 
@@ -218,6 +251,15 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
             }
             temp.dockWidget->setTitleBarWidget(temp.empty_titlebar_toolbar);
             temp.dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+            break;
+        case DBWidgetInfo::TypeMainWidget:
+            if (temp.dockWidget) {
+                if (temp.empty_titlebar_toolbar == nullptr) {
+                    temp.empty_titlebar_toolbar = new QWidget (temp.dockWidget);
+                }
+                temp.dockWidget->setTitleBarWidget(temp.empty_titlebar_toolbar);
+                temp.dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+            }
             break;
         default:
             qDebug() << "qt5: PluginLoader: Unknown widget type?";
@@ -239,38 +281,98 @@ unsigned char PluginLoader::getTotalInstances(QString internalName) {
     return instance;
 }
 
+unsigned long PluginLoader::getTotalMainWidgets() {
+    unsigned long i;
+    unsigned long amount = 0;
+    for (i = 0; i < loadedWidgets->size(); i++) {
+        if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget) {
+            amount++;
+        }
+    }
+    return amount;
+}
+
 void PluginLoader::removeWidget(unsigned long num) {
     if (num >= loadedWidgets->size()) {
         qDebug() <<"qt5: PluginLoader: removeWidget non existent?";
         return;
     }
-    LoadedWidget_t *w = &loadedWidgets->at(num);
-    switch (w->header->info.type) {
+    LoadedWidget_t *lw = &loadedWidgets->at(num);
+    switch (lw->header->info.type) {
     case DBWidgetInfo::TypeWidgetToolbar:
-        w->toolbar->setVisible(false);
-        delete w->widget;
-        delete w->toolbar;
+        lw->toolbar->setVisible(false);
+        delete lw->widget;
+        delete lw->toolbar;
         break;
     case DBWidgetInfo::TypeToolbar:
-        w->toolbar->setVisible(false);
-        delete w->toolbar;
+        lw->toolbar->setVisible(false);
+        delete lw->toolbar;
         break;
     case DBWidgetInfo::TypeDockable:
-        w->dockWidget->setVisible(false);
-        delete w->dockWidget;
+        lw->dockWidget->setVisible(false);
+        delete lw->dockWidget;
+        break;
+    case DBWidgetInfo::TypeMainWidget:
+        if (lw->dockWidget) {
+            lw->dockWidget->setVisible(false);
+            delete lw->widget;
+            delete lw->dockWidget;
+        }
+        else {
+            lw->widget->setVisible(false);
+            if (!lw->dockWidget) {
+                // replace current main widget
+                unsigned long i;
+                LoadedWidget_t *wr = nullptr;
+                for (i = 0; i < loadedWidgets->size(); i++) {
+                    wr = &loadedWidgets->at(i);
+                    if (wr->header->info.type == DBWidgetInfo::TypeMainWidget) {
+                        break;
+                    }
+                }
+                setMainWidget(wr);
+            }
+            delete lw->widget;
+        }
+        w->windowViewActionMainWidget(nullptr);
         break;
     default:
         qDebug() << "qt5: PluginLoader: Unknown widget type?";
         break;
     }
-    w->actionDestroy->setVisible(false);
-    delete w->actionDestroy;
-    w->actionToggleVisible->setVisible(false);
-    delete w->actionToggleVisible;
+    lw->actionDestroy->setVisible(false);
+    delete lw->actionDestroy;
+    lw->actionToggleVisible->setVisible(false);
+    delete lw->actionToggleVisible;
+    if (lw->actionMainWidget) {
+        lw->actionMainWidget->setVisible(false);
+        delete lw->actionMainWidget;
+    }
 }
 
 QWidget *PluginLoader::getMainWidget() {
     return mainWidget;
+}
+
+void PluginLoader::setMainWidget(LoadedWidget_t *lw) {
+    if (lw == nullptr) {
+        //w->main_widgets->setVisible(false);
+        w->setCentralWidget(nullptr);
+        settings->setValue(QString("PluginLoader"), QString("MainWidget"),QString(""));
+        return;
+    }
+
+    if (lw->widget && !lw->dockWidget && lw->widget != mainWidget) {
+        // probably main widget initialization on startup, make it easy
+        //w->setCentralWidget(lw->widget);
+        mainWidget = lw->widget;
+        if (settings->getValue(QString("PluginLoader"), QString("MainWidget"),QString("")).toString().compare(lw->internalName))
+            settings->setValue(QString("PluginLoader"), QString("MainWidget"),QString(*lw->internalName));
+        emit centralWidgetChanged(lw->widget);
+        return;
+    }
+    // convert new widget to simple widget and remove its dock
+    // convert current main widget to dock
 }
 
 void PluginLoader::setMainWindow(QMainWindow *mw) {
@@ -307,6 +409,14 @@ void PluginLoader::actionHandlerCheckable(bool check) {
                 break;
             case DBWidgetInfo::TypeDockable:
                 w->dockWidget->setVisible(check);
+                break;
+            case DBWidgetInfo::TypeMainWidget:
+                if (w->dockWidget) {
+                    w->dockWidget->setVisible(check);
+                }
+                else {
+                    w->widget->setVisible(check);
+                }
                 break;
             default:
                 qDebug() << "qt5: PluginLoader: Unknown widget type?";
@@ -368,6 +478,28 @@ void PluginLoader::actionHandlerRemove(bool check) {
     qDebug() << "qt5: PluginLoader: Widget could not be found, removing failed!" << Qt::endl;
 }
 
+void PluginLoader::actionHandlerMainWidget(bool check) {
+    Q_UNUSED(check);
+    QObject *s = sender();
+
+    unsigned long i;
+    for (i = 0; i < loadedWidgets->size(); i++) {
+        LoadedWidget_t *wi = &loadedWidgets->at(i);
+        if (wi->actionMainWidget == s) {
+            if (wi->widget != mainWidget) {
+                // new main widget requested
+                return setMainWidget(wi);
+            }
+            else {
+                return;
+            }
+        }
+    }
+    // toolbar not found
+    qDebug() << "qt5: PluginLoader: Widget could not be found, changing mainwidget failed!" << Qt::endl;
+}
+
+
 DBWidgetInfo *PluginLoader::widgetLibraryGetInfo(unsigned long num) {
     if (num>= widgetLibrary->size()) {
         return nullptr;
@@ -422,21 +554,14 @@ void PluginLoader::actionChecksSave() {
         else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable) {
             settings->setValue(QString("PluginLoader"), key,loadedWidgets->at(i).dockWidget->isVisible());
         }
+        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget) {
+            if (loadedWidgets->at(i).dockWidget)
+                settings->setValue(QString("PluginLoader"), key,loadedWidgets->at(i).dockWidget->isVisible());
+            else
+                settings->setValue(QString("PluginLoader"), key,loadedWidgets->at(i).widget->isVisible());
+        }
     }
 
-}
-
-int PluginLoader::addWidget(QWidget *parent, const QString *name) {
-    unsigned long i;
-    for (i = 0; i < widgetLibrary->size(); i++) {
-            if(name->compare(widgetLibrary->at(i).info.internalName) == 0) {
-                int ret = loadFromWidgetLibrary(i);
-                // set parent?
-                // TODO
-                return ret;
-            }
-    }
-    return -1;
 }
 
 void PluginLoader::lockWidgets(bool lock) {
@@ -448,7 +573,8 @@ void PluginLoader::lockWidgets(bool lock) {
         if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeWidgetToolbar || loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
             loadedWidgets->at(i).toolbar->setMovable(!lock);
         }
-        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable) {
+        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable || \
+                (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget && loadedWidgets->at(i).dockWidget)) {
             if (loadedWidgets->at(i).empty_titlebar_toolbar == nullptr) {
                 loadedWidgets->at(i).empty_titlebar_toolbar = new QWidget(loadedWidgets->at(i).dockWidget);
             }
@@ -462,7 +588,6 @@ void PluginLoader::lockWidgets(bool lock) {
             }
             //loadedWidgets->at(i).dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
         }
-
     }
 }
 

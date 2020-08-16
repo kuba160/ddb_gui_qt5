@@ -11,7 +11,7 @@
 #define strcasecmp _stricmp
 #endif
 
-TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBToolbarWidget(parent, Api), tabContextMenu(this)  {
+TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBWidget(parent, Api), tabContextMenu(this)  {
     configure();
     fillTabs();
     buildTabContextMenu();

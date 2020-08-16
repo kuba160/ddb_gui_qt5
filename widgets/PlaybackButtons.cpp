@@ -25,7 +25,7 @@ button_t buttons[] = {{QString("stop") , QStyle::SP_MediaStop,  SLOT(stop())},
                       {QString("next"),  QStyle::SP_MediaSkipForward, SLOT(playNext())},
                       {QString(),        QStyle::SP_TitleBarMenuButton, 0}};
 
-PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent), DBToolbarWidget(parent, Api) {
+PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent), DBWidget(parent, Api) {
     // Setup
     this->setIconSize(QSize(16, 16));
     this->setStyleSheet("QToolButton{padding: 6px;}");

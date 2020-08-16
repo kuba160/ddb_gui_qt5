@@ -11,7 +11,7 @@
 
 #include <QTreeView>
 
-class PlayList : public QTreeView, public DBToolbarWidget {
+class PlayList : public QTreeView, public DBWidget {
     Q_OBJECT
 
 public:

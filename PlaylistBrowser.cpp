@@ -3,7 +3,7 @@
 #include <QStyle>
 #include <QtGui>
 
-PlaylistBrowser::PlaylistBrowser(QWidget * parent, DBApi *Api) : QListWidget(parent), DBToolbarWidget(parent, Api) {
+PlaylistBrowser::PlaylistBrowser(QWidget * parent, DBApi *Api) : QListWidget(parent), DBWidget(parent, Api) {
     // Fill list
     int count = api->getPlaylistCount();
     for (int i = 0; i < count; i++) {

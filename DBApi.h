@@ -14,18 +14,22 @@
 #include "DeadbeefTranslator.h"
 
 //#define DBAPI (this->api->deadbeef)
-
 #define DBAPI deadbeef_internal
 
+#define DBAPI_VMAJOR 0
+#define DBAPI_VMINOR 1
+
 class DBApi : public QObject {
-
     Q_OBJECT
-
 public:
     DBApi(QWidget *parent = nullptr, DB_functions_t *Api = nullptr);
     ~DBApi();
 
     DB_functions_t *deadbeef = nullptr;
+    const char DBApi_vmajor = DBAPI_VMAJOR;
+    const char DBApi_vminor = DBAPI_VMINOR;
+
+
     bool isPaused();
 
 
@@ -116,27 +120,26 @@ public:
         TypeDockable        = 1<<2,
         TypeMainWidget      = 1<<3
     };
-    // type and constructor to it
     DBWidgetType type;
+    // widget constructor (for DBWidgetType::TypeWidgetToolbar or DBWidgetType::TypeMainWidget)
     QWidget *(*constructor)(QWidget *parent, DBApi *api);
+
+
+    // should not be used anymore
     // optional, if you want to control toolbar, constructor is ommited then
     QToolBar *(*constructorToolbar)(QWidget *parent, DBApi *api);
     QDockWidget *(*constructorDockWidget)(QWidget *parent, DBApi *api);
 
 };
 
-class DBToolbarWidget {
+class DBWidget {
 
 public:
-    DBToolbarWidget(QWidget *parent = nullptr, DBApi *api = nullptr);
-    ~DBToolbarWidget();
-
+    DBWidget(QWidget *parent = nullptr, DBApi *api = nullptr);
+    ~DBWidget();
     DBApi *api;
-    DBWidgetInfo info;
     void loadConfig(QObject *settings);
     void saveConfig(QObject *settings);
-
-    //virtual DBToolbarWidget *factory();
 };
 
 typedef struct DB_qtgui_s {

@@ -4,7 +4,7 @@
 #include "MainWindow.h"
 
 PlayListModel::PlayListModel(QObject *parent, DBApi *Api) : QAbstractItemModel(parent),
-                                                            DBToolbarWidget (nullptr, Api),
+                                                            DBWidget (nullptr, Api),
                                                             playIcon(":/root/images/play_16.png"),
                                                             pauseIcon(":/root/images/pause_16.png") {
     //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(trackChanged(DB_playItem_t*,DB_playItem_t*)));

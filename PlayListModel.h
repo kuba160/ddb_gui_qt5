@@ -7,7 +7,7 @@
 
 #include "DBApi.h"
 
-class PlayListModel : public QAbstractItemModel, public DBToolbarWidget {
+class PlayListModel : public QAbstractItemModel, public DBWidget {
     Q_OBJECT
     
 public:

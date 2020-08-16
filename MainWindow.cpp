@@ -25,7 +25,7 @@
 
 MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
-        DBToolbarWidget (parent, Api),
+        DBWidget (parent, Api),
         ui(new Ui::MainWindow) {
 
     ui->setupUi(this);
@@ -51,6 +51,9 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     //this->setCentralWidget(empty);
     //ui->mainLayout->addWidget(&playList);
 
+
+    main_widgets = ui->menuView->addMenu(dbtr->translate(nullptr,"Main Widget"));
+    main_widgets_list = new QActionGroup(nullptr);
     new_plugins = ui->menuView->addMenu(QString("%1...") .arg(dbtr->translate(nullptr,"Add")));
     remove_plugins = ui->menuView->addMenu(QString("%1...") .arg(dbtr->translate(nullptr,"Remove")));
     remove_plugins->menuAction()->setVisible(false);
@@ -106,6 +109,9 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         connect (pl, SIGNAL(actionPluginRemoveCreated(QAction *)), this, SLOT(windowViewActionRemove(QAction *)));
     }
 
+    // MainWidget selection
+    connect (pl, SIGNAL(actionPluginMainWidgetCreated(QAction *)), this, SLOT(windowViewActionMainWidget(QAction *)));
+
     connect (this, SIGNAL(configLoaded()), pl, SLOT(updateActionChecks()));
 
     connect (this->ui->actionBlockToolbarChanges, SIGNAL(toggled(bool)), pl, SLOT(lockWidgets(bool)));
@@ -120,13 +126,12 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
 
     pl->RestoreWidgets(this);
 
-    // HACK? set playlist as central widget
-    {
-        QWidget *mw = pl->getMainWidget();
-        if (mw) {
-            setCentralWidget(mw);
-        }
+    setCentralWidget(pl->getMainWidget());
+    connect (pl, SIGNAL(centralWidgetChanged(QWidget*)), this, SLOT(windowSetCentralWidget(QWidget*)));
+    if (pl->getTotalMainWidgets() <= 1) {
+        main_widgets->menuAction()->setVisible(false);
     }
+
 
     loadConfig();
     pl->lockWidgets(ui->actionBlockToolbarChanges->isChecked());
@@ -169,6 +174,24 @@ void MainWindow::windowViewActionRemove(QAction *action) {
 void MainWindow::windowViewActionRemoveToggleHide(bool visible) {
     remove_plugins->menuAction()->setVisible(visible);
 }
+
+void MainWindow::windowViewActionMainWidget(QAction *action) {
+    if (action == nullptr) {
+        if (pl->getTotalMainWidgets() > 1) {
+            main_widgets->menuAction()->setVisible(true);
+        }
+        else {
+            main_widgets->menuAction()->setVisible(false);
+        }
+        return;
+    }
+    main_widgets_list->addAction(action);
+    main_widgets->addAction(action);
+    if (pl->getTotalMainWidgets() > 1) {
+        main_widgets->menuAction()->setVisible(true);
+    }
+}
+
 
 void MainWindow::windowSetCentralWidget(QWidget *widget) {
     setCentralWidget(widget);

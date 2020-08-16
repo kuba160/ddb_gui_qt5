@@ -9,8 +9,7 @@
 #include <QDebug>
 #include <QStyleOptionSlider>
 
-
-VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBToolbarWidget(parent, api) {
+VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBWidget(parent, api) {
     setRange(-50, 0);
     //setOrientation(Qt::Vertical);
     setOrientation(Qt::Horizontal);

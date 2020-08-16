@@ -234,17 +234,17 @@ void DBApi::setRepeat(ddb_repeat_t i) {
 }
 
 
-DBToolbarWidget::DBToolbarWidget(QWidget *parent, DBApi *api_a) {
+DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
     Q_UNUSED(parent);
     Q_UNUSED(api);
     api = api_a;
 }
 
-DBToolbarWidget::~DBToolbarWidget() {
+DBWidget::~DBWidget() {
     // exit
 }
 
-void DBToolbarWidget::loadConfig(QObject *ptr) {
+void DBWidget::loadConfig(QObject *ptr) {
     Q_UNUSED(ptr);
     ;
 }
