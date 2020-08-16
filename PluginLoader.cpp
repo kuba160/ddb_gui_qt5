@@ -371,8 +371,46 @@ void PluginLoader::setMainWidget(LoadedWidget_t *lw) {
         emit centralWidgetChanged(lw->widget);
         return;
     }
-    // convert new widget to simple widget and remove its dock
+    if (lw->widget == mainWidget) {
+        return;
+    }
     // convert current main widget to dock
+    unsigned long i;
+    for (i = 0; i < loadedWidgets->size(); i++) {
+        LoadedWidget_t *lw_c = &loadedWidgets->at(i);
+        if (lw_c->widget == mainWidget) {
+            lw_c->dockWidget = new QDockWidget(*lw_c->friendlyName, w);
+            lw_c->widget->setParent(lw_c->dockWidget);
+            w->setCentralWidget(nullptr);
+            lw_c->dockWidget->setWidget(lw_c->widget);
+            lw_c->widget->setVisible(true);
+            if (areWidgetsLocked) {
+                if (!lw_c->empty_titlebar_toolbar)
+                    lw_c->empty_titlebar_toolbar = new QWidget(lw_c->dockWidget);
+                loadedWidgets->at(i).dockWidget->setTitleBarWidget(lw_c->empty_titlebar_toolbar);
+                loadedWidgets->at(i).dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+            }
+            else {
+                loadedWidgets->at(i).dockWidget->setTitleBarWidget(nullptr);
+                loadedWidgets->at(i).dockWidget->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
+            }
+            w->windowAddDockable(lw_c->dockWidget);
+            break;
+        }
+    }
+    // convert new widget to simple widget and remove its dock
+    lw->widget->setParent(w);
+    // segfault?
+    lw->dockWidget->setWidget(nullptr);
+    lw->dockWidget->setTitleBarWidget(nullptr);
+    delete lw->empty_titlebar_toolbar;
+    lw->empty_titlebar_toolbar = nullptr;
+    delete lw->dockWidget;
+    lw->dockWidget = nullptr;
+
+    mainWidget = lw->widget;
+    w->setCentralWidget(lw->widget);
+    lw->actionMainWidget->setChecked(true);
 }
 
 void PluginLoader::setMainWindow(QMainWindow *mw) {
