@@ -14,11 +14,11 @@
    <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string notr="true">DeadBeef</string>
+   <string notr="true">DeaDBeeF</string>
   </property>
   <property name="windowIcon">
    <iconset resource="Resources.qrc">
-    <normaloff>:/root/images/scalable.svg</normaloff>:/root/images/scalable.svg</iconset>
+    <normaloff>:/root/images/deadbeef.png</normaloff>:/root/images/deadbeef.png</iconset>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
@@ -458,8 +458,6 @@
    </property>
   </action>
  </widget>
- <resources>
-  <include location="Resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
