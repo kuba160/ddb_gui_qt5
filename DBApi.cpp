@@ -135,6 +135,13 @@ ddb_playback_state_t DBApi::getInternalState() {
     return internal_state;
 }
 
+void DBApi::autoSetValue(void *widget, const QString &key, const QVariant &value) {
+    settings->autoSetValue(widget,key,value);
+}
+
+QVariant DBApi::autoGetValue(void *widget, const QString &key, const QVariant &defaultValue) {
+    return settings->autoGetValue(widget, key, defaultValue);
+}
 
 void DBApi::addTracksByUrl(const QUrl &url, int position) {
     int pabort = 0;
@@ -236,15 +243,12 @@ void DBApi::setRepeat(ddb_repeat_t i) {
 
 DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
     Q_UNUSED(parent);
-    Q_UNUSED(api);
+    if (api_a == nullptr) {
+        qDebug() << "Widget (" << parent <<") initialized without api pointer!";
+    }
     api = api_a;
 }
 
 DBWidget::~DBWidget() {
     // exit
-}
-
-void DBWidget::loadConfig(QObject *ptr) {
-    Q_UNUSED(ptr);
-    ;
 }

@@ -7,7 +7,6 @@
 
 #include <QtGui.h>
 #include <QtGuiSettings.h>
-#include <TabBar.h>
 
 #include "MainWindow.h"
 
@@ -164,7 +163,7 @@ void PlayList::dropEvent(QDropEvent *event) {
             newItems[row] = text;
         }
         QList<int> rows = newItems.keys();
-        qSort(rows.begin(), rows.end());
+        std::sort(rows.begin(),rows.end());
         playListModel.moveItems(rows, row);
         event->setDropAction(Qt::CopyAction);
         event->accept();
@@ -209,7 +208,7 @@ void PlayList::createHeaderContextMenu() {
     foreach (QString name, playListModel.columnNames.values()) {
         QAction *action = new QAction(name, &headerContextMenu);
         action->setCheckable(true);
-        for (int i = 0; i < header()->count(); i++)
+        for (int i = 0; i < header()->count(); i++) {
             if (playListModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == name ||
                 (playListModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == "" && name == tr("Status"))
             ) {
@@ -217,6 +216,7 @@ void PlayList::createHeaderContextMenu() {
                 break;
             }
             connect(action, SIGNAL(toggled(bool)), SLOT(setColumnHidden(bool)));
+        }
         columnsMenu->addAction(action);
     }
     headerContextMenu.addMenu(columnsMenu);

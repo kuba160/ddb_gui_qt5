@@ -32,6 +32,12 @@
 extern MainWindow *w;
 extern DBApi *api;
 
+QStringList default_plugins = { QString("playbackButtons"),
+                                QString("seekSlider"),
+                                QString("volumeSlider"),
+                                QString("tabBar"),
+                                QString("playlist") };
+
 PluginLoader::PluginLoader(DBApi* Api) : QObject(nullptr), DBWidget (nullptr, Api) {
     qDebug() << "qt5: PluginLoader initialized";
     // List of plugins that can be loaded
@@ -71,12 +77,11 @@ PluginLoader::~PluginLoader() {
 }
 
 void PluginLoader::RestoreWidgets(QMainWindow *parent) {
-    QStringList slist = settings->getValue(QString("PluginLoader"),
-                                           QString("PluginsLoaded"),
-                                           QVariant(QStringList()
-                                                    << QString("playbackButtons")
-                                                    << QString("seekSlider")
-                                                    << QString("volumeSlider"))).toStringList();
+    QStringList slist = settings->getValue(QString("PluginLoader"), QString("PluginsLoaded"), default_plugins).toStringList();
+    QVariant deflayout = settings->QSGETCONF(QString("BuildDefaultLayout"),QVariant(true));
+    if (deflayout.toBool() == true) {
+        slist = default_plugins;
+    }
     mainWindow = parent;
     int i;
     for (i = 0; i < slist.size(); i++) {
@@ -164,6 +169,7 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
 
     qDebug() << "qt5: PluginLoader: Loading widget" << *temp.friendlyName;
 
+    temp.actionMainWidget = nullptr;
     switch (p->info.type) {
     case DBWidgetInfo::TypeWidgetToolbar:
         temp.widget = p->info.constructor(nullptr, api);
@@ -229,6 +235,12 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
 
     if (p->info.type == DBWidgetInfo::TypeWidgetToolbar || p->info.type == DBWidgetInfo::TypeToolbar) {
         temp.toolbar->setVisible(isEnabled);
+        // HACK FOR DEFAULT LAYOUT CREATION
+        QVariant deflayout = settings->QSGETCONF(QString("BuildDefaultLayout"),QVariant(true));
+        if (deflayout.toBool() && (temp.internalName == QString("tabBar"))){
+            mainWindow->addToolBarBreak();
+            settings->QSSETCONF(QString("BuildDefaultLayout"), QVariant(false));
+        }
         emit toolBarCreated(temp.toolbar);
     }
     else if (p->info.type == DBWidgetInfo::TypeDockable || \
@@ -358,7 +370,7 @@ void PluginLoader::setMainWidget(LoadedWidget_t *lw) {
     if (lw == nullptr) {
         //w->main_widgets->setVisible(false);
         w->setCentralWidget(nullptr);
-        settings->setValue(QString("PluginLoader"), QString("MainWidget"),QString(""));
+        settings->QSSETCONF(QString("MainWidget"),QString(""));
         return;
     }
 
@@ -367,7 +379,7 @@ void PluginLoader::setMainWidget(LoadedWidget_t *lw) {
         //w->setCentralWidget(lw->widget);
         mainWidget = lw->widget;
         if (settings->getValue(QString("PluginLoader"), QString("MainWidget"),QString("")).toString().compare(lw->internalName))
-            settings->setValue(QString("PluginLoader"), QString("MainWidget"),QString(*lw->internalName));
+            settings->QSSETCONF(QString("MainWidget"),QString(*lw->internalName));
         emit centralWidgetChanged(lw->widget);
         return;
     }
@@ -425,7 +437,7 @@ int PluginLoader::loadFromWidgetLibraryNew(unsigned long num) {
 
         slist.append(loadedWidgets->at(num_loaded).header->info.internalName);
         slist.sort();
-        settings->setValue(QString("PluginLoader"), QString("PluginsLoaded"),QVariant(slist));
+        settings->QSSETCONF(QString("PluginsLoaded"),QVariant(slist));
     }
     return ret;
 }
@@ -461,7 +473,7 @@ void PluginLoader::actionHandlerCheckable(bool check) {
                 break;
             }
             QString key = QString("%1/visible") .arg(*w->internalName);
-            settings->setValue(QString("PluginLoader"), key,check);
+            settings->QSSETCONF(key,check);
             return;
         }
     }
@@ -500,7 +512,7 @@ void PluginLoader::actionHandlerRemove(bool check) {
             if (j != -1) {
                 slist.removeAt(j);
                 slist.sort();
-                settings->setValue(QString("PluginLoader"), QString("PluginsLoaded"),QVariant(slist));
+                settings->QSSETCONF(QString("PluginsLoaded"),QVariant(slist));
 
                 settings->removeValue(QString("PluginLoader"), *wi->internalName);
             }
@@ -555,6 +567,35 @@ QString *PluginLoader::widgetName(unsigned long num) {
     return p->internalName;
 }
 
+QString *PluginLoader::widgetName(void *pointer) {
+    unsigned long i;
+    for (i = 0; i < loadedWidgets->size(); i++) {
+        LoadedWidget_t *lwt = &loadedWidgets->at(i);
+        switch(lwt->header->info.type) {
+        case DBWidgetInfo::TypeMainWidget:
+        case DBWidgetInfo::TypeDockable:
+            if (lwt->dockWidget && lwt->dockWidget == pointer) {
+                return lwt->internalName;
+            }
+            /* fall through */
+        case DBWidgetInfo::TypeToolbar:
+            if (lwt->widget && lwt->widget == pointer) {
+                return lwt->internalName;
+            }
+            /* fall through */
+        case DBWidgetInfo::TypeWidgetToolbar:
+            if (lwt->toolbar && lwt->toolbar == pointer) {
+                return lwt->internalName;
+            }
+            /* fall through */
+        case DBWidgetInfo::TypeDummy:
+            // has no widget
+            break;
+        }
+    }
+    return nullptr;
+}
+
 QString *PluginLoader::widgetFriendlyName(unsigned long num) {
     if (num>= loadedWidgets->size()) {
         return nullptr;
@@ -567,8 +608,8 @@ QString *PluginLoader::widgetFriendlyName(unsigned long num) {
 void PluginLoader::updateActionChecks() {
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {
-        QString key = QString("%1/visible") .arg(*loadedWidgets->at(i).internalName);
-        bool value = settings->getValue(QString("PluginLoader"), key, QVariant(true)).toBool();
+        QVariant s = settings->QSGETCONF(QString("%1/visible") .arg(*loadedWidgets->at(i).internalName), QVariant(true));
+        bool value = s.toBool();
         ///loadedWidgets->at(i).actionToggleVisible->setChecked(value);
         if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeWidgetToolbar || loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
             loadedWidgets->at(i).toolbar->setVisible(value);
@@ -587,16 +628,18 @@ void PluginLoader::actionChecksSave() {
     for (i = 0; i < loadedWidgets->size(); i++) {
         QString key = QString("%1/visible") .arg(*loadedWidgets->at(i).internalName);
         if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeWidgetToolbar || loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
-            settings->setValue(QString("PluginLoader"), key,loadedWidgets->at(i).toolbar->isVisible());
+            settings->QSSETCONF(key,loadedWidgets->at(i).toolbar->isVisible());
         }
         else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable) {
-            settings->setValue(QString("PluginLoader"), key,loadedWidgets->at(i).dockWidget->isVisible());
+            settings->QSSETCONF(key,loadedWidgets->at(i).dockWidget->isVisible());
         }
         else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget) {
-            if (loadedWidgets->at(i).dockWidget)
-                settings->setValue(QString("PluginLoader"), key,loadedWidgets->at(i).dockWidget->isVisible());
-            else
-                settings->setValue(QString("PluginLoader"), key,loadedWidgets->at(i).widget->isVisible());
+            if (loadedWidgets->at(i).dockWidget) {
+                settings->QSSETCONF(key,loadedWidgets->at(i).dockWidget->isVisible());
+            }
+            else {
+                settings->QSSETCONF(key,loadedWidgets->at(i).widget->isVisible());
+            }
         }
     }
 

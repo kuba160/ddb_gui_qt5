@@ -35,7 +35,7 @@ SOURCES  =          include/callbacks.cpp \
 		    QtGuiSettings.cpp \
                     widgets/SeekSlider.cpp \
 		    SystemTrayIcon.cpp \
-		    TabBar.cpp \
+                    widgets/TabBar.cpp \
                     widgets/VolumeSlider.cpp
 
 
@@ -67,7 +67,7 @@ HEADERS =               preferencesWidgets/InterfacePreferencesWidget.h \
 			QtGuiSettings.h \
                         widgets/SeekSlider.h \
 			SystemTrayIcon.h \
-			TabBar.h \
+                        widgets/TabBar.h \
                         widgets/VolumeSlider.h
 
 FORMS =         preferencesWidgets/InterfacePreferencesWidget.ui \

@@ -7,6 +7,10 @@
 #include <QString>
 #include <QSettings>
 
+#define QSSETCONF(X,Y) autoSetValue(this, X, Y);
+#define QSGETCONF(X,Y) autoGetValue(this, X, Y);
+
+
 class QtGuiSettings : public QSettings {
     Q_OBJECT
 public:
@@ -16,6 +20,10 @@ public:
 
     QVariant getValue(const QString &group, const QString &key, const QVariant &defaultValue);
     void setValue(const QString &group, const QString &key, const QVariant &value);
+
+    // use shorter version QSSETCONF(key, value) and QSGETCONF(key, defvalue);
+    void autoSetValue(void *, const QString &key, const QVariant &value);
+    QVariant autoGetValue(void *, const QString &key, const QVariant &value);
 
     void removeValue(const QString &group, const QString &key);
 

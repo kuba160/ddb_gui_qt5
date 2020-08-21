@@ -9,6 +9,7 @@
 #include "DBApi.h"
 
 extern DBApi *api;
+extern QStringList default_plugins;
 
 // Internal header for a plugin/widget
 typedef struct ExternalWidget_s{
@@ -99,8 +100,11 @@ public:
     LoadedWidget_t *widgetByName(QString *);
     // get widget internal name
     QString *widgetName(unsigned long num);
+    // get widget internal name from widget pointer
+    QString *widgetName(void *pointer);
     // get widget friendly name
     QString *widgetFriendlyName(unsigned long num);
+    //
 
     // get current mainwidget (can be nullptr)
     QWidget *getMainWidget();

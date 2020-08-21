@@ -23,9 +23,9 @@
 #include "widgets/VolumeSlider.h"
 #include "widgets/SeekSlider.h"
 #include "widgets/PlaybackButtons.h"
+#include "widgets/TabBar.h"
 #include "CoverArtWidget.h"
 #include "PlayListWidget.h"
-#include "TabBar.h"
 #include "PlaylistBrowser.h"
 
 DefaultPlugins::DefaultPlugins() {
@@ -68,7 +68,7 @@ DefaultPlugins::DefaultPlugins() {
     widgetLibrary->push_back(tabBar);
 
     tabBarD.internalName = QString("tabBarDock");
-    tabBarD.friendlyName = QString("Tab Bar (Dock)");
+    tabBarD.friendlyName = QString("%1 (Dock)") .arg(_("Tab strip"));
     tabBarD.type = DBWidgetInfo::TypeDockable;
     tabBarD.constructorDockWidget = TabBar::constructorDockable;
     widgetLibrary->push_back(tabBarD);

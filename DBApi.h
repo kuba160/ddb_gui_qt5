@@ -46,6 +46,10 @@ public:
 
     QString const& playlistNameByIdx(int idx);
     unsigned long getPlaylistCount();
+
+    //
+    void autoSetValue(void *widget, const QString &key, const QVariant &value);
+    QVariant autoGetValue(void *widget, const QString &key, const QVariant &defaultValue);
     
 private:
     ddb_playback_state_t internal_state;
@@ -135,11 +139,9 @@ public:
 class DBWidget {
 
 public:
-    DBWidget(QWidget *parent = nullptr, DBApi *api = nullptr);
+    DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr);
     ~DBWidget();
     DBApi *api;
-    void loadConfig(QObject *settings);
-    void saveConfig(QObject *settings);
 };
 
 typedef struct DB_qtgui_s {

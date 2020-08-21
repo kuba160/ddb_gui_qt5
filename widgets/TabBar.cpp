@@ -36,7 +36,7 @@ QWidget *TabBar::constructor(QWidget *parent, DBApi *Api) {
 QDockWidget *TabBar::constructorDockable(QWidget *parent, DBApi *Api) {
     QWidget *widget = new TabBar(parent, Api);
     QDockWidget *dock = new QDockWidget(parent);
-    dock->setWindowTitle(QString("Tab Bar"));
+    dock->setWindowTitle(QString(_("Tab Bar")));
     dock->setWidget(widget);
     return dock;
 }

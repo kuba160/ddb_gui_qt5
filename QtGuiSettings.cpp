@@ -1,5 +1,7 @@
 #include "QtGuiSettings.h"
+#include "QtGui.h"
 #include <QtDebug>
+#include "DBApi.h"
 
 QtGuiSettings *settings;
 
@@ -32,7 +34,6 @@ const QString QtGuiSettings::HeaderState = QString("HeaderState");
 const QString QtGuiSettings::HeaderIsLocked = QString("HeaderIsLocked");
 const QString QtGuiSettings::HeaderIsVisible = QString("HeaderIsVisible");
 
-
 QtGuiSettings::QtGuiSettings(QObject *parent) : QSettings(parent) {
     // dummy
 }
@@ -62,4 +63,61 @@ void QtGuiSettings::removeValue(const QString &group, const QString &key) {
     beginGroup(group);
     QSettings::remove(key);
     endGroup();
+}
+
+void QtGuiSettings::autoSetValue(void *widget, const QString &key, const QVariant &value) {
+    QString group;
+    if (widget == pl) {
+        group = QString("PluginLoader");
+    }
+    else if (widget == static_cast<void *>(w)) {
+        group = QString("MainWindow");
+    }
+    // widget in pluginloader
+    {
+        QString *np;
+        if ((np = pl->widgetName(widget))) {
+            group = *np;
+        }
+    }
+    if (group == QString()) {
+        qDebug() << "QtGuiSettings: unable to auto detect widget, saving" << key << "failed!";
+        return;
+    }
+    beginGroup(group);
+    QSettings::setValue(key, value);
+    endGroup();
+}
+
+QVariant QtGuiSettings::autoGetValue(void *widget, const QString &key, const QVariant &defaultValue) {
+    QString group;
+    if (widget == pl) {
+        group = QString("PluginLoader");
+    }
+    else if (widget == static_cast<void *>(w)) {
+        group = QString("MainWindow");
+    }
+    // widget in pluginloader
+    {
+        QString *np;
+        if ((np = pl->widgetName(widget))) {
+            group = *np;
+        }
+    }
+    if (group == QString()) {
+        qDebug() << "QtGuiSettings: unable to auto detect widget, getting" << key << "failed!";
+        return QVariant();
+    }
+    beginGroup(group);
+    QVariant result;
+    if (contains(key)) {
+        result = value(key, defaultValue);
+    }
+    else {
+        // save default value keys
+        QSettings::setValue(key, defaultValue);
+        result = defaultValue;
+    }
+    endGroup();
+    return result;
 }

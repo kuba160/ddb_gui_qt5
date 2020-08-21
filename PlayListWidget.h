@@ -6,7 +6,6 @@
 #include <QBoxLayout>
 
 #include "PlayList.h"
-#include "TabBar.h"
 
 class QMenu;
 
@@ -35,9 +34,7 @@ private:
     void createConnections();
 
     QBoxLayout layout;
-    TabBar tabBar;
     PlayList playList;
-    TabBar::TabBarPosition tabBarPosition;
     
 public Q_SLOTS:
     void refresh();
@@ -46,7 +43,6 @@ private Q_SLOTS:
     void selectPlaylist(int);
     void closePlylist(int);
     void renamePlaylist(int, const QString &);
-    void setTabBarPosition(TabBar::TabBarPosition);
     
 Q_SIGNALS:
     void newPlaylist();
