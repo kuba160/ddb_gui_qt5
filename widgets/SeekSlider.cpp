@@ -25,14 +25,23 @@ SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent), DBWidget(
 SeekSlider::~SeekSlider() {
 }
 
+QSize SeekSlider::sizeHint() const
+{
+    return QSize(maximumWidth()/2, 20);
+}
+
 QToolBar *SeekSlider::constructorToolbar(QWidget *parent, DBApi *api) {
     QToolBar *tb = new QToolBar(parent);
     SeekSlider *slider = new SeekSlider(tb, api);
     tb->addWidget(slider);
-    tb->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
+    slider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    tb->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
     tb->setContextMenuPolicy(Qt::PreventContextMenu);
+    tb->setFloatable(false);
     return tb;
 }
+
+
 
 bool SeekSlider::event(QEvent *event) {
     if (event->type() == QEvent::Wheel) {

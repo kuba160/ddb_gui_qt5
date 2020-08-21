@@ -15,9 +15,11 @@ class SeekSlider : public QSlider, public DBWidget {
 public:
     SeekSlider(QWidget *parent = 0, DBApi *api = 0);
     ~SeekSlider();
+
     static QWidget  *constructor(QWidget *parent = nullptr, DBApi *api = nullptr);
     static QToolBar *constructorToolbar(QWidget *parent = nullptr, DBApi *api = nullptr);
 
+    QSize sizeHint() const;
 protected:
     bool event(QEvent *event);
 
