@@ -263,6 +263,8 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
             }
             temp.dockWidget->setTitleBarWidget(temp.empty_titlebar_toolbar);
             temp.dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+            temp.dockWidget->setFixedWidth(temp.dockWidget->width());
+            temp.dockWidget->setFixedHeight(temp.dockWidget->height());
             break;
         case DBWidgetInfo::TypeMainWidget:
             if (temp.dockWidget) {
@@ -632,6 +634,10 @@ void PluginLoader::actionChecksSave() {
         }
         else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable) {
             settings->QSSETCONF(key,loadedWidgets->at(i).dockWidget->isVisible());
+            // HACK/FIX
+            if (1) {
+                loadedWidgets->at(i).dockWidget->setFixedSize(QSize(QWIDGETSIZE_MAX,QWIDGETSIZE_MAX));
+            }
         }
         else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget) {
             if (loadedWidgets->at(i).dockWidget) {
@@ -642,6 +648,8 @@ void PluginLoader::actionChecksSave() {
             }
         }
     }
+
+
 
 }
 
@@ -662,10 +670,16 @@ void PluginLoader::lockWidgets(bool lock) {
             if (lock) {
                 loadedWidgets->at(i).dockWidget->setTitleBarWidget(loadedWidgets->at(i).empty_titlebar_toolbar);
                 loadedWidgets->at(i).dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+                //loadedWidgets->at(i).dockWidget->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+               // if (loadedWidgets->at(i).dockWidget->isVisible()) {
+                    loadedWidgets->at(i).dockWidget->setFixedWidth(loadedWidgets->at(i).dockWidget->width());
+                    loadedWidgets->at(i).dockWidget->setFixedHeight(loadedWidgets->at(i).dockWidget->height());
+                //}
             }
             else {
                 loadedWidgets->at(i).dockWidget->setTitleBarWidget(nullptr);
                 loadedWidgets->at(i).dockWidget->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
+                loadedWidgets->at(i).dockWidget->setFixedSize(QSize(QWIDGETSIZE_MAX,QWIDGETSIZE_MAX));
             }
             //loadedWidgets->at(i).dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
         }
