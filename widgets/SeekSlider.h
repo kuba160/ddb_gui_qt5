@@ -22,6 +22,7 @@ public:
     QSize sizeHint() const;
 protected:
     bool event(QEvent *event);
+    void paintEvent(QPaintEvent *e);
 
 protected slots:
     void mouseReleaseEvent(QMouseEvent *ev);

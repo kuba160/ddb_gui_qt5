@@ -6,6 +6,7 @@
 #include <QSizePolicy>
 #include <QStyleOptionSlider>
 #include <QLabel>
+#include <QPainter>
 
 #undef DBAPI
 #define DBAPI api->deadbeef
@@ -50,6 +51,42 @@ bool SeekSlider::event(QEvent *event) {
     return QWidget::event(event);
 }
 
+void SeekSlider::paintEvent(QPaintEvent *e) {
+    Q_UNUSED(e);
+
+    qreal slider_width = this->width()-4.0;
+    qreal slider_height = 8.0;
+    qreal slider_xpos = 2.0;
+    qreal slider_ypos = this->height()/2-4.0;
+    float percentage = this->value()/100.0/SEEK_SCALE;
+
+    // TODO: Set colors from theme
+    QColor blue(43,127,186);
+    QPen pen(blue);
+    pen.setWidth(2);
+    pen.setBrush(blue);
+
+    QRectF rectangle(slider_xpos, slider_ypos, slider_width, slider_height);
+    QRectF progress_mask(slider_xpos, 0.0, slider_width * percentage, this->height());
+    qreal rect_xrad = 5.0;
+    qreal rect_yrad = 4.0;
+
+    // Start painting
+    QPainter qp(this);
+    qp.setRenderHint(QPainter::Antialiasing);
+    qp.setPen(pen);
+    qp.setBrush(blue);
+
+    // draw a full slider, but clip it according to progress
+    qp.setClipping(true);
+    qp.setClipRect(progress_mask);
+    qp.drawRoundedRect(rectangle, rect_xrad, rect_yrad);
+
+    // draw a full slider, but this time empty inside
+    qp.setClipping(false);
+    qp.setBrush(Qt::transparent);
+    qp.drawRoundedRect(rectangle, rect_xrad, rect_yrad);
+}
 
 void SeekSlider::mouseReleaseEvent(QMouseEvent *ev) {
     if (ev->button() == Qt::LeftButton || ev->button() == Qt::RightButton) {
@@ -70,7 +107,9 @@ void SeekSlider::mousePressEvent ( QMouseEvent * event ) {
             newVal = minimum() + ((maximum()-minimum()) * (height()-event->y())) / height();
         }
         else {
-            double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
+            // TODO: use when using default qt slider
+            //double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
+            double halfHandleWidth = 0.0;
             int adaptedPosX = event->x();
             if (adaptedPosX < halfHandleWidth)
                 adaptedPosX = halfHandleWidth;
@@ -87,6 +126,7 @@ void SeekSlider::mousePressEvent ( QMouseEvent * event ) {
           QSlider::setValue(newVal);
 
         activateNow = true;
+        update();
         event->accept();
     }
     QSlider::mousePressEvent(event);
@@ -99,16 +139,19 @@ void SeekSlider::onFrameUpdate() {
     int output_state = api->getOutputState();
     if (output_state == DDB_PLAYBACK_STATE_PAUSED || output_state == DDB_PLAYBACK_STATE_PLAYING) {
         QSlider::setValue(DBAPI->playback_get_pos() * SEEK_SCALE);
+        update();
     }
 }
 
 void SeekSlider::onPlaybackStop() {
     this->setEnabled(false);
+    update();
     this->setValue(0);
 }
 
 void SeekSlider::onPlaybackStart() {
     this->setEnabled(true);
+    update();
 }
 
 int SeekSlider::pos(QMouseEvent *ev) const {
