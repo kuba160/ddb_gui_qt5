@@ -12,6 +12,10 @@ public:
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
     void setValue(int value);
 
+    QSize sizeHint() const;
+protected:
+    void paintEvent(QPaintEvent *e);
+
 private:
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *ev);

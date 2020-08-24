@@ -13,7 +13,8 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBWid
     setRange(-50, 0);
     //setOrientation(Qt::Vertical);
     setOrientation(Qt::Horizontal);
-    setFixedWidth(80);
+    //setFixedWidth(80);
+    setMinimumWidth(72);
     setSingleStep(1);
     setPageStep(1);
     setFocusPolicy(Qt::NoFocus);
@@ -33,9 +34,55 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBWid
 
 QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
     VolumeSlider *vslider = new VolumeSlider(parent, api);
-    //vslider->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
-    vslider->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    vslider->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
+    //vslider->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     return new VolumeSlider(parent,api);
+}
+
+QSize VolumeSlider::sizeHint() const
+{
+    return QSize(17*4+2,27);
+}
+
+void VolumeSlider::paintEvent(QPaintEvent *e) {
+    Q_UNUSED(e);
+
+    qreal height_max = 19.0;
+    qreal height_min = 3.0;
+    qreal bar_width = 3.0;
+    qreal bar_marigin = 1.0;
+    qreal horizontal_marigin = 4.0;
+
+    qreal bar_amount = 17;//this->width()/(bar_width+bar_marigin);
+
+    qreal percentage = (value()+50.0)/50.0;
+
+    qDebug() << "VolumeSlider with" << bar_amount << "bars." << endl;
+    //setFixedWidth(bar_marigin + bar_amount*(bar_width+bar_marigin));
+    setFixedHeight(height_max+2*horizontal_marigin);
+
+    qreal total_pixels = bar_marigin + bar_amount*(bar_width+bar_marigin);
+
+    // Start painting
+    QPainter qp(this);
+    qp.setRenderHint(QPainter::Antialiasing);
+    QColor blue(43,127,186);
+    QPen pen(Qt::transparent);
+    pen.setWidth(0);
+    qp.setPen(pen);
+    qp.setBrush(blue);
+    qDebug() << "Percentage:" << percentage;
+    qDebug() << "Value:" <<value();
+
+    int i;
+    for (i = 0; i < bar_amount; i++) {
+        if (bar_amount*percentage+1.0 < i || percentage == 0) {
+            //qDebug() << "White bars from" << i;
+            qp.setBrush(Qt::white);
+        }
+        QRectF rectangle(2.0+i*(bar_width+bar_marigin),height_max+horizontal_marigin-i-height_min,bar_width, height_min+i);
+        qp.drawRect(rectangle);
+    }
 }
 
 void VolumeSlider::setValue(int value) {
@@ -56,7 +103,8 @@ void VolumeSlider::mousePressEvent ( QMouseEvent * event ) {
         newVal = minimum() + ((maximum()-minimum()) * (height()-event->y())) / height();
     }
     else {
-        double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
+        //double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
+        double halfHandleWidth = 0.0;
         int adaptedPosX = event->x();
         if (adaptedPosX < halfHandleWidth)
             adaptedPosX = halfHandleWidth;
@@ -71,6 +119,7 @@ void VolumeSlider::mousePressEvent ( QMouseEvent * event ) {
       VolumeSlider::setValue( maximum() - newVal );
     else
       VolumeSlider::setValue(newVal);
+    update();
 
     event->accept();
     }
