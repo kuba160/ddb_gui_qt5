@@ -13,35 +13,33 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBWid
     setRange(-50, 0);
     //setOrientation(Qt::Vertical);
     setOrientation(Qt::Horizontal);
-    //setFixedWidth(80);
-    setMinimumWidth(72);
     setSingleStep(1);
     setPageStep(1);
     setFocusPolicy(Qt::NoFocus);
+    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    //setMinimumHeight(27)
+
+    // 17 bars default (TODO hardcoded)
+    setMinimumWidth(76);
+    setMinimumHeight(27);
+
+    // TODO
+    //setStyleSheet(".QSlider {max-width: 1px;}");
 
     // DBApi links
     Volume = api->getVolume();
     QSlider::setValue(Volume);
     setToolTip(QString("%1dB") .arg (Volume));
     // API -> SLIDER
-    connect(api, SIGNAL(volumeChanged(int)), this, SLOT(onDeadbeefValueChanged(int)));
+    connect(api, SIGNAL(volumeChanged(float)), this, SLOT(onDeadbeefValueChanged(float)));
     // SLIDER -> API
-    connect(this, SIGNAL(volumeChanged(int)), api, SLOT(setVolume(int)));
+    connect(this, SIGNAL(volumeChanged(float)), api, SLOT(setVolume(float)));
     // SLIDER INTERNAL
     connect(this, SIGNAL(valueChanged(int)), this, SLOT(onSliderValueChanged(int)));
-
 }
 
 QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
-    VolumeSlider *vslider = new VolumeSlider(parent, api);
-    vslider->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
-    //vslider->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     return new VolumeSlider(parent,api);
-}
-
-QSize VolumeSlider::sizeHint() const
-{
-    return QSize(17*4+2,27);
 }
 
 void VolumeSlider::paintEvent(QPaintEvent *e) {
@@ -50,43 +48,54 @@ void VolumeSlider::paintEvent(QPaintEvent *e) {
     qreal height_max = 19.0;
     qreal height_min = 3.0;
     qreal bar_width = 3.0;
+    // TODO marigin not calculated when drawing percent amount (gets off if you change this)
     qreal bar_marigin = 1.0;
     qreal horizontal_marigin = 4.0;
+    qreal vertical_marigin = 4.0;
 
-    qreal bar_amount = 17;//this->width()/(bar_width+bar_marigin);
-
+    // widget is set to be minimum 76px wide, which will generate 17 bars
+    qreal bar_amount = floor((this->width()-8.0)/(bar_width+bar_marigin));
     qreal percentage = (value()+50.0)/50.0;
-
-    qDebug() << "VolumeSlider with" << bar_amount << "bars." << endl;
-    //setFixedWidth(bar_marigin + bar_amount*(bar_width+bar_marigin));
-    setFixedHeight(height_max+2*horizontal_marigin);
-
-    qreal total_pixels = bar_marigin + bar_amount*(bar_width+bar_marigin);
 
     // Start painting
     QPainter qp(this);
     qp.setRenderHint(QPainter::Antialiasing);
+
+    // TODO color hardcoded
     QColor blue(43,127,186);
     QPen pen(Qt::transparent);
     pen.setWidth(0);
     qp.setPen(pen);
     qp.setBrush(blue);
-    qDebug() << "Percentage:" << percentage;
-    qDebug() << "Value:" <<value();
 
     int i;
     for (i = 0; i < bar_amount; i++) {
-        if (bar_amount*percentage+1.0 < i || percentage == 0) {
-            //qDebug() << "White bars from" << i;
+        if (abs(bar_amount*percentage) < (static_cast<float>(i)+0.5) || percentage == 0) {
             qp.setBrush(Qt::white);
+            qp.setBrush(QColor(192,217,235));
         }
-        QRectF rectangle(2.0+i*(bar_width+bar_marigin),height_max+horizontal_marigin-i-height_min,bar_width, height_min+i);
+        qreal bar_height;
+        (bar_amount == 17) ? bar_height = height_min + i // 1px increase on default (no smoothing)
+                           : bar_height = i/bar_amount * (height_max-height_min) + height_min;
+        qreal bar_xpos = i*(bar_width+bar_marigin) + horizontal_marigin;
+        qreal bar_ypos = height_max + vertical_marigin - bar_height;
+        QRectF rectangle(bar_xpos, bar_ypos, bar_width, bar_height);
         qp.drawRect(rectangle);
     }
+
+    // TODO allow default slider
+    //QSlider::paintEvent(e);
 }
 
 void VolumeSlider::setValue(int value) {
     QSlider::setValue(value);
+    Volume = value;
+    setToolTip(QString("%1dB") .arg (Volume));
+    emit volumeChanged(value);
+}
+
+void VolumeSlider::setValue(float value) {
+    QSlider::setValue(round(value));
     Volume = value;
     setToolTip(QString("%1dB") .arg (Volume));
     emit volumeChanged(value);
@@ -103,8 +112,8 @@ void VolumeSlider::mousePressEvent ( QMouseEvent * event ) {
         newVal = minimum() + ((maximum()-minimum()) * (height()-event->y())) / height();
     }
     else {
-        //double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
-        double halfHandleWidth = 0.0;
+        double halfHandleWidth = (0.5 * sr.width()) + 0.5; // Correct rounding
+        //double halfHandleWidth = 0.0;
         int adaptedPosX = event->x();
         if (adaptedPosX < halfHandleWidth)
             adaptedPosX = halfHandleWidth;
@@ -139,12 +148,12 @@ void VolumeSlider::onSliderValueChanged(int value) {
     emit volumeChanged(value);
 }
 
-void VolumeSlider::onDeadbeefValueChanged(int value) {
+void VolumeSlider::onDeadbeefValueChanged(float value) {
     QSlider::setValue(value);
     Volume = value;
     // do not emit signal back
 }
 
-void VolumeSlider::adjustVolume(int value) {
+void VolumeSlider::adjustVolume(float value) {
     setValue(Volume + value);
 }

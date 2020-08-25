@@ -11,26 +11,26 @@ public:
     VolumeSlider(QWidget *parent = nullptr, DBApi *api = nullptr);
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
     void setValue(int value);
+    void setValue(float value);
 
-    QSize sizeHint() const;
 protected:
     void paintEvent(QPaintEvent *e);
 
 private:
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *ev);
-    int Volume;
+    float Volume;
 
 public slots:
     // called when value changes because of slider
     void onSliderValueChanged(int value);
     // called when value changes because of deadbeef (other plugin etc.)
-    void onDeadbeefValueChanged(int value);
+    void onDeadbeefValueChanged(float value);
     // increase / decrease volume by x amount
-    void adjustVolume(int value);
+    void adjustVolume(float value);
 signals:
     // emitted when value got changed by slider
-    void volumeChanged(int volume);
+    void volumeChanged(float volume);
 
 };
 
