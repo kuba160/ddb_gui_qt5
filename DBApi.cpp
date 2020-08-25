@@ -120,8 +120,8 @@ bool DBApi::isPaused() {
     return (internal_state == DDB_PLAYBACK_STATE_PAUSED) ? true : false;
 }
 
-int DBApi::getVolume() {
-    return static_cast<int>(DBAPI->volume_get_db());
+float DBApi::getVolume() {
+    return DBAPI->volume_get_db();
 }
 
 ddb_playback_state_t DBApi::getOutputState() {
@@ -156,7 +156,7 @@ void DBApi::addTracksByUrl(const QUrl &url, int position) {
 
 // slots
 
-void DBApi::setVolume(int value) {
+void DBApi::setVolume(float value) {
     DBAPI->volume_set_db(value);
 }
 

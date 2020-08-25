@@ -35,7 +35,7 @@ public:
 
     void addTracksByUrl(const QUrl &url, int position = -1);
 
-    int getVolume();
+    float getVolume();
 
     ddb_playback_state_t getOutputState();
     ddb_playback_state_t getInternalState();
@@ -64,7 +64,7 @@ private:
 
 // Signals are subscribed by different parts of gui
 signals:
-    void volumeChanged(int);
+    void volumeChanged(float);
     void playlistChanged();
     void playlistChanged(int);
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
@@ -82,7 +82,7 @@ signals:
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
     // When user changed volume:
-    void setVolume(int);
+    void setVolume(float);
     //
     void playTrackByIndex(uint32_t);
     //
