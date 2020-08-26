@@ -215,7 +215,7 @@ void DBApi::newPlaylist(QString *name) {
     emit playlistCreated();
 }
 
-void DBApi::renamePlaylist(int plt, QString *name) {
+void DBApi::renamePlaylist(int plt, const QString *name) {
     if (plt < playlistNames.size()) {
         DBAPI->pl_lock ();
         ddb_playlist_t *plt_p = DBAPI->plt_get_for_idx(plt);

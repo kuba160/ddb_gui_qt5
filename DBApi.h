@@ -104,7 +104,7 @@ public slots:
     //
     void newPlaylist(QString *);
     //
-    void renamePlaylist(int plt, QString *name);
+    void renamePlaylist(int plt, const QString *name);
     //
     void setShuffle(ddb_shuffle_t);
     //

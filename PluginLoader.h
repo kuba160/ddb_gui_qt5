@@ -8,6 +8,13 @@
 #include <QToolBar>
 #include "DBApi.h"
 
+#include <QtGlobal>
+#if QT_VERSION >= 0x051400
+#define ENDL Qt::endl
+#else
+#define ENDL endl
+#endif
+
 extern DBApi *api;
 extern QStringList default_plugins;
 

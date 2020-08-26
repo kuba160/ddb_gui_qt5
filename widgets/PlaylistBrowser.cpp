@@ -37,6 +37,10 @@ void PlaylistBrowser::mousePressEvent(QMouseEvent *event) {
     }
 }
 
+QWidget *PlaylistBrowser::constructor(QWidget *parent, DBApi *Api) {
+    return new PlaylistBrowser(parent, Api);
+}
+
 QDockWidget *PlaylistBrowser::constructorDockWidget(QWidget *parent, DBApi *Api) {
     QWidget *pb = new PlaylistBrowser(parent, Api);
     QDockWidget *dw = new QDockWidget(QString("Playlist Browser"));

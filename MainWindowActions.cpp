@@ -13,37 +13,12 @@
 #include "QtGui.h"
 #include "DBApi.h"
 #include "AboutDialog.h"
-#include "PlayList.h"
 #include "PreferencesDialog.h"
 
 #include <include/callbacks.h>
 #include <QtConcurrent>
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
-
-
-// PlayBack toolbar
-
-void MainWindow::on_actionStop_triggered() {
-    DBAPI->sendmessage(DB_EV_STOP, 0, 0, 0);
-    updateTitle();
-}
-
-void MainWindow::on_actionPlay_triggered() {
-    api->sendPlayMessage(DB_EV_PLAY_CURRENT);
-}
-
-void MainWindow::on_actionPause_triggered() {
-    DBAPI->sendmessage(DB_EV_TOGGLE_PAUSE, 0, 0, 0);
-}
-
-void MainWindow::on_actionPrev_triggered() {
-    api->sendPlayMessage(DB_EV_PREV);
-}
-
-void MainWindow::on_actionNext_triggered() {
-    api->sendPlayMessage(DB_EV_NEXT);
-}
 
 // menuBar -/ File
 
@@ -145,22 +120,6 @@ void MainWindow::on_actionExit_triggered() {
     close();
 }
 
-
-// menuEdit
-
-void MainWindow::on_actionClearAll_triggered() {
-    //playList.clearPlayList();
-}
-
-
-void MainWindow::on_actionSelectAll_triggered() {
-    //playList.selectAll();
-}
-
-void MainWindow::on_actionDeselectAll_triggered() {
-    //playList.deselectAll();
-}
-
 // actionFind missing?
 
 void MainWindow::on_actionPreferences_triggered() {
@@ -171,74 +130,6 @@ void MainWindow::on_actionPreferences_triggered() {
     connect(prefDialog, SIGNAL(titleStoppedChanged()), this, SLOT(titleSettingChanged()));
     prefDialog->exec();
     delete prefDialog;
-}
-
-// menuView
-
-void MainWindow::on_actionHideMenuBar_triggered() {
-    ui->menuBar->setHidden(!ui->menuBar->isHidden());
-    ui->actionHideMenuBar->setChecked(!ui->menuBar->isHidden());
-}
-
-void MainWindow::on_actionHideTabBar_triggered() {
-    //playList.hideTab();
-}
-
-
-
-void MainWindow::on_actionPlayListHeader_triggered() {
-    //playList.header();
-}
-
-/*
-// todo make this dynamic
-#ifdef ARTWORK_ENABLED
-void MainWindow::on_actionHideCover_triggered() {
-    coverArtWidget.setHidden(!coverArtWidget.isHidden());
-}
-
-void MainWindow::onCoverartClose() {
-    ui->actionHideCoverArt->setChecked(false);
-}
-
-#endif
-*/
-
-void MainWindow::on_actionBlockToolbarChanges_triggered() {
-    int i;
-    //for (i = 0; i < ToolbarStackCount; i++) {
-    //    ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
-    //}
-}
-
-// menu "Options" (called Playback)
-
-// orderMenu
-
-void MainWindow::on_actionLinearOrder_triggered() {
-    DBAPI->conf_set_int("playback.order", PLAYBACK_ORDER_LINEAR);
-}
-
-void MainWindow::on_actionRandomOrder_triggered() {
-    DBAPI->conf_set_int("playback.order", PLAYBACK_ORDER_RANDOM);
-}
-
-void MainWindow::on_actionShuffleOrder_triggered() {
-    DBAPI->conf_set_int("playback.order", PLAYBACK_ORDER_SHUFFLE_TRACKS);
-}
-
-// loopingMenu
-
-void MainWindow::on_actionLoopAll_triggered() {
-    DBAPI->conf_set_int("playback.loop", PLAYBACK_MODE_LOOP_ALL);
-}
-
-void MainWindow::on_actionLoopTrack_triggered() {
-    DBAPI->conf_set_int("playback.loop", PLAYBACK_MODE_LOOP_SINGLE);
-}
-
-void MainWindow::on_actionLoopNothing_triggered() {
-    DBAPI->conf_set_int("playback.loop", PLAYBACK_MODE_NOLOOP);
 }
 
 // menu "Help"

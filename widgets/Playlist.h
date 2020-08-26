@@ -17,6 +17,8 @@ class PlayList : public QTreeView, public DBWidget {
 public:
     PlayList(QWidget *parent = nullptr, DBApi *Api = nullptr);
     ~PlayList();
+
+    static QWidget *constructor(QWidget *parent, DBApi *Api);
     
     void saveConfig();
     void loadConfig();

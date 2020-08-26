@@ -3,8 +3,7 @@
 #include "QtGui.h"
 #include "MainWindow.h"
 
-PlayListModel::PlayListModel(QObject *parent, DBApi *Api) : QAbstractItemModel(parent),
-                                                            DBWidget (nullptr, Api),
+PlayListModel::PlayListModel(QObject *parent) : QAbstractItemModel(parent),
                                                             playIcon(":/root/images/play_16.png"),
                                                             pauseIcon(":/root/images/pause_16.png") {
     //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(trackChanged(DB_playItem_t*,DB_playItem_t*)));
@@ -89,14 +88,17 @@ QVariant PlayListModel::data(const QModelIndex &index, int role = Qt::DisplayRol
 }
 
 QModelIndex PlayListModel::index(int row, int column, const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return createIndex(row, column, nullptr);
 }
 
 QModelIndex PlayListModel::parent(const QModelIndex &child) const {
+    Q_UNUSED(child);
     return QModelIndex();
 }
 
 int PlayListModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     DBAPI->pl_lock ();
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int rowCount = DBAPI->plt_get_item_count(plt, PL_MAIN);

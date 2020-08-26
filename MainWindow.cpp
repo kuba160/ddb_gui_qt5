@@ -13,7 +13,6 @@
 #include "QtGui.h"
 #include "DBApi.h"
 #include "AboutDialog.h"
-#include "PlayList.h"
 #include "PreferencesDialog.h"
 
 #include <include/callbacks.h>
@@ -27,30 +26,10 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
         DBWidget (parent, Api),
         ui(new Ui::MainWindow) {
-
     ui->setupUi(this);
     
     loadActions();
     loadIcons();
-
-    //api = new DBApi;
-
-    //orderGroup.addAction(ui->actionLinearOrder);
-    //orderGroup.addAction(ui->actionRandomOrder);
-    //orderGroup.addAction(ui->actionShuffleOrder);
-
-    //loopingGroup.addAction(ui->actionLoopAll);
-    //loopingGroup.addAction(ui->actionLoopTrack);
-    //loopingGroup.addAction(ui->actionLoopNothing);
-
-    ui->centralwidget->hide();
-    //ui->SeekToolbar->addWidget(&progressBar);
-    //ui->VolumeToolbar->addWidget(&volumeSlider);
-    //QWidget *empty = new QWidget(this);
-    //empty->setVisible(false);
-    //this->setCentralWidget(empty);
-    //ui->mainLayout->addWidget(&playList);
-
 
     main_widgets = ui->menuView->addMenu(dbtr->translate(nullptr,"Main Widget"));
     main_widgets_list = new QActionGroup(nullptr);
@@ -127,7 +106,6 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     pl->RestoreWidgets(this);
 
     setCentralWidget(pl->getMainWidget());
-    connect (pl, SIGNAL(centralWidgetChanged(QWidget*)), this, SLOT(windowSetCentralWidget(QWidget*)));
     if (pl->getTotalMainWidgets() <= 1) {
         main_widgets->menuAction()->setVisible(false);
     }
@@ -191,12 +169,6 @@ void MainWindow::windowViewActionMainWidget(QAction *action) {
         main_widgets->menuAction()->setVisible(true);
     }
 }
-
-
-void MainWindow::windowSetCentralWidget(QWidget *widget) {
-    setCentralWidget(widget);
-}
-
 
 void MainWindow::createConnections() {
     connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
@@ -498,10 +470,6 @@ void MainWindow::saveConfig() {
 
     //playList.saveConfig();
     pl->actionChecksSave();
-}
-
-void MainWindow::on_actionRemove_triggered() {
-    //playList.deleteSelectedTracks();
 }
 
 void MainWindow::windowActivate() {

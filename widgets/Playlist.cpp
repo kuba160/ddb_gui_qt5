@@ -1,4 +1,4 @@
-#include "PlayList.h"
+#include "Playlist.h"
 
 #include <QApplication>
 #include <QVBoxLayout>
@@ -10,7 +10,7 @@
 
 #include "MainWindow.h"
 
-PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(this, Api), playListModel(this, Api) {
+PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(this, Api), playListModel(this) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setDragEnabled(true);
@@ -47,6 +47,10 @@ PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(th
     createConnections();
 
     installEventFilter(this);
+}
+
+QWidget * PlayList::constructor(QWidget *parent, DBApi *Api) {
+    return new PlayList(parent, Api);
 }
 
 bool PlayList::eventFilter(QObject *target, QEvent *event) {

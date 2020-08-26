@@ -19,7 +19,7 @@ TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBWidget(parent, 
     createConnections();
 
     connect (api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
-    connect (this, SIGNAL(tabRenamed(int, QString *)), api, SLOT(renamePlaylist(int, QString *)));
+    connect (this, SIGNAL(tabRenamed(int,const QString *)), api, SLOT(renamePlaylist(int,const QString *)));
 }
 
 TabBar::~TabBar() {

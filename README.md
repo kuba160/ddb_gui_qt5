@@ -5,26 +5,21 @@ This plugin provides a Qt interface for [deadbeef](http://deadbeef.sourceforge.n
 ![image](https://user-images.githubusercontent.com/6359901/56922057-a6252880-6ac7-11e9-807f-3dc7b49ad502.png)
 
 ## Install
-For installation requires Qt 5 (specific version unknown) or greater and DeaDBeeF 0.7. For debian based systems install `qt5-default`.
+For installation requires Qt 5 (>=5.9.0) or greater and DeaDBeeF (>=1.8.0). For debian based systems install `qt5-default`.
 
 Get ddb_gui_qt5 sources from repository:
 ```bash
 $ git clone git://github.com/kuba160/ddb_gui_qt5
 ```
-Create temporary directory (for example </path/to/sources>/build) and change into it:
+Run qmake:
 ```bash
-$ cd ddb_gui_qt/
-$ mkdir build
-$ cd build
-```
-Run cmake (`CMAKE_INSTALL_PREFIX` default is /usr/local):
-```bash
-$ cmake -D CMAKE_INSTALL_PREFIX=<DEADBEEF_INSTALL_PREFIX> ../
+$ qmake ddb_gui_qt5.pro
+$ make
 ```
 
-Then run make:
+The default install path on linux is `~/.local/lib/deadbeef`, on other systems copy `ddb_gui_qt5.so` / `ddb_gui_qt5.dll` to your plugins directory.
 ```bash
-$ make
-# make install
+$ make install
 ```
-Then choose the QT gui plugin in the preference and restart DeaDBeeF. Another possibility is to start deadbeef with `--gui qt5`	 parameter.
+
+Then choose the QT gui plugin in the preferences and restart DeaDBeeF. Another possibility is to start deadbeef with `--gui qt5` parameter.

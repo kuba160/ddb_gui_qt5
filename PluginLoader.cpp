@@ -480,7 +480,7 @@ void PluginLoader::actionHandlerCheckable(bool check) {
         }
     }
     // toolbar not found
-    qDebug() << "qt5: PluginLoader: Widget toggled but no pointer available!" << Qt::endl;
+    qDebug() << "qt5: PluginLoader: Widget toggled but no pointer available!" << ENDL;
 
 }
 
@@ -497,7 +497,7 @@ void PluginLoader::actionHandler(bool check) {
         }
     }
     // toolbar not found
-    qDebug() << "qt5: PluginLoader: Widget could not be found, adding failed!" << Qt::endl;
+    qDebug() << "qt5: PluginLoader: Widget could not be found, adding failed!" << ENDL;
 }
 
 void PluginLoader::actionHandlerRemove(bool check) {
@@ -527,7 +527,7 @@ void PluginLoader::actionHandlerRemove(bool check) {
         }
     }
     // toolbar not found
-    qDebug() << "qt5: PluginLoader: Widget could not be found, removing failed!" << Qt::endl;
+    qDebug() << "qt5: PluginLoader: Widget could not be found, removing failed!" << ENDL;
 }
 
 void PluginLoader::actionHandlerMainWidget(bool check) {
@@ -548,7 +548,7 @@ void PluginLoader::actionHandlerMainWidget(bool check) {
         }
     }
     // toolbar not found
-    qDebug() << "qt5: PluginLoader: Widget could not be found, changing mainwidget failed!" << Qt::endl;
+    qDebug() << "qt5: PluginLoader: Widget could not be found, changing mainwidget failed!" << ENDL;
 }
 
 

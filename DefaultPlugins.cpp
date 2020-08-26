@@ -23,10 +23,20 @@
 #include "widgets/VolumeSlider.h"
 #include "widgets/SeekSlider.h"
 #include "widgets/PlaybackButtons.h"
+#include "widgets/Playlist.h"
+#include "widgets/PlaylistBrowser.h"
 #include "widgets/TabBar.h"
 #include "CoverArtWidget.h"
-#include "PlayListWidget.h"
-#include "PlaylistBrowser.h"
+
+class Dummy : public QWidget, public DBWidget {
+public:
+    static QWidget *constructor (QWidget *parent, DBApi *api);
+};
+
+QWidget *Dummy::constructor (QWidget *parent, DBApi *api) {
+    Q_UNUSED(api);
+    return new QWidget(parent);
+}
 
 DefaultPlugins::DefaultPlugins() {
     widgetLibrary = new std::vector<DBWidgetInfo>();
@@ -58,7 +68,7 @@ DefaultPlugins::DefaultPlugins() {
     playlistWidget.internalName = QString("playlist");
     playlistWidget.friendlyName = QString("Playlist");
     playlistWidget.type = DBWidgetInfo::TypeMainWidget;
-    playlistWidget.constructor = PlayListWidget::constructor;
+    playlistWidget.constructor = PlayList::constructor;
     widgetLibrary->push_back(playlistWidget);
 
     tabBar.internalName = QString("tabBar");
@@ -75,11 +85,16 @@ DefaultPlugins::DefaultPlugins() {
 
     playlistBrowser.internalName = QString("playlistBrowser");
     playlistBrowser.friendlyName = QString("Playlist browser");
-    playlistBrowser.type = DBWidgetInfo::TypeDockable;
+    playlistBrowser.type = DBWidgetInfo::TypeMainWidget;
+    playlistBrowser.constructor = PlaylistBrowser::constructor;
     playlistBrowser.constructorDockWidget = PlaylistBrowser::constructorDockWidget;
     widgetLibrary->push_back(playlistBrowser);
 
-
+    dummy.internalName = QString("dummy");
+    dummy.friendlyName = QString("Dummy");
+    dummy.type = DBWidgetInfo::TypeMainWidget;
+    dummy.constructor = Dummy::constructor;
+    widgetLibrary->push_back(dummy);
 }
 
 DefaultPlugins::~DefaultPlugins() {
