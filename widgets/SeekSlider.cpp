@@ -7,6 +7,7 @@
 #include <QStyleOptionSlider>
 #include <QLabel>
 #include <QPainter>
+#include <QtMath>
 
 #undef DBAPI
 #define DBAPI api->deadbeef
@@ -58,7 +59,7 @@ void SeekSlider::paintEvent(QPaintEvent *e) {
     qreal slider_height = 8.0;
     qreal slider_xpos = 2.0;
     qreal slider_ypos = this->height()/2-4.0;
-    float percentage = this->value()/100.0/SEEK_SCALE;
+    float percentage = DBAPI->playback_get_pos()/100.0;
 
     // TODO: Set colors from theme
     QColor blue(43,127,186);
@@ -67,7 +68,7 @@ void SeekSlider::paintEvent(QPaintEvent *e) {
     pen.setBrush(blue);
 
     QRectF rectangle(slider_xpos, slider_ypos, slider_width, slider_height);
-    QRectF progress_mask(slider_xpos, 0.0, slider_width * percentage, this->height());
+    QRectF progress_mask(slider_xpos, 0.0, qFloor(slider_width * percentage), this->height());
     qreal rect_xrad = 5.0;
     qreal rect_yrad = 4.0;
 
@@ -86,6 +87,18 @@ void SeekSlider::paintEvent(QPaintEvent *e) {
     qp.setClipping(false);
     qp.setBrush(Qt::transparent);
     qp.drawRoundedRect(rectangle, rect_xrad, rect_yrad);
+
+    // draw fade line to make progress smooth (don't draw on edges)
+    const char no_line_zone = 7;
+    if (qCeil(slider_width * percentage) > no_line_zone && qCeil(slider_width * percentage) < (slider_width - no_line_zone)) {
+        qreal line_xpos = qCeil(slider_width * percentage + 1.0);
+        qreal pixel_edge_fade = (slider_width * percentage) - qFloor(slider_width * percentage); // 0..1
+        int line_color = qFloor(255*pixel_edge_fade);
+        QPen pen2(QColor(43,127,186,line_color));
+        pen2.setWidthF(1.5);
+        qp.setPen(pen2);
+        qp.drawLine(line_xpos, slider_ypos, line_xpos, slider_ypos + slider_height);
+    }
 }
 
 void SeekSlider::mouseReleaseEvent(QMouseEvent *ev) {
