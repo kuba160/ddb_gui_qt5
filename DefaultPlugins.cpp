@@ -26,7 +26,7 @@
 #include "widgets/Playlist.h"
 #include "widgets/PlaylistBrowser.h"
 #include "widgets/TabBar.h"
-#include "CoverArtWidget.h"
+#include "widgets/CoverArt.h"
 
 class Dummy : public QWidget, public DBWidget {
 public:
@@ -61,8 +61,8 @@ DefaultPlugins::DefaultPlugins() {
 
     artworkWidget.internalName = QString("artwork");
     artworkWidget.friendlyName = QString("Album Art");
-    artworkWidget.type = DBWidgetInfo::TypeDockable;
-    artworkWidget.constructorDockWidget = CoverArtWidget::constructorDockWidget;
+    artworkWidget.type = DBWidgetInfo::TypeMainWidget;
+    artworkWidget.constructor = CoverArt::constructor;
     widgetLibrary->push_back(artworkWidget);
 
     playlistWidget.internalName = QString("playlist");

@@ -14,6 +14,7 @@ SOURCES  =  include/callbacks.cpp \
             preferencesWidgets/PluginsPreferencesWidget.cpp \
             preferencesWidgets/PluginSettingsWidget.cpp \
             preferencesWidgets/SoundPreferencesWidget.cpp \
+            widgets/CoverArt.cpp \
             widgets/PlaybackButtons.cpp \
             widgets/Playlist.cpp \
             widgets/PlaylistBrowser.cpp \
@@ -21,8 +22,6 @@ SOURCES  =  include/callbacks.cpp \
             widgets/TabBar.cpp \
             widgets/VolumeSlider.cpp \
             AboutDialog.cpp \
-            CoverArtWidget.cpp \
-            CoverArtWrapper.cpp \
             CoverArtCache.cpp \
             DBApi.cpp \
             DBFileDialog.cpp \
@@ -46,6 +45,7 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             preferencesWidgets/PluginsPreferencesWidget.h \
             preferencesWidgets/PluginSettingsWidget.h \
             preferencesWidgets/SoundPreferencesWidget.h \
+            widgets/CoverArt.h \
             widgets/PlaybackButtons.h \
             widgets/Playlist.h \
             widgets/PlaylistBrowser.h \
@@ -53,8 +53,6 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             widgets/TabBar.h \
             widgets/VolumeSlider.h \
             AboutDialog.h \
-            CoverArtWrapper.h \
-            CoverArtWidget.h \
             CoverArtCache.h \
             DBApi.h \
             DBFileDialog.h \

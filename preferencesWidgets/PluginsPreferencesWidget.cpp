@@ -66,7 +66,7 @@ void PluginsPreferencesWidget::loadPluginInfo(int item) {
         ddb_dialog_t conf;
         conf.title = plugin->name;
         conf.layout = plugin->configdialog;
-        conf.get_param = conf_get_str;
+        // conf.get_param = conf_get_str;
         configurePluginSettingsPanel(&conf);
     }
     else {

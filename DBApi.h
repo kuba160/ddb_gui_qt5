@@ -12,6 +12,7 @@
 #include <QDockWidget>
 #include <QtGuiSettings.h>
 #include "DeadbeefTranslator.h"
+#include "CoverArtCache.h"
 
 //#define DBAPI (this->api->deadbeef)
 #define DBAPI deadbeef_internal
@@ -29,6 +30,7 @@ public:
     const char DBApi_vmajor = DBAPI_VMAJOR;
     const char DBApi_vminor = DBAPI_VMINOR;
 
+    CoverArtCache coverart_cache;
 
     bool isPaused();
 

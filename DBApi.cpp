@@ -8,7 +8,7 @@
 #define DBAPI this->deadbeef
 
 
-DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent) {
+DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent), coverart_cache(parent) {
     this->deadbeef = Api;
     if (DBAPI->conf_get_int("resume.paused", 0)) {
         // will be paused
@@ -37,6 +37,7 @@ DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent) {
     currShuffle = DBAPI->streamer_get_shuffle();
     currRepeat = DBAPI->streamer_get_repeat();
 
+    connect(this, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)),&coverart_cache, SLOT(currCoverChangeCheck(DB_playItem_t *, DB_playItem_t *)));
 }
 
 DBApi::~DBApi() {

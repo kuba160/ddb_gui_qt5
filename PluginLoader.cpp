@@ -206,6 +206,7 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         else {
             temp.widget = p->info.constructor(nullptr, api);
             temp.dockWidget = new QDockWidget(*temp.friendlyName, mainWindow);
+            temp.dockWidget->setObjectName(*temp.internalName);
             temp.dockWidget->setWidget(temp.widget);
             temp.actionMainWidget->setChecked(false);
         }
@@ -425,6 +426,9 @@ void PluginLoader::setMainWidget(LoadedWidget_t *lw) {
     mainWidget = lw->widget;
     w->setCentralWidget(lw->widget);
     lw->actionMainWidget->setChecked(true);
+
+    settings->QSSETCONF(QString("MainWidget"),QString(*lw->internalName));
+    emit centralWidgetChanged(lw->widget);
 }
 
 void PluginLoader::setMainWindow(QMainWindow *mw) {
