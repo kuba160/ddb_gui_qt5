@@ -11,7 +11,7 @@ public:
     DBWidgetInfo *WidgetReturn(unsigned long);
 private:
     std::vector<DBWidgetInfo> *widgetLibrary;
-    DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget, playlistWidget, tabBar, tabBarD, dummy;
+    DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget, playlistWidget, tabBar, tabBarD, dummy, medialib;
     DBWidgetInfo playlistBrowser;
 };
 

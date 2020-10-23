@@ -15,6 +15,7 @@ SOURCES  =  include/callbacks.cpp \
             preferencesWidgets/PluginSettingsWidget.cpp \
             preferencesWidgets/SoundPreferencesWidget.cpp \
             widgets/CoverArt.cpp \
+            widgets/Medialib.cpp \
             widgets/PlaybackButtons.cpp \
             widgets/Playlist.cpp \
             widgets/PlaylistBrowser.cpp \
@@ -46,6 +47,7 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             preferencesWidgets/PluginSettingsWidget.h \
             preferencesWidgets/SoundPreferencesWidget.h \
             widgets/CoverArt.h \
+            widgets/Medialib.h \
             widgets/PlaybackButtons.h \
             widgets/Playlist.h \
             widgets/PlaylistBrowser.h \

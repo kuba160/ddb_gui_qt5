@@ -27,6 +27,7 @@
 #include "widgets/PlaylistBrowser.h"
 #include "widgets/TabBar.h"
 #include "widgets/CoverArt.h"
+#include "widgets/Medialib.h"
 
 class Dummy : public QWidget, public DBWidget {
 public:
@@ -95,6 +96,12 @@ DefaultPlugins::DefaultPlugins() {
     dummy.type = DBWidgetInfo::TypeMainWidget;
     dummy.constructor = Dummy::constructor;
     widgetLibrary->push_back(dummy);
+
+    medialib.internalName = QString("medialib");
+    medialib.friendlyName = QString("Medialib");
+    medialib.type = DBWidgetInfo::TypeMainWidget;
+    medialib.constructor = Medialib::constructor;
+    widgetLibrary->push_back(medialib);
 }
 
 DefaultPlugins::~DefaultPlugins() {
