@@ -57,6 +57,10 @@ CoverArt::~CoverArt() {
 }
 
 QWidget *CoverArt::constructor(QWidget *parent, DBApi *Api) {
+    DB_plugin_t *artwork = Api->deadbeef->plug_get_for_id("artwork");
+    if (!artwork) {
+        return new QLabel(QString("Artwork plugin not available"));
+    }
     return new CoverArt(parent, Api);
 }
 
