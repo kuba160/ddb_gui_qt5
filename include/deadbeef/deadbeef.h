@@ -71,6 +71,8 @@ extern "C" {
 // that there's a better replacement in the newer deadbeef versions.
 
 // api version history:
+// 1.13 -- deadbeef-1.9
+// 1.12 -- deadbeef-1.8.4
 // 1.11 -- deadbeef-1.8.3
 // 1.10 -- deadbeef-1.8.0
 // 1.9 -- deadbeef-0.7.2
@@ -96,7 +98,7 @@ extern "C" {
 // 0.1 -- deadbeef-0.2.0
 
 #define DB_API_VERSION_MAJOR 1
-#define DB_API_VERSION_MINOR 11
+#define DB_API_VERSION_MINOR 13
 
 #if defined(__clang__)
 
@@ -131,6 +133,18 @@ extern "C" {
 
 #ifndef DDB_API_LEVEL
 #define DDB_API_LEVEL DB_API_VERSION_MINOR
+#endif
+
+#if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 13)
+#define DEPRECATED_113 DDB_DEPRECATED("since deadbeef API 1.13")
+#else
+#define DEPRECATED_113
+#endif
+
+#if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 12)
+#define DEPRECATED_112 DDB_DEPRECATED("since deadbeef API 1.12")
+#else
+#define DEPRECATED_112
 #endif
 
 #if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 11)
@@ -322,6 +336,9 @@ enum {
     DB_PLUGIN_VFS     = 5,
     DB_PLUGIN_PLAYLIST = 6,
     DB_PLUGIN_GUI = 7,
+#if (DDB_API_LEVEL >= 13)
+    DB_PLUGIN_MEDIASOURCE = 8,
+#endif
 };
 
 // output plugin states
@@ -592,6 +609,9 @@ enum ddb_sys_directory_t {
     DDB_SYS_DIR_PLUGIN = 4,
     DDB_SYS_DIR_PIXMAP = 5,
     DDB_SYS_DIR_CACHE = 6,
+#if (DDB_API_LEVEL >= 13)
+    DDB_SYS_DIR_PLUGIN_RESOURCES = 7,
+#endif
 };
 
 // typecasting macros
@@ -652,6 +672,11 @@ enum {
 #if (DDB_API_LEVEL >= 10)
     // the caller supports text dimming functions
     DDB_TF_CONTEXT_TEXT_DIM = 16,
+#endif
+    // since 1.13
+#if (DDB_API_LEVEL >= 13)
+    // the caller guarantees that metadata access is thread safe
+    DDB_TF_CONTEXT_NO_MUTEX_LOCK = 32,
 #endif
 };
 
@@ -800,7 +825,7 @@ typedef struct {
     int (*plt_get_count) (void);
 
     // 1st item in playlist nr. 'plt'
-    DB_playItem_t * (*plt_get_head) (int plt);
+    DB_playItem_t * (*plt_get_head) (int plt) DEPRECATED_113;
 
     // nr. of selected items in playlist nr. 'plt'
     int (*plt_get_sel_count) (int plt);
@@ -1219,10 +1244,10 @@ typedef struct {
     const char * (*metacache_add_string) (const char *str);
     void (*metacache_remove_string) (const char *str);
 
-    // increase/decrease reference count for a string in metadata cache, such as
-    // the ones returned by pl_find_meta
-    void (*metacache_ref) (const char *str);
-    void (*metacache_unref) (const char *str);
+    // These functions are broken, and should not be used.
+    // Use metacache_add_string/metacache_remove_string instead.
+    void (*metacache_ref) (const char *str) DEPRECATED_113;
+    void (*metacache_unref) (const char *str) DEPRECATED_113;
 
     // this function must return original un-overriden value (ignoring the keys prefixed with '!')
     // it's not thread-safe, and must be used under the same conditions as the
@@ -1353,12 +1378,12 @@ typedef struct {
     // free the code returned by tf_compile
     void (*tf_free) (char *code);
 
-    // evaluate the titleformatting script in a given context
+    // Evaluate the compiled titleformatting script in the given context
     // ctx: a pointer to ddb_tf_context_t structure initialized by the caller
     // code: the bytecode data created by tf_compile
     // out: buffer allocated by the caller, must be big enough to fit the output string
     // outlen: the size of out buffer
-    // returns -1 on fail, output size on success
+    // returns -1 on failure, output size on success
     int (*tf_eval) (ddb_tf_context_t *ctx, const char *code, char *out, int outlen);
 
     // sort using title formatting v2
@@ -1530,6 +1555,23 @@ typedef struct {
     void (*streamer_set_repeat) (ddb_repeat_t repeat);
 
     ddb_repeat_t (*streamer_get_repeat) (void);
+#endif
+
+// since 1.12
+#if (DDB_API_LEVEL >= 12)
+    DB_metaInfo_t *(*pl_meta_for_key_with_override) (ddb_playItem_t *it, const char *key);
+    const char *(*pl_find_meta_with_override) (DB_playItem_t *it, const char *key);
+    int (*pl_get_meta_with_override) (ddb_playItem_t *it, const char *key, char *val, size_t size);
+    int (*pl_meta_exists_with_override) (DB_playItem_t *it, const char *key);
+#endif
+
+// since 1.13
+#if (DDB_API_LEVEL >= 13)
+    void (*plt_item_set_selected)(ddb_playlist_t *plt, ddb_playItem_t *it, int sel);
+    ddb_playlist_t * (*plt_find_by_name) (const char *name);
+    ddb_playlist_t * (*plt_append) (const char *title);
+    ddb_playItem_t * (*plt_get_head_item) (ddb_playlist_t *p, int iter);
+    ddb_playItem_t * (*plt_get_tail_item) (ddb_playlist_t *p, int iter);
 #endif
 } DB_functions_t;
 
@@ -2015,6 +2057,59 @@ typedef struct DB_playlist_s {
     DB_playItem_t * (*load2) (int visibility, ddb_playlist_t *plt, DB_playItem_t *after, const char *fname, int *pabort);
 #endif
 } DB_playlist_t;
+
+#if (DDB_API_LEVEL >= 13)
+
+// Mediasource plugin
+// The purpose is to provide access to external media sources.
+// It's used for the built-in media library plugin.
+
+typedef struct ddb_medialib_item_s {
+    const char *text; // e.g. the genre
+
+    DB_playItem_t *track; // NULL in non-leaf nodes
+
+    struct ddb_medialib_item_s *next;
+    struct ddb_medialib_item_s *children;
+    int num_children;
+} ddb_medialib_item_t;
+
+typedef enum {
+    DDB_MEDIASOURCE_EVENT_CONTENT_CHANGED = 1,
+    DDB_MEDIASOURCE_EVENT_STATE_CHANGED = 1,
+} ddb_mediasource_event_type_t;
+
+typedef enum {
+    DDB_MEDIASOURCE_STATE_IDLE,
+    DDB_MEDIASOURCE_STATE_LOADING,
+    DDB_MEDIASOURCE_STATE_SCANNING,
+    DDB_MEDIASOURCE_STATE_INDEXING,
+    DDB_MEDIASOURCE_STATE_SAVING,
+} ddb_mediasource_state_t;
+
+typedef void (* ddb_medialib_listener_t)(ddb_mediasource_event_type_t event, void *user_data);
+typedef void *ddb_mediasource_source_t;
+
+typedef struct {
+    DB_plugin_t plugin;
+
+    const char *(*source_name)(void);
+
+    /// @param source_path: a unique name to identify the instance, this will be used to prefix individual instance configuration files, caches, etc.
+    ddb_mediasource_source_t (*create_source) (const char *source_path);
+    void (*free_source) (ddb_mediasource_source_t source);
+
+    int (*add_listener)(ddb_mediasource_source_t source, ddb_medialib_listener_t listener, void *user_data);
+    void (*remove_listener)(ddb_mediasource_source_t source, int listener_id);
+
+    ddb_medialib_item_t * (*create_list)(ddb_mediasource_source_t source, const char *query, const char *filter);
+    void (*free_list) (ddb_mediasource_source_t source, ddb_medialib_item_t *list);
+
+    // whether scanner/indexer is active
+    ddb_mediasource_state_t (*scanner_state) (ddb_mediasource_source_t source);
+} DB_mediasource_t;
+
+#endif
 
 #undef DDB_DEPRECATED
 #undef DEPRECATED
