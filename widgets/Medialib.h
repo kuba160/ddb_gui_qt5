@@ -16,7 +16,6 @@
 
 typedef struct ddb_medialib_plugin_s {
     DB_mediasource_t plugin;
-#pragma mark - Configuration
 
     unsigned (*folder_count)(ddb_mediasource_source_t source);
     void (*folder_at_index)(ddb_mediasource_source_t source, int index, char *folder, size_t size);
@@ -24,6 +23,14 @@ typedef struct ddb_medialib_plugin_s {
 } ddb_medialib_plugin_t;
 ////
 
+// MedialibTreeWidgetItem
+class MedialibTreeWidgetItem : public QTreeWidgetItem, public DBWidget {
+public:
+    MedialibTreeWidgetItem (QWidget *parent = nullptr, DBApi *api = nullptr, ddb_medialib_item_t *it = nullptr);
+    DB_playItem_t *track = nullptr;
+};
+
+// Medialib
 class Medialib : public QWidget, public DBWidget {
     Q_OBJECT
 
@@ -31,21 +38,27 @@ public:
     Medialib(QWidget *parent = nullptr, DBApi *api = nullptr);
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
 
+    void updateTree();
+
+public slots:
+    void searchQueryChanged(int index);
+    void searchBoxChanged(const QString &text);
+
+
 protected:
     //virtual void resizeEvent(QResizeEvent *event);
 private:
-    QTreeWidget *tree = nullptr;
+    // DeaDBeeF
+    ddb_mediasource_source_t pl_mediasource;
     DB_mediasource_t *ml = nullptr;
     ddb_medialib_plugin_t *ml_source = nullptr;
 
-    void FillChildrens (QTreeWidgetItem *item, ddb_medialib_item_t *it);
-
-
-    QHBoxLayout *search_layout = nullptr;
+    // Widget
     QVBoxLayout *main_layout = nullptr;
+    QHBoxLayout *search_layout = nullptr;
+    QTreeWidget *tree = nullptr;
     QComboBox *search_query = nullptr;
     QLineEdit *search_box = nullptr;
-
 };
 
 #endif // VOLUMESLIDER_H
