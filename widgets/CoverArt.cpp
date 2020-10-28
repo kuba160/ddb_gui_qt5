@@ -69,7 +69,7 @@ void CoverArt::onCurrCoverChanged(uint32_t handle) {
     handle_watch = handle;
 }
 
-void CoverArt::onCoverLoaded(u_int32_t handle, QImage *image) {
+void CoverArt::onCoverLoaded(uint32_t handle, QImage *image) {
     if (handle == handle_watch) {
         // todo free previous etc etc.
         // check if cover is null
