@@ -84,13 +84,6 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     //main_layout->setSpacing(5);
     main_layout->addLayout(search_layout);
     main_layout->addWidget(tree);
-    int i;
-    for (i = 0; i < default_query.count(); i++) {
-        search_query->addItem(_(default_query.at(i).toUtf8()));
-    }
-    search_query->setCurrentIndex(1);
-    search_query->insertSeparator(search_query->count());
-    search_query->addItem(QString("Local"));
     search_box->setPlaceholderText(QString(_("Search")) + "...");
     connect(search_query, SIGNAL(currentIndexChanged(int)), this, SLOT(searchQueryChanged(int)));
     connect(search_box, SIGNAL(textChanged(const QString &)), this, SLOT(searchBoxChanged(const QString &)));
@@ -109,6 +102,16 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     const char *folders[] = {"/media/kuba-kubuntu/Archiwum/Muzyka/", "A:/Muzyka/FLAC", nullptr};
     ml_source->set_folders(pl_mediasource,folders,2);
 
+    // selectors
+    ml_selector = ml->get_selectors(pl_mediasource);
+    const char* selector;
+    while ((selector = ml->get_name_for_selector(pl_mediasource,ml_selector[search_query_count]))) {
+        search_query->addItem(_(selector));
+        search_query_count++;
+    }
+    search_query->setCurrentIndex(1);
+    search_query->insertSeparator(search_query->count());
+    search_query->addItem(QString("Local"));
     // remove after sleep fix
     updateTree();
 }
@@ -139,8 +142,12 @@ void Medialib::updateTree() {
         ml->free_list(pl_mediasource, curr_it);
     }
     curr_it = ml->create_list (pl_mediasource,
-                                               default_query.at(index).toLower().toUtf8(),
-                                               text.length() ? text.toUtf8() : " ");
+                               ml_selector[index],
+                               text.length() ? text.toUtf8() : " ");
+    if (!curr_it) {
+        qDebug() << "QtMedialib: Tried to updateTree, but medialib failed" << Qt::endl;
+        return;
+    }
     tree->clear();
     QList<QTreeWidgetItem *> items;
     items.append (new MedialibTreeWidgetItem(this, api, curr_it));
@@ -153,7 +160,14 @@ void Medialib::updateTree() {
 
 void Medialib::searchQueryChanged(int index) {
     Q_UNUSED(index);
-    updateTree();
+    if (index < search_query_count) {
+        updateTree();
+    }
+    else if (search_query_count !=0){
+        qDebug() << "qtMedialib: backend change" << Qt::endl;
+        search_query->setCurrentIndex(1);
+        //updateTree();
+    }
 }
 
 void Medialib::searchBoxChanged(const QString &text) {

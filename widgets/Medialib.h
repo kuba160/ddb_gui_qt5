@@ -59,6 +59,7 @@ private:
     ddb_mediasource_source_t pl_mediasource;
     DB_mediasource_t *ml = nullptr;
     ddb_medialib_plugin_t *ml_source = nullptr;
+    ddb_mediasource_list_selector_t *ml_selector;
     int listener_id = -1;
     ddb_medialib_item_t *curr_it = nullptr;
 
@@ -67,6 +68,7 @@ private:
     QHBoxLayout *search_layout = nullptr;
     QTreeWidget *tree = nullptr;
     QComboBox *search_query = nullptr;
+    int search_query_count = 0;
     QLineEdit *search_box = nullptr;
 };
 
