@@ -27,7 +27,7 @@ typedef struct ddb_medialib_plugin_s {
 class MedialibTreeWidgetItem : public QTreeWidgetItem, public DBWidget {
 public:
     MedialibTreeWidgetItem (QWidget *parent = nullptr, DBApi *api = nullptr, ddb_medialib_item_t *it = nullptr);
-    QList<void *> getTracks();
+    QList<DB_playItem_t *> getTracks();
     DB_playItem_t *track = nullptr;
 };
 
@@ -54,15 +54,13 @@ public slots:
     void searchQueryChanged(int index);
     void searchBoxChanged(const QString &text);
 
-
-protected:
-    //virtual void resizeEvent(QResizeEvent *event);
 private:
     // DeaDBeeF
     ddb_mediasource_source_t pl_mediasource;
     DB_mediasource_t *ml = nullptr;
     ddb_medialib_plugin_t *ml_source = nullptr;
     int listener_id = -1;
+    ddb_medialib_item_t *curr_it = nullptr;
 
     // Widget
     QVBoxLayout *main_layout = nullptr;

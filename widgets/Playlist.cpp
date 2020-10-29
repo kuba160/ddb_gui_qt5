@@ -175,9 +175,19 @@ void PlayList::dropEvent(QDropEvent *event) {
     } else if (event->mimeData()->hasFormat("medialib/tracks")) {
         QByteArray encodedData = event->mimeData()->data("medialib/tracks");
         QDataStream stream(&encodedData, QIODevice::ReadOnly);
-        QList<void*> items;
-        // TODO
-
+        playItemList a;
+        stream >> a;
+        //qDebug() <<"dropEven:" << a.list.at(0)->startsample << a.list.at(0)->endsample << a.list.at(0)->shufflerating << Qt::endl;
+        qint64 i;
+        ddb_playlist_t *plt = DBAPI->plt_get_curr();
+        for (i = a.count-1; i >= 0; i--) {
+            // TODO insert pos
+            playListModel.insertByPlayItemAtPosition(a.list.at(i),indexAt(event->pos()).row());
+            //DBAPI->plt_insert_item(plt,nullptr,a.list.at(i));
+        }
+        DBAPI->plt_unref(plt);
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
     } else {
         event->ignore();
     }

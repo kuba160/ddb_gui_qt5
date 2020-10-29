@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QApplication>
 #include <QDrag>
+#include <cstdint>
 
 // used for sleep()
 #include <unistd.h>
@@ -23,8 +24,7 @@ void MedialibTreeWidget::mousePressEvent(QMouseEvent *event) {
     QTreeWidget::mousePressEvent(event);
 }
 
-void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event)
-{
+void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event) {
     if (!(event->buttons() & Qt::LeftButton))
         return;
     if ((event->pos() - dragStartPosition).manhattanLength()
@@ -34,10 +34,10 @@ void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event)
     QDrag *drag = new QDrag(this);
     QMimeData *mimeData = new QMimeData;
 
-    QList<void *> list = static_cast<MedialibTreeWidgetItem *>(selectedItems().at(0))->getTracks();
+    QList<DB_playItem_t *> list = static_cast<MedialibTreeWidgetItem *>(selectedItems().at(0))->getTracks();
     QByteArray encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
-    stream << list;
+    stream << (playItemList) {list.count(),list};
     mimeData->setData("medialib/tracks",encodedData);
     drag->setMimeData(mimeData);
     drag->exec(Qt::CopyAction | Qt::MoveAction);
@@ -52,8 +52,9 @@ MedialibTreeWidgetItem::MedialibTreeWidgetItem(QWidget *parent, DBApi *api, ddb_
         child = child->next;
     }
 }
-QList<void *> MedialibTreeWidgetItem::getTracks() {
-    QList<void *> list;
+
+QList<DB_playItem_t *> MedialibTreeWidgetItem::getTracks() {
+    QList<DB_playItem_t *> list;
     if (track) {
         list.append(track);
     }
@@ -105,7 +106,7 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
 
     listener_id = ml->add_listener(pl_mediasource,listener_callback,this);
     // TODO, allow setting folders
-    const char *folders[] = {"/media/kuba-kubuntu/Hauptdisk/Archiwum/Muzyka/FLAC/OWN/", "A:/Muzyka/FLAC", nullptr};
+    const char *folders[] = {"/media/kuba-kubuntu/Archiwum/Muzyka/", "A:/Muzyka/FLAC", nullptr};
     ml_source->set_folders(pl_mediasource,folders,2);
 
     // remove after sleep fix
@@ -114,7 +115,8 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
 
 Medialib::~Medialib() {
     ml->remove_listener(pl_mediasource,listener_id);
-    ml->free_source(pl_mediasource);
+    if (pl_mediasource)
+        ml->free_source(pl_mediasource);
 }
 
 QWidget *Medialib::constructor(QWidget *parent, DBApi *api) {
@@ -130,27 +132,23 @@ QWidget *Medialib::constructor(QWidget *parent, DBApi *api) {
     return new Medialib(parent,api);
 }
 
-/*
-void Medialib::resizeEvent(QResizeEvent *event) {
-    Q_UNUSED(event)
-    //tree->resize(this->width(),this->height());
-}
-*/
-
 void Medialib::updateTree() {
     int index = search_query->currentIndex();
     QString text = search_box->text();
-    ddb_medialib_item_t *it = ml->create_list (pl_mediasource,
+    if (curr_it) {
+        ml->free_list(pl_mediasource, curr_it);
+    }
+    curr_it = ml->create_list (pl_mediasource,
                                                default_query.at(index).toLower().toUtf8(),
                                                text.length() ? text.toUtf8() : " ");
     tree->clear();
     QList<QTreeWidgetItem *> items;
-    items.append (new MedialibTreeWidgetItem(this, api, it));
-    ml->free_list(pl_mediasource, it);
+    items.append (new MedialibTreeWidgetItem(this, api, curr_it));
 
     tree->insertTopLevelItems(0, items);
     tree->expandItem(tree->itemAt(0,0));
-    tree->itemAt(0,0)->sortChildren(0,Qt::AscendingOrder);
+    if (tree->itemAt(0,0))
+        tree->itemAt(0,0)->sortChildren(0,Qt::AscendingOrder);
 }
 
 void Medialib::searchQueryChanged(int index) {
