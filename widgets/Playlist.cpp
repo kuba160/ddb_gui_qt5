@@ -28,9 +28,9 @@ PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(th
     setExpandsOnDoubleClick(false);
     setAcceptDrops(true);
     setModel(&playListModel);
-    
+
     header()->setStretchLastSection(false);
-    
+
 //###################################################
 //     header()->setStretchLastSection(true);
 //     header()->setSectionResizeMode(QHeaderView::Stretch);
@@ -130,7 +130,8 @@ void PlayList::loadConfig() {
 }
 
 void PlayList::dragEnterEvent(QDragEnterEvent *event) {
-    if (event->mimeData()->hasUrls() || event->mimeData()->hasFormat("playlist/track")) {
+    if (event->mimeData()->hasUrls() || event->mimeData()->hasFormat("playlist/track")
+                                     || event->mimeData()->hasFormat("medialib/tracks")) {
         event->setDropAction(Qt::MoveAction);
         event->accept();
     } else {
@@ -171,6 +172,12 @@ void PlayList::dropEvent(QDropEvent *event) {
         playListModel.moveItems(rows, row);
         event->setDropAction(Qt::CopyAction);
         event->accept();
+    } else if (event->mimeData()->hasFormat("medialib/tracks")) {
+        QByteArray encodedData = event->mimeData()->data("medialib/tracks");
+        QDataStream stream(&encodedData, QIODevice::ReadOnly);
+        QList<void*> items;
+        // TODO
+
     } else {
         event->ignore();
     }

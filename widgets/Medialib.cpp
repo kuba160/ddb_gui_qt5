@@ -1,5 +1,9 @@
 #include <QTreeWidget>
 #include <QLabel>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QApplication>
+#include <QDrag>
 
 // used for sleep()
 #include <unistd.h>
@@ -8,22 +12,65 @@
 
 QStringList default_query = {"Album", "Artist", "Genre", "Folder"};
 
+static void listener_callback(ddb_mediasource_event_type_t event, void *user_data) {
+    Q_UNUSED(event); Q_UNUSED(user_data)
+    static_cast<Medialib *>(user_data)->updateTree();
+}
+
+void MedialibTreeWidget::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton)
+        dragStartPosition = event->pos();
+    QTreeWidget::mousePressEvent(event);
+}
+
+void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    if (!(event->buttons() & Qt::LeftButton))
+        return;
+    if ((event->pos() - dragStartPosition).manhattanLength()
+         < QApplication::startDragDistance())
+        return;
+
+    QDrag *drag = new QDrag(this);
+    QMimeData *mimeData = new QMimeData;
+
+    QList<void *> list = static_cast<MedialibTreeWidgetItem *>(selectedItems().at(0))->getTracks();
+    QByteArray encodedData;
+    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+    stream << list;
+    mimeData->setData("medialib/tracks",encodedData);
+    drag->setMimeData(mimeData);
+    drag->exec(Qt::CopyAction | Qt::MoveAction);
+}
+
+MedialibTreeWidgetItem::MedialibTreeWidgetItem(QWidget *parent, DBApi *api, ddb_medialib_item_t *it) : DBWidget(parent,api) {
+    setText(0,QString(it->text));
+    track = it->track;
+    ddb_medialib_item_t *child = it ? it->children : nullptr;
+    while(child != nullptr) {
+        this->addChild(new MedialibTreeWidgetItem(parent, api, child));
+        child = child->next;
+    }
+}
+QList<void *> MedialibTreeWidgetItem::getTracks() {
+    QList<void *> list;
+    if (track) {
+        list.append(track);
+    }
+    int i;
+    for (i = 0; i < childCount(); i++) {
+        list.append(static_cast<MedialibTreeWidgetItem *>(child(i))->getTracks());
+    }
+    return list;
+}
+
 Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
-    DB_plugin_t *medialib = api->deadbeef->plug_get_for_id("medialib");
-    ml = static_cast<DB_mediasource_t *>((void *)medialib);
-    ml_source = static_cast<ddb_medialib_plugin_t *>((void *)medialib);
-
-    pl_mediasource = ml->create_source("ddb_gui_qt5");
-
-    // TODO, allow setting folders
-    const char *folders[] = {"/media/kuba-kubuntu/Hauptdisk/Archiwum/Muzyka/FLAC/OWN/", "A:/Muzyka/FLAC", nullptr};
-    ml_source->set_folders(pl_mediasource,folders,2);
-
-    // medialib thread unsafe at time of programming, wait for it to calm down :)
-    sleep(1);
-
-    tree = new QTreeWidget();
+    // GUI
+    tree = new MedialibTreeWidget();
     tree->setHeaderHidden(true);
+    tree->setDragDropMode(QAbstractItemView::DragDrop);
+    tree->setDragEnabled(true);
+    tree->viewport()->setAcceptDrops(true);
     main_layout = new QVBoxLayout(this);
     search_layout = new QHBoxLayout();
     search_query = new QComboBox();
@@ -36,24 +83,38 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     //main_layout->setSpacing(5);
     main_layout->addLayout(search_layout);
     main_layout->addWidget(tree);
-    search_query->addItems(default_query);
+    int i;
+    for (i = 0; i < default_query.count(); i++) {
+        search_query->addItem(_(default_query.at(i).toUtf8()));
+    }
     search_query->setCurrentIndex(1);
     search_query->insertSeparator(search_query->count());
     search_query->addItem(QString("Local"));
     search_box->setPlaceholderText(QString(_("Search")) + "...");
     connect(search_query, SIGNAL(currentIndexChanged(int)), this, SLOT(searchQueryChanged(int)));
     connect(search_box, SIGNAL(textChanged(const QString &)), this, SLOT(searchBoxChanged(const QString &)));
+
+    // DEADBEEF
+    DB_plugin_t *medialib = api->deadbeef->plug_get_for_id("medialib");
+    ml = static_cast<DB_mediasource_t *>((void *)medialib);
+    ml_source = static_cast<ddb_medialib_plugin_t *>((void *)medialib);
+
+    pl_mediasource = ml->create_source("ddb_gui_qt5");
+    // medialib thread unsafe at time of programming, wait for it to calm down :)
+    sleep(1);
+
+    listener_id = ml->add_listener(pl_mediasource,listener_callback,this);
+    // TODO, allow setting folders
+    const char *folders[] = {"/media/kuba-kubuntu/Hauptdisk/Archiwum/Muzyka/FLAC/OWN/", "A:/Muzyka/FLAC", nullptr};
+    ml_source->set_folders(pl_mediasource,folders,2);
+
+    // remove after sleep fix
     updateTree();
 }
 
-MedialibTreeWidgetItem::MedialibTreeWidgetItem(QWidget *parent, DBApi *api, ddb_medialib_item_t *it) : DBWidget(parent,api) {
-    setText(0,QString(it->text));
-    track = it->track;
-    ddb_medialib_item_t *child = it ? it->children : nullptr;
-    while(child != nullptr) {
-        this->addChild(new MedialibTreeWidgetItem(parent, api, child));
-        child = child->next;
-    }
+Medialib::~Medialib() {
+    ml->remove_listener(pl_mediasource,listener_id);
+    ml->free_source(pl_mediasource);
 }
 
 QWidget *Medialib::constructor(QWidget *parent, DBApi *api) {

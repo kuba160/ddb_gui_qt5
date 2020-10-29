@@ -27,7 +27,16 @@ typedef struct ddb_medialib_plugin_s {
 class MedialibTreeWidgetItem : public QTreeWidgetItem, public DBWidget {
 public:
     MedialibTreeWidgetItem (QWidget *parent = nullptr, DBApi *api = nullptr, ddb_medialib_item_t *it = nullptr);
+    QList<void *> getTracks();
     DB_playItem_t *track = nullptr;
+};
+
+// MedialibTreeWidget
+class MedialibTreeWidget : public QTreeWidget {
+protected:
+    QPoint dragStartPosition;
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
 };
 
 // Medialib
@@ -36,6 +45,7 @@ class Medialib : public QWidget, public DBWidget {
 
 public:
     Medialib(QWidget *parent = nullptr, DBApi *api = nullptr);
+    ~Medialib();
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
 
     void updateTree();
@@ -52,6 +62,7 @@ private:
     ddb_mediasource_source_t pl_mediasource;
     DB_mediasource_t *ml = nullptr;
     ddb_medialib_plugin_t *ml_source = nullptr;
+    int listener_id = -1;
 
     // Widget
     QVBoxLayout *main_layout = nullptr;

@@ -214,6 +214,7 @@ void PlayListModel::moveItems(QList<int> indices, int before) {
 QStringList PlayListModel::mimeTypes () const {
     QStringList qstrList;
     qstrList.append("playlist/track");
+    qstrList.append("medialib/tracks");
     qstrList.append("text/uri-list");
     return qstrList;
 }
