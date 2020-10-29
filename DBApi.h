@@ -151,4 +151,13 @@ typedef struct DB_qtgui_s {
     int (*register_widget) (DBWidgetInfo *);
 } DB_qtgui_t;
 
+class playItemList {
+public:
+    qint32 count;
+    QList<DB_playItem_t *> list;
+};
+
+QDataStream &operator<<(QDataStream &ds, const playItemList &pil);
+QDataStream &operator>>(QDataStream &ds, playItemList &pil);
+
 #endif // DBAPIWRAPPER_H

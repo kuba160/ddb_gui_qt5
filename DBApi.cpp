@@ -255,3 +255,25 @@ DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
 DBWidget::~DBWidget() {
     // exit
 }
+
+QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {
+    ds << pil.count;
+    qint32 i;
+    for (i = 0; i < pil.count; i++) {
+        auto ptr= reinterpret_cast<quintptr>(pil.list.at(i));
+        ds << ptr;
+    }
+    return ds;
+}
+QDataStream& operator >> (QDataStream &ds, playItemList &pil) {
+    pil.list.clear();
+    ds >> pil.count;
+    qint32 i;
+    for (i = 0; i < pil.count; i++) {
+        quintptr ptrval;
+        ds >> ptrval;
+        auto temp = reinterpret_cast<DB_playItem_t *>(ptrval);
+        pil.list.append(temp);
+    }
+    return ds;
+}
