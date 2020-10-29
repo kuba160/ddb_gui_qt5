@@ -37,7 +37,9 @@ DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent), coverart_c
     currShuffle = DBAPI->streamer_get_shuffle();
     currRepeat = DBAPI->streamer_get_repeat();
 
-    connect(this, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)),&coverart_cache, SLOT(currCoverChangeCheck(DB_playItem_t *, DB_playItem_t *)));
+    if(coverart_cache.getCoverArtPlugin()) {
+        connect(this, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)),&coverart_cache, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
+    }
 }
 
 DBApi::~DBApi() {

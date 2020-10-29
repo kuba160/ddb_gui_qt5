@@ -1,11 +1,9 @@
 #ifndef COVERARTWIDGET_H
 #define COVERARTWIDGET_H
 
-#include <QDockWidget>
 #include <QLabel>
 #include <QLayout>
 #include "DBApi.h"
-#include <QAction>
 
 class CoverArt : public QWidget, public DBWidget{
     Q_OBJECT
@@ -13,26 +11,17 @@ class CoverArt : public QWidget, public DBWidget{
 public:
     CoverArt(QWidget *parent = nullptr, DBApi *api = nullptr);
     ~CoverArt();
-
-    QMargins *m;
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
 
-    QLabel *cover_display = nullptr;
-    QImage *cover_image = nullptr;
-    void updateCover(DB_playItem_t *track = NULL);
-
+public slots:
+    void currCoverChanged();
 private:
+    void setCover(QImage *image);
     virtual void resizeEvent(QResizeEvent *event);
     QHBoxLayout *layout = nullptr;
-    uint32_t handle_watch;
-    
-public slots:
-    void onCurrCoverChanged(uint32_t);
-    void onCoverLoaded(uint32_t, QImage *);
-
-signals:
-    void onCloseEvent();
-    
+    QLabel *cover_display = nullptr;
+    QImage *cover_image = nullptr;
+    QMargins *m;
 };
 
 #endif // COVERARTWIDGET_H
