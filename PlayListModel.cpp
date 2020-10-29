@@ -182,6 +182,22 @@ void PlayListModel::insertByURLAtPosition(const QUrl &url, int position) {
     endInsertRows();
 }
 
+void PlayListModel::insertByPlayItemAtPosition(DB_playItem_t *item, int position) {
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    int prev_track_count = DBAPI->plt_get_item_count(plt, PL_MAIN);
+    DB_playItem_t *after;
+    if (position == -1) {
+        after = nullptr;
+    }
+    else {
+        after = DBAPI->pl_get_for_idx(position);
+    }
+    DBAPI->plt_insert_item(plt,after,item);
+    int count = DBAPI->plt_get_item_count(plt, PL_MAIN) - prev_track_count;
+    DBAPI->plt_unref(plt);
+    beginInsertRows(QModelIndex(), position, position + count - 1);
+    endInsertRows();
+}
 void PlayListModel::moveItems(QList<int> indices, int before) {
     uint32_t *inds = new uint32_t[indices.length()];
     //uint32_t inds[indices.length()];

@@ -20,6 +20,7 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent) const;
 
     void insertByURLAtPosition(const QUrl &url, int position = -1);
+    void insertByPlayItemAtPosition(DB_playItem_t *item, int position = -1);
     void moveItems(QList<int> indices, int before);
     
     void clearPlayList();
