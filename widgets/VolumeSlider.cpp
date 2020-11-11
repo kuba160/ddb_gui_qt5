@@ -145,6 +145,7 @@ void VolumeSlider::mouseReleaseEvent ( QMouseEvent * event ) {
 void VolumeSlider::onSliderValueChanged(int value) {
     // QSlider::setValue(value);
     Volume = value;
+    setToolTip(QString("%1dB") .arg (Volume));
     emit volumeChanged(value);
 }
 
