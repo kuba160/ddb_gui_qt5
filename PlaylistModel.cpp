@@ -117,6 +117,9 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role = Qt::DisplayRol
             buffer[0] = 0;
             switch (h->type) {
             case HT_playing:
+                // TODO include information about queue here
+                //ret = QString::fromUtf8("");
+                //break;
             case HT_albumArt:
                 ret = QString::fromUtf8("");
                 break;
