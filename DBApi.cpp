@@ -50,15 +50,16 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     Q_UNUSED(p2);
 
     ddb_event_trackchange_t *ev;
+     ddb_playback_state_t state;
     switch (id) {
         case DB_EV_SONGCHANGED:
             ev = (ddb_event_trackchange_t *)ctx;
             emit trackChanged(ev->from, ev->to);
             break;
         case DB_EV_PAUSED:
-            //internal_state = p1;
-            if (internal_state != p1) {
-                internal_state = (ddb_playback_state_t) p1;
+            state = p1 ? DDB_PLAYBACK_STATE_PAUSED : DDB_PLAYBACK_STATE_PLAYING;
+            if (internal_state != state) {
+                internal_state = state;
                 if (p1) {
                     emit playbackPaused();
                 }

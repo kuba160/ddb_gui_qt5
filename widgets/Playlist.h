@@ -7,16 +7,16 @@
 #include <QMenu>
 
 #include "DBApi.h"
-#include "PlayListModel.h"
+#include "PlaylistModel.h"
 
 #include <QTreeView>
 
-class PlayList : public QTreeView, public DBWidget {
+class Playlist : public QTreeView, public DBWidget {
     Q_OBJECT
 
 public:
-    PlayList(QWidget *parent = nullptr, DBApi *Api = nullptr);
-    ~PlayList();
+    Playlist(QWidget *parent = nullptr, DBApi *Api = nullptr);
+    ~Playlist();
 
     static QWidget *constructor(QWidget *parent, DBApi *Api);
     
@@ -54,13 +54,14 @@ protected:
     void dropEvent(QDropEvent *event);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
 
-    PlayListModel playListModel;
+    PlaylistModel playlistModel;
 
-public Q_SLOTS:
+public slots:
+    void onPlaylistChanged();
     void delSelectedTracks();
     void refresh();
 
-private Q_SLOTS:
+private slots:
     void trackDoubleClicked(QModelIndex index);
     void headerContextMenuRequested(QPoint);
     void lockColumns(bool);

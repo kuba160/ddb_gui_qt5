@@ -10,7 +10,7 @@
 
 #include "MainWindow.h"
 
-PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(this, Api), playListModel(this) {
+Playlist::Playlist(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(this, Api), playlistModel(this, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setDragEnabled(true);
@@ -27,7 +27,7 @@ PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(th
     setWordWrap(false);
     setExpandsOnDoubleClick(false);
     setAcceptDrops(true);
-    setModel(&playListModel);
+    setModel(&playlistModel);
 
     header()->setStretchLastSection(false);
 
@@ -47,13 +47,21 @@ PlayList::PlayList(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(th
     createConnections();
 
     installEventFilter(this);
+
+    playlistModel.setDefaultHeaders();
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    playlistModel.setPlaylist(plt);
+    DBAPI->plt_unref(plt);
+    //playlistModel.setColumns()
+
+    connect(api,SIGNAL(playlistChanged()),this,SLOT(onPlaylistChanged()));
 }
 
-QWidget * PlayList::constructor(QWidget *parent, DBApi *Api) {
-    return new PlayList(parent, Api);
+QWidget * Playlist::constructor(QWidget *parent, DBApi *Api) {
+    return new Playlist(parent, Api);
 }
 
-bool PlayList::eventFilter(QObject *target, QEvent *event) {
+bool Playlist::eventFilter(QObject *target, QEvent *event) {
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = (QKeyEvent *)event;
         if ((keyEvent->key() == Qt::Key_Enter) || (keyEvent->key() == Qt::Key_Return)) {
@@ -64,11 +72,11 @@ bool PlayList::eventFilter(QObject *target, QEvent *event) {
     return QTreeView::eventFilter(target, event);
 }
 
-PlayList::~PlayList() {
+Playlist::~Playlist() {
     delete lockColumnsAction;
 }
 
-void PlayList::createConnections() {
+void Playlist::createConnections() {
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
     connect(this, SIGNAL(enterRelease(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
 
@@ -81,44 +89,44 @@ void PlayList::createConnections() {
     connect(api, SIGNAL(playlistChanged()), this, SLOT(refresh()));
 }
 
-void PlayList::refresh() {
+void Playlist::refresh() {
     setModel(NULL);
-    setModel(&playListModel);
+    setModel(&playlistModel);
     goToLastSelection();
     header()->restoreState(headerState);
 }
 
-void PlayList::goToLastSelection() {
+void Playlist::goToLastSelection() {
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
     if (cursor < 0)
         restoreCursor();
     else
-        setCurrentIndex(playListModel.index(cursor, 0, QModelIndex()));
+        setCurrentIndex(playlistModel.index(cursor, 0, QModelIndex()));
     DBAPI->plt_unref(plt);
 }
 
-void PlayList::restoreCursor() {
+void Playlist::restoreCursor() {
     int currentPlaylist = DBAPI->plt_get_curr_idx();
     int cursor = DBAPI->conf_get_int(QString("playlist.cursor.%1").arg(currentPlaylist).toUtf8().constData(), -1);
-    setCurrentIndex(playListModel.index(cursor, 0, QModelIndex()));
+    setCurrentIndex(playlistModel.index(cursor, 0, QModelIndex()));
 }
 
-void PlayList::storeCursor() {
+void Playlist::storeCursor() {
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
     DBAPI->conf_set_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8().constData(), cursor);
     DBAPI->plt_unref(plt);
 }
 
-void PlayList::saveConfig() {
+void Playlist::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsVisible,!header()->isHidden());
     SETTINGS->setValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderState, header()->saveState());
     SETTINGS->setValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsLocked, !header()->sectionsMovable() && header()->sectionResizeMode(1) == QHeaderView::Fixed);
-    playListModel.saveConfig();
+    //playlistModel.saveConfig();
 }
 
-void PlayList::loadConfig() {
+void Playlist::loadConfig() {
     bool isVisible = SETTINGS->getValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsVisible,true).toBool();
     bool isLocked = SETTINGS->getValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsLocked, true).toBool();
     headerState = SETTINGS->getValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderState, QByteArray()).toByteArray();
@@ -129,7 +137,7 @@ void PlayList::loadConfig() {
     lockColumnsAction->setChecked(isLocked);
 }
 
-void PlayList::dragEnterEvent(QDragEnterEvent *event) {
+void Playlist::dragEnterEvent(QDragEnterEvent *event) {
     if (event->mimeData()->hasUrls() || event->mimeData()->hasFormat("playlist/track")
                                      || event->mimeData()->hasFormat("medialib/tracks")) {
         event->setDropAction(Qt::MoveAction);
@@ -139,7 +147,7 @@ void PlayList::dragEnterEvent(QDragEnterEvent *event) {
     }
 }
 
-void PlayList::dropEvent(QDropEvent *event) {
+void Playlist::dropEvent(QDropEvent *event) {
     if (event->mimeData()->hasUrls()) {
         ddb_playlist_t *plt = DBAPI->plt_get_curr();
         int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
@@ -147,7 +155,7 @@ void PlayList::dropEvent(QDropEvent *event) {
         int row = indexAt(event->pos()).row();
         int before = (row >= 0) ? row - 1 : count - 1;
         foreach (QUrl url, event->mimeData()->urls()) {
-            playListModel.insertByURLAtPosition(url, before);
+            playlistModel.insertByURLAtPosition(url, before);
             before++;
         }
         event->setDropAction(Qt::CopyAction);
@@ -169,7 +177,7 @@ void PlayList::dropEvent(QDropEvent *event) {
         }
         QList<int> rows = newItems.keys();
         std::sort(rows.begin(),rows.end());
-        playListModel.moveItems(rows, row);
+        playlistModel.moveItems(rows, row);
         event->setDropAction(Qt::CopyAction);
         event->accept();
     } else if (event->mimeData()->hasFormat("medialib/tracks")) {
@@ -182,7 +190,7 @@ void PlayList::dropEvent(QDropEvent *event) {
         ddb_playlist_t *plt = DBAPI->plt_get_curr();
         for (i = a.count-1; i >= 0; i--) {
             // TODO insert pos
-            playListModel.insertByPlayItemAtPosition(a.list.at(i),indexAt(event->pos()).row());
+            playlistModel.insertByPlayItemAtPosition(a.list.at(i),indexAt(event->pos()).row());
             //DBAPI->plt_insert_item(plt,nullptr,a.list.at(i));
         }
         DBAPI->plt_unref(plt);
@@ -193,7 +201,7 @@ void PlayList::dropEvent(QDropEvent *event) {
     }
 }
 
-void PlayList::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
+void Playlist::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
     if (selected == deselected)
         return;
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
@@ -204,11 +212,11 @@ void PlayList::selectionChanged(const QItemSelection &selected, const QItemSelec
     QTreeView::selectionChanged(selected, deselected);
 }
 
-void PlayList::trackDoubleClicked(QModelIndex index) {
+void Playlist::trackDoubleClicked(QModelIndex index) {
     w->Api()->playTrackByIndex(index.row());
 }
 
-void PlayList::createContextMenu() {
+void Playlist::createContextMenu() {
     setContextMenuPolicy(Qt::CustomContextMenu);
     QAction *delTrack = new QAction(tr("Remove Track(s) From Playlist"), this);
     delTrack->setShortcut(Qt::Key_Delete);
@@ -217,7 +225,7 @@ void PlayList::createContextMenu() {
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
 }
 
-void PlayList::createHeaderContextMenu() {
+void Playlist::createHeaderContextMenu() {
     lockColumnsAction = new QAction(tr("Lock columns"), &headerContextMenu);
     lockColumnsAction->setCheckable(true);
     lockColumnsAction->setChecked(header()->sectionsMovable() && header()->sectionResizeMode(0) == QHeaderView::Fixed);
@@ -226,25 +234,27 @@ void PlayList::createHeaderContextMenu() {
     loadConfig();
     
     QMenu *columnsMenu = new QMenu(tr("Columns"), &headerContextMenu);
-    foreach (QString name, playListModel.columnNames.values()) {
-        QAction *action = new QAction(name, &headerContextMenu);
+    foreach (PlaylistHeader_t *header, playlistModel.columns) {
+        QAction *action = new QAction(header->title, &headerContextMenu);
         action->setCheckable(true);
-        for (int i = 0; i < header()->count(); i++) {
-            if (playListModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == name ||
-                (playListModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == "" && name == tr("Status"))
+        /*
+        for (int i = 0; i < playlistModel.columns.count(); i++) {
+            if (playlistModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == name ||
+                (playlistModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == "" && name == tr("Status"))
             ) {
                 action->setChecked(!isColumnHidden(i));
                 break;
             }
             connect(action, SIGNAL(toggled(bool)), SLOT(setColumnHidden(bool)));
         }
+        */
         columnsMenu->addAction(action);
     }
     headerContextMenu.addMenu(columnsMenu);
     headerContextMenu.addAction(lockColumnsAction);
 }
 
-void PlayList::showContextMenu(QPoint point) {
+void Playlist::showContextMenu(QPoint point) {
     if (indexAt(point).row() < 0)
         return;
     QMenu menu(this);
@@ -252,47 +262,47 @@ void PlayList::showContextMenu(QPoint point) {
     menu.exec(mapToGlobal(point));
 }
 
-void PlayList::headerContextMenuRequested(QPoint pos) {
+void Playlist::headerContextMenuRequested(QPoint pos) {
     headerContextMenu.move(mapToGlobal(pos));
     headerContextMenu.show();
 }
 
-void PlayList::lockColumns(bool locked) {
+void Playlist::lockColumns(bool locked) {
     header()->setSectionResizeMode(locked ? QHeaderView::Fixed : QHeaderView::Interactive);
     header()->setSectionsMovable(!locked);
     headerState = header()->saveState();
 }
 
-void PlayList::onTrackChanged(DB_playItem_t *from, DB_playItem_t *to) {
+void Playlist::onTrackChanged(DB_playItem_t *from, DB_playItem_t *to) {
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int index = DBAPI->plt_get_item_idx(plt, to, PL_MAIN);
     DBAPI->plt_unref(plt);
-    setCurrentIndex(playListModel.index(index, 0, QModelIndex()));
+    setCurrentIndex(playlistModel.index(index, 0, QModelIndex()));
 
-    playListModel.index(index, 0, QModelIndex());
+    playlistModel.index(index, 0, QModelIndex());
 }
 
-void PlayList::delSelectedTracks() {
-    playListModel.deleteTracks(selectionModel()->selectedRows());
+void Playlist::delSelectedTracks() {
+    playlistModel.deleteTracks(selectionModel()->selectedRows());
 }
 
-void PlayList::clearPlayList() {
-    playListModel.clearPlayList();
+void Playlist::clearPlayList() {
+    playlistModel.clearPlayList();
 }
 
-void PlayList::insertByURLAtPosition(const QUrl& url, int position) {
-    playListModel.insertByURLAtPosition(url, position);
+void Playlist::insertByURLAtPosition(const QUrl& url, int position) {
+    playlistModel.insertByURLAtPosition(url, position);
 }
 
-void PlayList::toggleHeaderHidden() {
+void Playlist::toggleHeaderHidden() {
     setHeaderHidden(!isHeaderHidden());
 }
 
-void PlayList::setColumnHidden(bool hidden) {
+void Playlist::setColumnHidden(bool hidden) {
     if (QAction *action = qobject_cast<QAction *>(QObject::sender())) {
         for (int i = 0; i < header()->count(); i++) {
-            if (playListModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == action->text() ||
-                (playListModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == "" && action->text() == tr("Status"))
+            if (playlistModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == action->text() ||
+                (playlistModel.headerData(i, Qt::Horizontal, Qt::DisplayRole).toString() == "" && action->text() == tr("Status"))
             ) {
                 QTreeView::setColumnHidden(i, !hidden);
                 headerState = header()->saveState();
@@ -302,6 +312,11 @@ void PlayList::setColumnHidden(bool hidden) {
     }
 }
 
-void PlayList::saveHeaderState() {
+void Playlist::saveHeaderState() {
     headerState = header()->saveState();
+}
+
+void Playlist::onPlaylistChanged() {
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    playlistModel.setPlaylist(plt);
 }

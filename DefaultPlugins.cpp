@@ -69,7 +69,7 @@ DefaultPlugins::DefaultPlugins() {
     playlistWidget.internalName = QString("playlist");
     playlistWidget.friendlyName = QString("Playlist");
     playlistWidget.type = DBWidgetInfo::TypeMainWidget;
-    playlistWidget.constructor = PlayList::constructor;
+    playlistWidget.constructor = Playlist::constructor;
     widgetLibrary->push_back(playlistWidget);
 
     tabBar.internalName = QString("tabBar");
