@@ -29,6 +29,9 @@
 
 #include "DefaultPlugins.h"
 
+#define GETCONF(X,Y) settings->getValue(QString("PluginLoader"),X,Y)
+#define SETCONF(X,Y) settings->setValue(QString("PluginLoader"),X,Y)
+
 extern MainWindow *w;
 extern DBApi *api;
 
@@ -56,6 +59,7 @@ PluginLoader::PluginLoader(DBApi* Api) : QObject(nullptr), DBWidget (nullptr, Ap
             i++;
         }
     }
+    // External widgets will be appended to widgetLibrary
 }
 
 PluginLoader::~PluginLoader() {
@@ -77,12 +81,13 @@ PluginLoader::~PluginLoader() {
 }
 
 void PluginLoader::RestoreWidgets(QMainWindow *parent) {
-    QStringList slist = settings->getValue(QString("PluginLoader"), QString("PluginsLoaded"), default_plugins).toStringList();
-    QVariant deflayout = settings->QSGETCONF(QString("BuildDefaultLayout"),QVariant(true));
-    if (deflayout.toBool() == true) {
+    QStringList slist = GETCONF("PluginsLoaded", default_plugins).toStringList();
+    bool deflayout = GETCONF(QString("BuildDefaultLayout"),QVariant(true)).toBool();
+    if (deflayout) {
         slist = default_plugins;
     }
     mainWindow = parent;
+    // Try to load widgets from config
     int i;
     for (i = 0; i < slist.size(); i++) {
         unsigned long wl_num = widgetLibraryGetNum(&slist.at(i));
@@ -90,7 +95,7 @@ void PluginLoader::RestoreWidgets(QMainWindow *parent) {
             pl->loadFromWidgetLibrary(wl_num);
         }
         else {
-            qDebug() << "qt5: PluginLoader: request to load plugin" + slist.at(i) + "but it is not available!";
+            qDebug() << "qt5: PluginLoader: requested to load plugin" + slist.at(i) + "but it is missing from widget library!";
         }
     }
 }
@@ -574,7 +579,6 @@ QString *PluginLoader::widgetFriendlyName(unsigned long num) {
     return p->friendlyName;
 }
 
-
 void PluginLoader::updateActionChecks() {
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {
@@ -613,9 +617,6 @@ void PluginLoader::actionChecksSave() {
             }
         }
     }
-
-
-
 }
 
 void PluginLoader::lockWidgets(bool lock) {
