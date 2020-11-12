@@ -170,41 +170,31 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
     qDebug() << "qt5: PluginLoader: Loading widget" << *temp.friendlyName;
 
     temp.actionMainWidget = nullptr;
+    QWidget dummyName;
     switch (p->info.type) {
-    case DBWidgetInfo::TypeWidgetToolbar:
-        temp.widget = p->info.constructor(nullptr, api);
+    case DBWidgetInfo::TypeToolbar:
         temp.toolbar = new QToolBar(mainWindow);
         temp.toolbar->setObjectName(*temp.internalName);
+        temp.widget = p->info.constructor(temp.toolbar, api);
         temp.toolbar->addWidget(temp.widget);
         temp.dockWidget = nullptr;
         break;
-    case DBWidgetInfo::TypeToolbar:
-        temp.widget = nullptr;
-        temp.toolbar = p->info.constructorToolbar(mainWindow, api);
-        temp.toolbar->setObjectName(*temp.internalName);
-        temp.dockWidget = nullptr;
-        break;
-    case DBWidgetInfo::TypeDockable:
-        temp.widget = nullptr;
-        temp.toolbar = nullptr;
-        temp.dockWidget = p->info.constructorDockWidget(mainWindow, api);
-        temp.dockWidget->setObjectName(*temp.internalName);
-        temp.dockWidget->setVisible(true);
-        break;
     case DBWidgetInfo::TypeMainWidget:
+        dummyName.setObjectName(*temp.internalName);
         temp.actionMainWidget = new QAction(*temp.friendlyName);
         temp.actionMainWidget->setCheckable(true);
         // if widget of TypeMainWidget is not selected as main widget, make it as dockwidget
         if (temp.internalName->compare(settings->getValue(QString("PluginLoader"), QString("MainWidget"), QString("playlist")).toString()) == 0 || \
                 QString("").compare(settings->getValue(QString("PluginLoader"), QString("MainWidget"), QString("")).toString()) == 0) {
-            temp.widget = p->info.constructor(mainWindow, api);
+            temp.widget = p->info.constructor(&dummyName, api);
+            temp.widget->setParent(mainWindow);
             temp.dockWidget = nullptr;
             setMainWidget(&temp);
             temp.actionMainWidget->setChecked(true);
 
         }
         else {
-            temp.widget = p->info.constructor(nullptr, api);
+            temp.widget = p->info.constructor(&dummyName, api);
             temp.dockWidget = new QDockWidget(*temp.friendlyName, mainWindow);
             temp.dockWidget->setObjectName(*temp.internalName);
             temp.dockWidget->setWidget(temp.widget);
@@ -234,7 +224,7 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
     connect(temp.actionDestroy, SIGNAL(triggered(bool)), this, SLOT(actionHandlerRemove(bool)));
     emit actionPluginRemoveCreated(temp.actionDestroy);
 
-    if (p->info.type == DBWidgetInfo::TypeWidgetToolbar || p->info.type == DBWidgetInfo::TypeToolbar) {
+    if (p->info.type == DBWidgetInfo::TypeToolbar) {
         temp.toolbar->setVisible(isEnabled);
         // HACK FOR DEFAULT LAYOUT CREATION
         QVariant deflayout = settings->QSGETCONF(QString("BuildDefaultLayout"),QVariant(true));
@@ -244,8 +234,7 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         }
         emit toolBarCreated(temp.toolbar);
     }
-    else if (p->info.type == DBWidgetInfo::TypeDockable || \
-            (p->info.type == DBWidgetInfo::TypeMainWidget && temp.dockWidget)) {
+    else if (p->info.type == DBWidgetInfo::TypeMainWidget && temp.dockWidget) {
         emit dockableWidgetCreated(temp.dockWidget);
         temp.dockWidget->setVisible(isEnabled);
     }
@@ -254,19 +243,9 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
     // Widgets should be locked after config got loaded in MainWindow
     if (areWidgetsLocked) {
         switch (temp.header->info.type) {
-        case DBWidgetInfo::TypeWidgetToolbar:
         case DBWidgetInfo::TypeToolbar:
               temp.toolbar->setMovable(false);
               break;
-        case DBWidgetInfo::TypeDockable:
-            if (temp.empty_titlebar_toolbar == nullptr) {
-                temp.empty_titlebar_toolbar = new QWidget (temp.dockWidget);
-            }
-            temp.dockWidget->setTitleBarWidget(temp.empty_titlebar_toolbar);
-            temp.dockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
-            temp.dockWidget->setFixedWidth(temp.dockWidget->width());
-            temp.dockWidget->setFixedHeight(temp.dockWidget->height());
-            break;
         case DBWidgetInfo::TypeMainWidget:
             if (temp.dockWidget) {
                 if (temp.empty_titlebar_toolbar == nullptr) {
@@ -314,18 +293,10 @@ void PluginLoader::removeWidget(unsigned long num) {
     }
     LoadedWidget_t *lw = &loadedWidgets->at(num);
     switch (lw->header->info.type) {
-    case DBWidgetInfo::TypeWidgetToolbar:
+    case DBWidgetInfo::TypeToolbar:
         lw->toolbar->setVisible(false);
         delete lw->widget;
         delete lw->toolbar;
-        break;
-    case DBWidgetInfo::TypeToolbar:
-        lw->toolbar->setVisible(false);
-        delete lw->toolbar;
-        break;
-    case DBWidgetInfo::TypeDockable:
-        lw->dockWidget->setVisible(false);
-        delete lw->dockWidget;
         break;
     case DBWidgetInfo::TypeMainWidget:
         if (lw->dockWidget) {
@@ -459,12 +430,8 @@ void PluginLoader::actionHandlerCheckable(bool check) {
         if (w->actionToggleVisible == s) {
             // show/hide toolbar with num=i
             switch (w->header->info.type) {
-            case DBWidgetInfo::TypeWidgetToolbar:
             case DBWidgetInfo::TypeToolbar:
                 w->toolbar->setVisible(check);
-                break;
-            case DBWidgetInfo::TypeDockable:
-                w->dockWidget->setVisible(check);
                 break;
             case DBWidgetInfo::TypeMainWidget:
                 if (w->dockWidget) {
@@ -579,21 +546,18 @@ QString *PluginLoader::widgetName(void *pointer) {
         LoadedWidget_t *lwt = &loadedWidgets->at(i);
         switch(lwt->header->info.type) {
         case DBWidgetInfo::TypeMainWidget:
-        case DBWidgetInfo::TypeDockable:
             if (lwt->dockWidget && lwt->dockWidget == pointer) {
                 return lwt->internalName;
             }
-            /* fall through */
+            break;
         case DBWidgetInfo::TypeToolbar:
             if (lwt->widget && lwt->widget == pointer) {
                 return lwt->internalName;
             }
-            /* fall through */
-        case DBWidgetInfo::TypeWidgetToolbar:
-            if (lwt->toolbar && lwt->toolbar == pointer) {
+            else if (lwt->toolbar && lwt->toolbar == pointer) {
                 return lwt->internalName;
             }
-            /* fall through */
+            break;
         case DBWidgetInfo::TypeDummy:
             // has no widget
             break;
@@ -617,11 +581,15 @@ void PluginLoader::updateActionChecks() {
         QVariant s = settings->QSGETCONF(QString("%1/visible") .arg(*loadedWidgets->at(i).internalName), QVariant(true));
         bool value = s.toBool();
         ///loadedWidgets->at(i).actionToggleVisible->setChecked(value);
-        if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeWidgetToolbar || loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
+        if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
             loadedWidgets->at(i).toolbar->setVisible(value);
         }
-        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable) {
-            loadedWidgets->at(i).dockWidget->setVisible(value);
+        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget) {
+            if (loadedWidgets->at(i).dockWidget)
+                loadedWidgets->at(i).dockWidget->setVisible(value);
+            else {
+                loadedWidgets->at(i).widget->setVisible(value);
+            }
         }
     }
 }
@@ -633,15 +601,8 @@ void PluginLoader::actionChecksSave() {
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {
         QString key = QString("%1/visible") .arg(*loadedWidgets->at(i).internalName);
-        if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeWidgetToolbar || loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
+        if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
             settings->QSSETCONF(key,loadedWidgets->at(i).toolbar->isVisible());
-        }
-        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable) {
-            settings->QSSETCONF(key,loadedWidgets->at(i).dockWidget->isVisible());
-            // HACK/FIX
-            if (1) {
-                loadedWidgets->at(i).dockWidget->setFixedSize(QSize(QWIDGETSIZE_MAX,QWIDGETSIZE_MAX));
-            }
         }
         else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget) {
             if (loadedWidgets->at(i).dockWidget) {
@@ -663,11 +624,10 @@ void PluginLoader::lockWidgets(bool lock) {
     //for
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {
-        if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeWidgetToolbar || loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
+        if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
             loadedWidgets->at(i).toolbar->setMovable(!lock);
         }
-        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeDockable || \
-                (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget && loadedWidgets->at(i).dockWidget)) {
+        else if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeMainWidget && loadedWidgets->at(i).dockWidget) {
             if (loadedWidgets->at(i).empty_titlebar_toolbar == nullptr) {
                 loadedWidgets->at(i).empty_titlebar_toolbar = new QWidget(loadedWidgets->at(i).dockWidget);
             }

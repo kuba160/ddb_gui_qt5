@@ -101,6 +101,9 @@ QImage * thread_getCoverArt(QString fname, QString artist, QString album) {
 
 
 QFuture<QImage *> CoverArtCache::loadCoverArt(DB_playItem_t *track) {
+    if (!artwork) {
+        return QFuture<QImage*>();
+    }
     ddb_tf_context_t *context = new ddb_tf_context_t;
     context->_size = sizeof(ddb_tf_context_t);
     context->it = track;
@@ -132,6 +135,9 @@ QFuture<QImage *> CoverArtCache::loadCoverArt(DB_playItem_t *track) {
 
 
 QFuture<QImage *> CoverArtCache::loadCoverArt(const char *fname, const char *artist, const char *album) {
+    if (!artwork) {
+        return QFuture<QImage*>();
+    }
     cac_current = this;
     if (album)
         strcpy(album_lookup,album);

@@ -39,7 +39,6 @@ PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent)
     }
 }
 
-QToolBar * PlaybackButtons::constructorToolbar(QWidget *parent, DBApi *Api) {
-    PlaybackButtons *pbuttons = new PlaybackButtons(parent, Api);
-    return pbuttons;
+QWidget * PlaybackButtons::constructor(QWidget *parent, DBApi *Api) {
+    return new PlaybackButtons(parent, Api);
 }

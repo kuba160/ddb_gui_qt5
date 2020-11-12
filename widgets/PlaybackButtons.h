@@ -15,7 +15,7 @@ class PlaybackButtons : public QToolBar, public DBWidget {
     Q_OBJECT
 public:
     PlaybackButtons(QWidget *parent = nullptr, DBApi *Api = nullptr);
-    static QToolBar *constructorToolbar (QWidget *parent = nullptr, DBApi *Api =nullptr);
+    static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api =nullptr);
 };
 
 #endif // PLAYBACKBUTTONS_H

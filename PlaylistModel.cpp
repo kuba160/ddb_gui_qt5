@@ -20,11 +20,13 @@ PlaylistModel::~PlaylistModel() {
 }
 
 void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
+    emit beginResetModel();
     if (plt) {
         DBAPI->plt_unref(plt);
     }
     plt = plt_new;
     DBAPI->plt_ref(plt);
+    emit endResetModel();
 }
 
 void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
@@ -88,7 +90,7 @@ int PlaylistModel::columnCount(const QModelIndex &parent) const {
 Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
     Qt::ItemFlags defaultFlags = QAbstractItemModel::flags(index);
     if (index.isValid()) {
-        return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | defaultFlags;
+        return Qt::ItemIsDragEnabled | defaultFlags;
     }
     else {
         return Qt::ItemIsDropEnabled | defaultFlags;
@@ -178,9 +180,7 @@ QModelIndex PlaylistModel::parent(const QModelIndex &child) const {
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     DBAPI->pl_lock ();
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int rowCount = DBAPI->plt_get_item_count(plt, PL_MAIN);
-    DBAPI->plt_unref(plt);
     DBAPI->pl_unlock ();
     return rowCount;
 }

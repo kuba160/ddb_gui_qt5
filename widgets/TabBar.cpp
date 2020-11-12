@@ -33,14 +33,6 @@ QWidget *TabBar::constructor(QWidget *parent, DBApi *Api) {
     return widget;
 }
 
-QDockWidget *TabBar::constructorDockable(QWidget *parent, DBApi *Api) {
-    QWidget *widget = new TabBar(parent, Api);
-    QDockWidget *dock = new QDockWidget(parent);
-    dock->setWindowTitle(QString(_("Tab Bar")));
-    dock->setWidget(widget);
-    return dock;
-}
-
 void TabBar::createConnections() {
     connect(this, SIGNAL(tabCloseRequested(int)), SLOT(closeTab(int)));
     connect(this, SIGNAL(tabContextMenuRequested(int, QPoint)), SLOT(showTabContextMenu(int, QPoint)));

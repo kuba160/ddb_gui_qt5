@@ -7,8 +7,8 @@
 #include <QString>
 #include <QSettings>
 
-#define QSSETCONF(X,Y) autoSetValue(this, X, Y);
-#define QSGETCONF(X,Y) autoGetValue(this, X, Y);
+#define QSSETCONF(X,Y) autoSetValue(this, X, Y)
+#define QSGETCONF(X,Y) autoGetValue(this, X, Y)
 
 
 class QtGuiSettings : public QSettings {

@@ -59,7 +59,6 @@ protected:
 public slots:
     void onPlaylistChanged();
     void delSelectedTracks();
-    void refresh();
 
 private slots:
     void trackDoubleClicked(QModelIndex index);

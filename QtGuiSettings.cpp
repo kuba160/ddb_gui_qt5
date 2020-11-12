@@ -97,8 +97,8 @@ QVariant QtGuiSettings::autoGetValue(void *widget, const QString &key, const QVa
     else if (widget == static_cast<void *>(w)) {
         group = QString("MainWindow");
     }
-    // widget in pluginloader
-    {
+    else {
+        // widget in pluginloader
         QString *np;
         if ((np = pl->widgetName(widget))) {
             group = *np;

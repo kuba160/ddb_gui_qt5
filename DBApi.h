@@ -30,15 +30,20 @@ public:
     const char DBApi_vmajor = DBAPI_VMAJOR;
     const char DBApi_vminor = DBAPI_VMINOR;
 
-    CoverArtCache coverart_cache;
+    //// CoverArt
+    // functions might return invalid value if plugin is unavailable
+    bool isCoverArtPluginAvailable();
+    // load CoverArt
+    QFuture<QImage *> loadCoverArt(const char *fname, const char *artist, const char *album);
+    QFuture<QImage *> loadCoverArt(DB_playItem_t *);
+    QImage *getDefaultCoverArt();
+    // Call after you are done with cover (not if used signal cover)
+    void coverArt_unref(QImage *);
+
 
     bool isPaused();
-
-
     void addTracksByUrl(const QUrl &url, int position = -1);
-
     float getVolume();
-
     ddb_playback_state_t getOutputState();
     ddb_playback_state_t getInternalState();
 
@@ -49,11 +54,60 @@ public:
     QString const& playlistNameByIdx(int idx);
     unsigned long getPlaylistCount();
 
-    //
+    // Settings
+    void confSetValue(const QString &plugname, const QString &key, const QVariant &value);
+    QVariant confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue);
     void autoSetValue(void *widget, const QString &key, const QVariant &value);
     QVariant autoGetValue(void *widget, const QString &key, const QVariant &defaultValue);
     
+// Signals are subscribed by different parts of gui
+signals:
+    // Volume
+    void volumeChanged(float);
+    // Playback
+    void trackChanged(DB_playItem_t *, DB_playItem_t *);
+    void playbackPaused();
+    void playbackUnPaused();
+    void playbackStarted();
+    void playbackStopped();
+    // Playlist
+    void playlistChanged();
+    void playlistChanged(int to);
+    void playlistMoved(int plt, int before);
+    void playlistCreated();
+    void playlistRenamed(int plt);
+    // DeaDBeeF Window
+    void deadbeefActivated();
+    // Shuffle/Repeat
+    void shuffleChanged();
+    void repeatChanged();
+    // Cover
+    void currCoverChanged(QImage *);
+
+// Slots redirect messages from qt gui to deadbeef internal system
+public slots:
+    // Change volume
+    void setVolume(float);
+    // Just send message (id only)
+    void sendPlayMessage(uint32_t id);
+    // Playback
+    void togglePause();
+    void play();
+    void playNext();
+    void playPrev();
+    void playTrackByIndex(uint32_t);
+    void stop();
+    // Playlist
+    void changePlaylist(int);
+    void movePlaylist(int plt, int before);
+    void newPlaylist(QString *);
+    void renamePlaylist(int plt, const QString *name);
+    // Shuffle/Repeat
+    void setShuffle(ddb_shuffle_t);
+    void setRepeat(ddb_repeat_t);
+
 private:
+    CoverArtCache coverart_cache;
     ddb_playback_state_t internal_state;
     QtGuiSettings *qt_settings;
 
@@ -63,54 +117,8 @@ private:
 
     ddb_repeat_t currRepeat;
     ddb_shuffle_t currShuffle;
-
-// Signals are subscribed by different parts of gui
-signals:
-    void volumeChanged(float);
-    void playlistChanged();
-    void playlistChanged(int);
-    void trackChanged(DB_playItem_t *, DB_playItem_t *);
-    void playbackPaused();
-    void playbackUnPaused();
-    void playbackStarted();
-    void playbackStopped();
-    void deadbeefActivated();
-    void playlistMoved(int plt, int before);
-    void playlistCreated();
-    void playlistRenamed(int plt);
-    void shuffleChanged();
-    void repeatChanged();
-
-// Slots redirect messages from qt gui to deadbeef internal system
-public slots:
-    // When user changed volume:
-    void setVolume(float);
-    //
-    void playTrackByIndex(uint32_t);
-    //
-    void sendPlayMessage(uint32_t id);
-    //
-    void togglePause();
-    //
-    void play();
-    //
-    void stop();
-    //
-    void playNext();
-    //
-    void playPrev();
-    //
-    void changePlaylist(int);
-    //
-    void movePlaylist(int plt, int before);
-    //
-    void newPlaylist(QString *);
-    //
-    void renamePlaylist(int plt, const QString *name);
-    //
-    void setShuffle(ddb_shuffle_t);
-    //
-    void setRepeat(ddb_repeat_t);
+private slots:
+    void onCurrCoverChanged();
 };
 
 class DBWidgetInfo {
@@ -121,21 +129,13 @@ public:
 
     enum DBWidgetType {
         TypeDummy = 0,
-        TypeWidgetToolbar   = 1<<0,
-        TypeToolbar         = 1<<1,
-        TypeDockable        = 1<<2,
-        TypeMainWidget      = 1<<3
+        TypeToolbar         = 1<<0,
+        TypeMainWidget      = 1<<1
     };
+    // Toolbar or MainWidget(dockable)
     DBWidgetType type;
-    // widget constructor (for DBWidgetType::TypeWidgetToolbar or DBWidgetType::TypeMainWidget)
+    // widget constructor (save to cast parent to QDockWidget* for Toolbar)
     QWidget *(*constructor)(QWidget *parent, DBApi *api);
-
-
-    // should not be used anymore
-    // optional, if you want to control toolbar, constructor is ommited then
-    QToolBar *(*constructorToolbar)(QWidget *parent, DBApi *api);
-    QDockWidget *(*constructorDockWidget)(QWidget *parent, DBApi *api);
-
 };
 
 class DBWidget {
@@ -144,6 +144,7 @@ public:
     DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr);
     ~DBWidget();
     DBApi *api;
+    QString _internalNameWidget;
 };
 
 typedef struct DB_qtgui_s {

@@ -14,7 +14,7 @@ public:
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
 
 public slots:
-    void currCoverChanged();
+    void currCoverChanged(QImage *);
 private:
     void setCover(QImage *image);
     virtual void resizeEvent(QResizeEvent *event);

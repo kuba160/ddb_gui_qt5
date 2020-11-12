@@ -9,8 +9,8 @@ CoverArt::CoverArt(QWidget *parent, DBApi *api): QWidget(parent), DBWidget (pare
     layout = new QHBoxLayout();
     layout->addWidget(cover_display);
     setLayout(layout);
-    setCover(api->coverart_cache.getDefaultCoverArt());
-    connect (&(api->coverart_cache.currCover),SIGNAL(finished()),this,SLOT(currCoverChanged()));
+    setCover(api->getDefaultCoverArt());
+    connect(api,SIGNAL(currCoverChanged(QImage *)),this,SLOT(currCoverChanged(QImage *)));
 }
 
 CoverArt::~CoverArt() {
@@ -24,8 +24,8 @@ QWidget *CoverArt::constructor(QWidget *parent, DBApi *Api) {
     return new CoverArt(parent, Api);
 }
 
-void CoverArt::currCoverChanged() {
-    setCover(api->coverart_cache.currCover.result());
+void CoverArt::currCoverChanged(QImage *img) {
+    setCover(img);
 }
 
 void CoverArt::setCover(QImage *image) {

@@ -41,14 +41,6 @@ QWidget *PlaylistBrowser::constructor(QWidget *parent, DBApi *Api) {
     return new PlaylistBrowser(parent, Api);
 }
 
-QDockWidget *PlaylistBrowser::constructorDockWidget(QWidget *parent, DBApi *Api) {
-    QWidget *pb = new PlaylistBrowser(parent, Api);
-    QDockWidget *dw = new QDockWidget(QString("Playlist Browser"));
-
-    dw->setWidget(pb);
-    return dw;
-}
-
 void PlaylistBrowser::selectPlaylist(int pl) {
     setCurrentItem(item(pl));
 }

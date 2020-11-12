@@ -32,15 +32,14 @@ QSize SeekSlider::sizeHint() const
     return QSize(maximumWidth()/2, 20);
 }
 
-QToolBar *SeekSlider::constructorToolbar(QWidget *parent, DBApi *api) {
-    QToolBar *tb = new QToolBar(parent);
-    SeekSlider *slider = new SeekSlider(tb, api);
-    tb->addWidget(slider);
-    slider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+QWidget *SeekSlider::constructor(QWidget *parent, DBApi *api) {
+    QToolBar *tb = static_cast<QToolBar *>(parent);
     tb->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
     tb->setContextMenuPolicy(Qt::PreventContextMenu);
     tb->setFloatable(false);
-    return tb;
+    SeekSlider *slider = new SeekSlider(tb, api);
+    slider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    return slider;
 }
 
 

@@ -40,6 +40,7 @@ DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent), coverart_c
     if(coverart_cache.getCoverArtPlugin()) {
         connect(this, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)),&coverart_cache, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
     }
+    connect (&coverart_cache.currCover,SIGNAL(finished()),this,SLOT(onCurrCoverChanged()));
 }
 
 DBApi::~DBApi() {
@@ -137,6 +138,14 @@ ddb_playback_state_t DBApi::getOutputState() {
 
 ddb_playback_state_t DBApi::getInternalState() {
     return internal_state;
+}
+
+void DBApi::confSetValue(const QString &plugname, const QString &key, const QVariant &value) {
+    settings->setValue(plugname,key,value);
+}
+
+QVariant DBApi::confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue) {
+    return settings->getValue(plugname,key,defaultValue);
 }
 
 void DBApi::autoSetValue(void *widget, const QString &key, const QVariant &value) {
@@ -244,17 +253,45 @@ void DBApi::setRepeat(ddb_repeat_t i) {
     emit repeatChanged();
 }
 
+bool DBApi::isCoverArtPluginAvailable() {
+    return coverart_cache.getCoverArtPlugin() ? true : false;
+}
+
+QFuture<QImage *> DBApi::loadCoverArt(const char *fname, const char *artist, const char *album) {
+    return coverart_cache.loadCoverArt(fname,artist,album);
+}
+
+QFuture<QImage *> DBApi::loadCoverArt(DB_playItem_t *p) {
+    return coverart_cache.loadCoverArt(p);
+}
+
+QImage * DBApi::getDefaultCoverArt() {
+    return coverart_cache.getDefaultCoverArt();
+}
+
+void DBApi::coverArt_unref(QImage *) {
+    // TODO
+    return;
+}
+
+void DBApi::onCurrCoverChanged() {
+    emit currCoverChanged(coverart_cache.currCover.result());
+}
 
 DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
-    Q_UNUSED(parent);
     if (api_a == nullptr) {
         qDebug() << "Widget (" << parent <<") initialized without api pointer!";
     }
     api = api_a;
+    if (parent) {
+        _internalNameWidget = parent->objectName();
+        //qDebug() << _internalNameWidget << Qt::endl;
+    }
 }
 
 DBWidget::~DBWidget() {
     // exit
+    //delete _internalNameWidget;
 }
 
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {

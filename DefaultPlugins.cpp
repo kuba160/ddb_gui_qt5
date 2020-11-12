@@ -44,20 +44,20 @@ DefaultPlugins::DefaultPlugins() {
 
     volumeSlider.internalName = QString("volumeSlider");
     volumeSlider.friendlyName = QString("Volume bar");
-    volumeSlider.type = DBWidgetInfo::TypeWidgetToolbar;
+    volumeSlider.type = DBWidgetInfo::TypeToolbar;
     volumeSlider.constructor = VolumeSlider::constructor;
     widgetLibrary->push_back(volumeSlider);
 
     seekSlider.internalName = QString("seekSlider");
     seekSlider.friendlyName = QString("Seekbar");
     seekSlider.type = DBWidgetInfo::TypeToolbar;
-    seekSlider.constructorToolbar = SeekSlider::constructorToolbar;
+    seekSlider.constructor = SeekSlider::constructor;
     widgetLibrary->push_back(seekSlider);
 
     playbackButtons.internalName = QString("playbackButtons");
     playbackButtons.friendlyName = QString("Playback controls");
     playbackButtons.type = DBWidgetInfo::TypeToolbar;
-    playbackButtons.constructorToolbar = PlaybackButtons::constructorToolbar;
+    playbackButtons.constructor = PlaybackButtons::constructor;
     widgetLibrary->push_back(playbackButtons);
 
     artworkWidget.internalName = QString("artwork");
@@ -74,21 +74,20 @@ DefaultPlugins::DefaultPlugins() {
 
     tabBar.internalName = QString("tabBar");
     tabBar.friendlyName = QString("Tab strip");
-    tabBar.type = DBWidgetInfo::TypeWidgetToolbar;
+    tabBar.type = DBWidgetInfo::TypeToolbar;
     tabBar.constructor = TabBar::constructor;
     widgetLibrary->push_back(tabBar);
 
     tabBarD.internalName = QString("tabBarDock");
     tabBarD.friendlyName = QString("%1 (Dock)") .arg(_("Tab strip"));
-    tabBarD.type = DBWidgetInfo::TypeDockable;
-    tabBarD.constructorDockWidget = TabBar::constructorDockable;
+    tabBarD.type = DBWidgetInfo::TypeMainWidget;
+    tabBarD.constructor = TabBar::constructor;
     widgetLibrary->push_back(tabBarD);
 
     playlistBrowser.internalName = QString("playlistBrowser");
     playlistBrowser.friendlyName = QString("Playlist browser");
     playlistBrowser.type = DBWidgetInfo::TypeMainWidget;
     playlistBrowser.constructor = PlaylistBrowser::constructor;
-    playlistBrowser.constructorDockWidget = PlaylistBrowser::constructorDockWidget;
     widgetLibrary->push_back(playlistBrowser);
 
     dummy.internalName = QString("dummy");

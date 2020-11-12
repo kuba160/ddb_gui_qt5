@@ -10,7 +10,7 @@
 
 #include "MainWindow.h"
 
-Playlist::Playlist(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(this, Api), playlistModel(this, Api) {
+Playlist::Playlist(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(parent, Api), playlistModel(this, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setDragEnabled(true);
@@ -53,7 +53,11 @@ Playlist::Playlist(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(th
     playlistModel.setPlaylist(plt);
     DBAPI->plt_unref(plt);
     //playlistModel.setColumns()
-
+    QByteArray data = Api->confGetValue(parent->objectName(),"HeaderState",QByteArray()).toByteArray();
+    qDebug() << _internalNameWidget << Qt::endl;
+    if (data != QByteArray()) {
+        header()->restoreState(data);
+    }
     connect(api,SIGNAL(playlistChanged()),this,SLOT(onPlaylistChanged()));
 }
 
@@ -84,16 +88,6 @@ void Playlist::createConnections() {
     connect(header(), SIGNAL(sectionResized(int,int,int)), SLOT(saveHeaderState()));
     connect(header(), SIGNAL(sectionMoved(int,int,int)), SLOT(saveHeaderState()));
     connect(header(), SIGNAL(sectionClicked(int)), SLOT(saveHeaderState()));
-    //connect(w->Api(), SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(onTrackChanged(DB_playItem_t *, DB_playItem_t *)));
-    //connect(w->Api(), SIGNAL(playlistChanged()), SLOT(refresh()));
-    connect(api, SIGNAL(playlistChanged()), this, SLOT(refresh()));
-}
-
-void Playlist::refresh() {
-    setModel(NULL);
-    setModel(&playlistModel);
-    goToLastSelection();
-    header()->restoreState(headerState);
 }
 
 void Playlist::goToLastSelection() {
@@ -313,7 +307,11 @@ void Playlist::setColumnHidden(bool hidden) {
 }
 
 void Playlist::saveHeaderState() {
+    qDebug() << _internalNameWidget << Qt::endl;
     headerState = header()->saveState();
+    qDebug() << headerState << Qt::endl;
+
+    api->confSetValue(_internalNameWidget, "HeaderState",headerState);
 }
 
 void Playlist::onPlaylistChanged() {

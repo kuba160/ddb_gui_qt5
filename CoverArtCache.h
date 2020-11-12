@@ -4,7 +4,6 @@
 #include <QImage>
 #include <QHash>
 #include <QFutureWatcher>
-#include <QRandomGenerator>
 #include "include/artwork.h"
 
 class CoverArtCache : public QObject {

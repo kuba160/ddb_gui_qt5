@@ -13,7 +13,6 @@ public:
     PlaylistBrowser(QWidget *parent = nullptr, DBApi *Api = nullptr);
 
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
-    static QDockWidget *constructorDockWidget(QWidget *parent = nullptr, DBApi *Api = nullptr);
 
 private slots:
     void onItemClicked(QListWidgetItem *);

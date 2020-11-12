@@ -17,7 +17,6 @@ public:
     ~SeekSlider();
 
     static QWidget  *constructor(QWidget *parent = nullptr, DBApi *api = nullptr);
-    static QToolBar *constructorToolbar(QWidget *parent = nullptr, DBApi *api = nullptr);
 
     QSize sizeHint() const;
 protected:
