@@ -39,8 +39,8 @@ Playlist::Playlist(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(pa
     header()->setContextMenuPolicy(Qt::CustomContextMenu);
     header()->setSortIndicatorShown(false);
     
-    header()->setDefaultSectionSize(80);
-    header()->setMinimumSectionSize(10);
+    //header()->setDefaultSectionSize(80);
+    //header()->setMinimumSectionSize(10);
     
     createContextMenu();
     createHeaderContextMenu();

@@ -43,9 +43,22 @@ void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
     }
 }
 
+// Taken from DeaDBeeF gtkui (plcommon.h)
+#define COLUMN_FORMAT_ARTISTALBUM "$if(%artist%,%artist%,Unknown Artist)[ - %album%]"
+#define COLUMN_FORMAT_ARTIST "$if(%artist%,%artist%,Unknown Artist)"
+#define COLUMN_FORMAT_ALBUM "%album%"
+#define COLUMN_FORMAT_TITLE "%title%"
+#define COLUMN_FORMAT_YEAR "%year%"
+#define COLUMN_FORMAT_LENGTH "%length%"
+#define COLUMN_FORMAT_TRACKNUMBER "%tracknumber%"
+#define COLUMN_FORMAT_BAND "$if(%album artist%,%album artist%,Unknown Artist)"
+#define COLUMN_FORMAT_CODEC "%codec%"
+#define COLUMN_FORMAT_BITRATE "%bitrate%"
+
 QString PlaylistModel::formatFromHeaderType(headerType t) {
-    const QString map[] = {"","%list_index%","", "", "%artist% / %album%", "%artist%", "%album%", "%title%",
-                           "%year%", "%tracknumber%", "%album artist% / %album%", "%codec%", "%bitrate%", "INVALID"};
+    // no format for HT_empty, HT_itemIndex, HT_playing and HT_albumArt
+    const QString map[] = {"", "", "", "", COLUMN_FORMAT_ARTISTALBUM, COLUMN_FORMAT_ARTIST, COLUMN_FORMAT_ALBUM, COLUMN_FORMAT_TITLE,
+                           COLUMN_FORMAT_YEAR, COLUMN_FORMAT_LENGTH, COLUMN_FORMAT_TRACKNUMBER, COLUMN_FORMAT_BAND, COLUMN_FORMAT_CODEC, COLUMN_FORMAT_BITRATE };
     if (t < HT_custom) {
         return map[t];
     }
@@ -57,7 +70,7 @@ QList<PlaylistHeader_t *> PlaylistModel::setDefaultHeaders() {
         //  Title, type, formatting
     PlaylistHeader_t a[] = {
         {"♫", HT_playing,"",1},
-        {"Artist / Album", HT_artistAlbum,"",1},
+        {"Artist - Album", HT_artistAlbum,"",1},
         {"Track No", HT_trackNum,"",1},
         {"Title", HT_title,"",1},
         {"Duration", HT_custom, "%length%",1},
@@ -118,6 +131,10 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role = Qt::DisplayRol
             char buffer[1024]; // TODO hardcoded 1024
             buffer[0] = 0;
             switch (h->type) {
+            case HT_itemIndex:
+                // TODO start at 1?
+                ret = QString::number(index.row());
+                break;
             case HT_playing:
                 // TODO include information about queue here
                 //ret = QString::fromUtf8("");

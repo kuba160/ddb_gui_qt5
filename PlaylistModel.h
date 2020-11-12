@@ -17,6 +17,7 @@ enum headerType{
     HT_album,
     HT_title,
     HT_year,
+    HT_length,
     HT_trackNum,
     HT_bandAlbumArtist,
     HT_codec,
