@@ -18,10 +18,10 @@ public slots:
 private:
     void setCover(QImage *image);
     virtual void resizeEvent(QResizeEvent *event);
-    QHBoxLayout *layout = nullptr;
+    QHBoxLayout layout;
     QLabel *cover_display = nullptr;
     QImage *cover_image = nullptr;
-    QMargins *m;
+    QMargins m;
 };
 
 #endif // COVERARTWIDGET_H
