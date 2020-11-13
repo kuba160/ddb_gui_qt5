@@ -10,7 +10,6 @@ class CoverArt : public QWidget, public DBWidget{
 
 public:
     CoverArt(QWidget *parent = nullptr, DBApi *api = nullptr);
-    ~CoverArt();
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
 
 public slots:
@@ -19,7 +18,7 @@ private:
     void setCover(QImage *image);
     virtual void resizeEvent(QResizeEvent *event);
     QHBoxLayout layout;
-    QLabel *cover_display = nullptr;
+    QLabel cover_display;
     QImage *cover_image = nullptr;
     QMargins m;
 };
