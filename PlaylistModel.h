@@ -30,11 +30,12 @@ typedef struct PlaylistHeader_s {
     headerType type;
     // Format if type is HT_custom
     QString format = "";
-    // In PlaylistModel - to distinguish between translation
-    unsigned char _translate = 0;
     // In PlaylistModel - compiled format
     char *_format_compiled = nullptr;
 } PlaylistHeader_t;
+
+QDataStream &operator<<(QDataStream &ds, const PlaylistHeader_t &pil);
+QDataStream &operator>>(QDataStream &ds, PlaylistHeader_t &pil);
 
 class PlaylistModel : public QAbstractItemModel, public DBWidget {
     Q_OBJECT
@@ -57,8 +58,9 @@ public:
     QList<PlaylistHeader_t *> columns;
 
     //
-    QList<PlaylistHeader_t *> setDefaultHeaders();
-    QString formatFromHeaderType(headerType);
+    QList<PlaylistHeader_t *> *setDefaultHeaders();
+    static QString formatFromHeaderType(headerType);
+    static QString titleFromHeaderType(headerType);
 
 private:
     int columnCount(const QModelIndex &parent) const;

@@ -5,7 +5,12 @@
 #include <QDropEvent>
 #include <QUrl>
 #include <QMenu>
-
+#include <QDialog>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QComboBox>
+#include <QLabel>
+#include <QDialogButtonBox>
 #include "DBApi.h"
 #include "PlaylistModel.h"
 
@@ -20,32 +25,29 @@ public:
 
     static QWidget *constructor(QWidget *parent, DBApi *Api);
     
-    void saveConfig();
-    void loadConfig();
-    
-    void goToLastSelection();
-
+    // cursor
     void restoreCursor();
     static void storeCursor();
 
     void clearPlayList();
+    void goToLastSelection();
+
     void insertByURLAtPosition(const QUrl &url, int position = -1);
 
-    void toggleHeaderHidden();
-
 signals:
+    // Enter event
     void enterRelease(QModelIndex);
 
 private:
-    QPoint startPos;
+    // Header
+    QList<PlaylistHeader_t *> headers;
     QMenu headerContextMenu;
-    QByteArray headerState;
-    QAction *lockColumnsAction;
+    QList<QAction*> headerActions;
+    QMenu *headerGrouping;
+    // header num for current header menu
+    int headerMenu_pos;
 
-    void createConnections();
-    void createContextMenu();
-    void createHeaderContextMenu();
-
+    // Enter event
     bool eventFilter(QObject *obj, QEvent *event);
 
 
@@ -66,8 +68,42 @@ private slots:
     void lockColumns(bool);
     void onTrackChanged(DB_playItem_t *, DB_playItem_t *);
     void showContextMenu(QPoint);
-    void setColumnHidden(bool);
     void saveHeaderState();
+
+    void headerDialogAdd(bool);
+    void headerDialogEdit(bool);
+    void headerDialogRemove(bool);
+
+    void headerAdd(int,PlaylistHeader_t *);
+    void headerEdit(int,PlaylistHeader_t *);
+};
+
+class HeaderDialog : public QDialog {
+    Q_OBJECT
+public:
+    HeaderDialog(QWidget *parent = nullptr, int headernum = -1, PlaylistHeader_t *header = nullptr);
+
+    QFormLayout layout;
+    QDialogButtonBox buttons;
+    QLineEdit title;
+    QComboBox type;
+    QWidget format_parent;
+    QHBoxLayout format_layout;
+    QLineEdit format;
+    QString format_saved;
+    QLabel format_help;
+    PlaylistHeader_t *h = nullptr;
+    int n;
+    int editting = 0;
+
+signals:
+    void headerDialogEvent(int headernum, PlaylistHeader_t *header);
+private slots:
+    void titleEdited(const QString &text);
+    void typeChanged(int index);
+    void formatEdited(const QString &text);
+    void accepted();
+    void rejected();
 };
 
 #endif // PLAYLIST_H

@@ -30,7 +30,20 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
 }
 
 void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
-    if (columns != c_new) {
+    emit beginResetModel();
+    columns = c_new;
+    int i;
+    for (i = 0; i < columns.size(); i++) {
+        if (columns.at(i)->type != HT_custom) {
+            columns.at(i)->format = QString(formatFromHeaderType(columns.at(i)->type));
+            if (!columns.at(i)->format.isEmpty()) {
+                columns.at(i)->_format_compiled = DBAPI->tf_compile(columns.at(i)->format.toUtf8());
+            }
+        }
+    }
+    emit columnsChanged();
+    emit endResetModel();
+    /*if (columns != c_new) {
         int i;
         for (i = 0; i < columns.size(); i++) {
             if (columns.at(i)->_format_compiled) {
@@ -40,7 +53,7 @@ void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
         }
         columns = c_new;
         emit columnsChanged();
-    }
+    }*/
 }
 
 // Taken from DeaDBeeF gtkui (plcommon.h)
@@ -59,21 +72,35 @@ QString PlaylistModel::formatFromHeaderType(headerType t) {
     // no format for HT_empty, HT_itemIndex, HT_playing and HT_albumArt
     const QString map[] = {"", "", "", "", COLUMN_FORMAT_ARTISTALBUM, COLUMN_FORMAT_ARTIST, COLUMN_FORMAT_ALBUM, COLUMN_FORMAT_TITLE,
                            COLUMN_FORMAT_YEAR, COLUMN_FORMAT_LENGTH, COLUMN_FORMAT_TRACKNUMBER, COLUMN_FORMAT_BAND, COLUMN_FORMAT_CODEC, COLUMN_FORMAT_BITRATE };
-    if (t < HT_custom) {
+    if (t < HT_custom && t > HT_empty) {
         return map[t];
     }
     return "";
 }
 
-QList<PlaylistHeader_t *> PlaylistModel::setDefaultHeaders() {
+QStringList items = {_("Item Index"), _("Playing"), _("Album Art"), _("Artist - Album"),
+                     _("Artist"), _("Album"), _("Title"), _("Year"), _("Duration"), _("Track Number"),
+                     _("Band / Album Artist"), _("Codec"), _("Bitrate"), _("Custom")};
+
+QString PlaylistModel::titleFromHeaderType(headerType t) {
+    const QStringList items = {_("Item Index"), _("Playing"), _("Album Art"), _("Artist - Album"),
+                         _("Artist"), _("Album"), _("Title"), _("Year"), _("Duration"), _("Track Number"),
+                         _("Band / Album Artist"), _("Codec"), _("Bitrate"), _("Custom")};
+    if (t < HT_custom+1 && t > HT_empty+1) {
+        return items.at(t-1);
+    }
+    return "";
+}
+
+QList<PlaylistHeader_t *> *PlaylistModel::setDefaultHeaders() {
     QList<PlaylistHeader_t *> default_headers;
         //  Title, type, formatting
     PlaylistHeader_t a[] = {
-        {"♫", HT_playing,"",1},
-        {"Artist - Album", HT_artistAlbum,"",1},
-        {"Track No", HT_trackNum,"",1},
-        {"Title", HT_title,"",1},
-        {"Duration", HT_custom, "%length%",1},
+        {"♫", HT_playing,""},
+        {_("Artist - Album"), HT_artistAlbum,""},
+        {_("Track No"), HT_trackNum,""},
+        {_("Title"), HT_title,""},
+        {_("Duration"), HT_length, ""},
         {"", HT_empty}
     };
     int i;
@@ -92,7 +119,7 @@ QList<PlaylistHeader_t *> PlaylistModel::setDefaultHeaders() {
         default_headers.append(temp);
     }
     setColumns(default_headers);
-    return columns;
+    return &columns;
 }
 
 int PlaylistModel::columnCount(const QModelIndex &parent) const {
@@ -205,12 +232,7 @@ int PlaylistModel::rowCount(const QModelIndex &parent) const {
 QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const {
     if (orientation == Qt::Horizontal) {
         if (role == Qt::DisplayRole && section < columns.count()) {
-            if (columns[section]->_translate) {
-                return QVariant(QString(_(columns[section]->title.toUtf8())));
-            }
-            else {
-                return QVariant(columns[section]->title);
-            }
+            return QVariant(columns[section]->title);
         }
     }
     return QVariant();
@@ -256,7 +278,7 @@ void PlaylistModel::deleteTracks(const QModelIndexList &tracks) {
 }
 
 void PlaylistModel::sort(int n, Qt::SortOrder order) {
-    if (n >= columns.length() || columns[n]->type == HT_playing) {
+    if (!plt || n >= columns.length() || columns[n]->type == HT_playing || columns[n]->format.isEmpty()) {
         return;
     }
     DBAPI->plt_sort_v2(plt, PL_MAIN, -1, columns[n]->format.toUtf8(), order);
@@ -354,4 +376,21 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const
 
     mimeData->setData("playlist/track", encodedData);
     return mimeData;
+}
+
+QDataStream &operator<<(QDataStream &ds, const PlaylistHeader_t &pil) {
+    ds << pil.title;
+    ds << pil.type;
+    if (pil.type == HT_custom)
+        ds << pil.format;
+    else
+        ds << QString();
+    return ds;
+}
+QDataStream& operator >> (QDataStream &ds, PlaylistHeader_t &pil) {
+    ds >> pil.title;
+    ds >> pil.type;
+    ds >> pil.format;
+    pil._format_compiled = nullptr;
+    return ds;
 }
