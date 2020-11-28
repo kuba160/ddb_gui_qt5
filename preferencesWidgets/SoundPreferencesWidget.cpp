@@ -2,6 +2,8 @@
 #include "ui_SoundPreferencesWidget.h"
 
 #include "QtGui.h"
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 static void enumSoundcardCallback(const char *name, const char *desc, void *userdata) {
     SoundPreferencesWidget *dialog = (SoundPreferencesWidget *) (userdata);

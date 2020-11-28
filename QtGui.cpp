@@ -33,6 +33,8 @@
 #include "PluginLoader.h"
 #include "DeadbeefTranslator.h"
 
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 static int pluginStart();
 static int pluginStop();
@@ -100,16 +102,9 @@ static int pluginStop() {
 static int pluginConnect() {
     initializeApi();
 
-    coverart_plugin = (DB_artwork_plugin_t *)DBAPI->plug_get_for_id("artwork");
-    if (coverart_plugin)
-        qDebug() << "qtui: found cover-art plugin";
-
-
-#ifdef HOTKEYS_ENABLED
     hotkeys_plugin = (DB_hotkeys_plugin_t *)DBAPI->plug_get_for_id("hotkeys");
     if (hotkeys_plugin)
         qDebug() << "qtui: found global hotkeys plugin";
-#endif
     return 0;
 }
 

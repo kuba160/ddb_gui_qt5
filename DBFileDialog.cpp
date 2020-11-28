@@ -4,6 +4,8 @@
 
 #include "QtGui.h"
 #include "MainWindow.h"
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 DBFileDialog::DBFileDialog(QWidget *parent,
                            const QString &caption,

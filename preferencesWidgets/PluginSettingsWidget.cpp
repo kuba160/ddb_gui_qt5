@@ -10,6 +10,8 @@
 #include <QComboBox>
 
 #include "include/parser.h"
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 PluginSettingsWidget::PluginSettingsWidget(ddb_dialog_t *conf, QWidget *parent):
         QGroupBox(parent),

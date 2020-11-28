@@ -28,6 +28,7 @@
 #include "MainWindow.h"
 
 #include "DefaultPlugins.h"
+#include "DeadbeefTranslator.h"
 
 #define GETCONF(X,Y) settings->getValue(QString("PluginLoader"),X,Y)
 #define SETCONF(X,Y) settings->setValue(QString("PluginLoader"),X,Y)

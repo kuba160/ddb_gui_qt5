@@ -2,6 +2,7 @@
 
 #include "QtGui.h"
 #include "MainWindow.h"
+#include "DeadbeefTranslator.h"
 
 PlaylistModel::PlaylistModel(QObject *parent, DBApi *Api) : QAbstractItemModel(parent),
                                                             DBWidget(nullptr,Api),
@@ -27,6 +28,10 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
     plt = plt_new;
     DBAPI->plt_ref(plt);
     emit endResetModel();
+}
+
+void PlaylistModel::setPlaylistLock(bool lock) {
+    isLocked = lock;
 }
 
 void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
@@ -129,7 +134,10 @@ int PlaylistModel::columnCount(const QModelIndex &parent) const {
 
 Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
     Qt::ItemFlags defaultFlags = QAbstractItemModel::flags(index);
-    if (index.isValid()) {
+    if (isLocked) {
+        return defaultFlags;
+    }
+    else if (index.isValid()) {
         return Qt::ItemIsDragEnabled | defaultFlags;
     }
     else {
@@ -262,7 +270,7 @@ void PlaylistModel::onTrackChanged(DB_playItem_t *from, DB_playItem_t *to) {
 }
 
 void PlaylistModel::deleteTracks(const QModelIndexList &tracks) {
-    if (tracks.length() == 0)
+    if (tracks.length() == 0 || isLocked)
         return;
     beginRemoveRows(QModelIndex(), tracks.first().row(), tracks.last().row());
 
@@ -278,7 +286,7 @@ void PlaylistModel::deleteTracks(const QModelIndexList &tracks) {
 }
 
 void PlaylistModel::sort(int n, Qt::SortOrder order) {
-    if (!plt || n >= columns.length() || columns[n]->type == HT_playing || columns[n]->format.isEmpty()) {
+    if (!plt || n >= columns.length() || columns[n]->type == HT_playing || columns[n]->format.isEmpty() || isLocked) {
         return;
     }
     DBAPI->plt_sort_v2(plt, PL_MAIN, -1, columns[n]->format.toUtf8(), order);

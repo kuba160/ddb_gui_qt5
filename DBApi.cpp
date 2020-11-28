@@ -3,12 +3,18 @@
 #include <QDebug>
 #include <QWidget>
 #include "QtGui.h"
-
+#include "CoverArtCache.h"
+#include "QtGuiSettings.h"
+#include "DeadbeefTranslator.h"
+#undef _
 #undef DBAPI
 #define DBAPI this->deadbeef
 
+#define CAC (COVERARTCACHE_P(coverart_cache))
+#define CSET (static_cast<QtGuiSettings *>(qt_settings))
 
-DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent), coverart_cache(parent) {
+
+DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_cache(parent) {
     this->deadbeef = Api;
     if (DBAPI->conf_get_int("resume.paused", 0)) {
         // will be paused
@@ -37,14 +43,25 @@ DBApi::DBApi(QWidget *parent, DB_functions_t *Api) : QObject(parent), coverart_c
     currShuffle = DBAPI->streamer_get_shuffle();
     currRepeat = DBAPI->streamer_get_repeat();
 
-    if(coverart_cache.getCoverArtPlugin()) {
-        connect(this, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)),&coverart_cache, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
+    // CoverArt Cache
+    coverart_cache = new CoverArtCache();
+    if(COVERARTCACHE_P(coverart_cache)->getCoverArtPlugin()) {
+        connect(this, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)),COVERARTCACHE_P(coverart_cache), SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
     }
-    connect (&coverart_cache.currCover,SIGNAL(finished()),this,SLOT(onCurrCoverChanged()));
+    connect(&COVERARTCACHE_P(coverart_cache)->currCover,SIGNAL(finished()),this,SLOT(onCurrCoverChanged()));
+
+    // Settings
+    qt_settings = new QtGuiSettings(this);
 }
 
 DBApi::~DBApi() {
     plugin.plugin.message = nullptr;
+    delete CAC;
+    delete CSET;
+}
+
+const char * DBApi::_(const char *str) {
+    return dbtr->translate(nullptr, str).toUtf8();
 }
 
 int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
@@ -254,19 +271,19 @@ void DBApi::setRepeat(ddb_repeat_t i) {
 }
 
 bool DBApi::isCoverArtPluginAvailable() {
-    return coverart_cache.getCoverArtPlugin() ? true : false;
+    return CAC->getCoverArtPlugin() ? true : false;
 }
 
 QFuture<QImage *> DBApi::loadCoverArt(const char *fname, const char *artist, const char *album) {
-    return coverart_cache.loadCoverArt(fname,artist,album);
+    return CAC->loadCoverArt(fname,artist,album);
 }
 
 QFuture<QImage *> DBApi::loadCoverArt(DB_playItem_t *p) {
-    return coverart_cache.loadCoverArt(p);
+    return CAC->loadCoverArt(p);
 }
 
 QImage * DBApi::getDefaultCoverArt() {
-    return coverart_cache.getDefaultCoverArt();
+    return CAC->getDefaultCoverArt();
 }
 
 void DBApi::coverArt_unref(QImage *) {
@@ -275,7 +292,7 @@ void DBApi::coverArt_unref(QImage *) {
 }
 
 void DBApi::onCurrCoverChanged() {
-    emit currCoverChanged(coverart_cache.currCover.result());
+    emit currCoverChanged(CAC->currCover.result());
 }
 
 DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {

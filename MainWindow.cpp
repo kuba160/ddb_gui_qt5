@@ -19,7 +19,7 @@
 #include <QtConcurrent>
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
-
+#include "DeadbeefTranslator.h"
 //#include "PluginLoader.h"
 
 MainWindow::MainWindow(QWidget *parent, DBApi *Api) :

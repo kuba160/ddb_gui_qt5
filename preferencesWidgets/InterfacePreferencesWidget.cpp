@@ -4,7 +4,8 @@
 #include "QtGuiSettings.h"
 #include "QtGui.h"
 #include "GuiUpdater.h"
-
+#undef DBAPI
+#define DBAPI deadbeef_internal
 InterfacePreferencesWidget::InterfacePreferencesWidget(QWidget *parent, Qt::WindowFlags f):
         QWidget(parent, f),
         ui(new Ui::InterfacePreferencesWidget) {

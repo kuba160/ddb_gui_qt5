@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QPainter>
 #include <QtMath>
+#include <QToolBar>
 
 #undef DBAPI
 #define DBAPI api->deadbeef

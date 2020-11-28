@@ -27,7 +27,7 @@ public:
     
     // cursor
     void restoreCursor();
-    static void storeCursor();
+    void storeCursor();
 
     void clearPlayList();
     void goToLastSelection();
@@ -66,6 +66,7 @@ private slots:
     void trackDoubleClicked(QModelIndex index);
     void headerContextMenuRequested(QPoint);
     void lockColumns(bool);
+    void lockPlaylist(bool);
     void onTrackChanged(DB_playItem_t *, DB_playItem_t *);
     void showContextMenu(QPoint);
     void saveHeaderState();

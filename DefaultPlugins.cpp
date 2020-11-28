@@ -28,6 +28,10 @@
 #include "widgets/TabBar.h"
 #include "widgets/CoverArt.h"
 #include "widgets/Medialib.h"
+#include "widgets/LogViewer.h"
+
+#undef _
+#include "DeadbeefTranslator.h"
 
 class Dummy : public QWidget, public DBWidget {
 public:
@@ -101,6 +105,12 @@ DefaultPlugins::DefaultPlugins() {
     medialib.type = DBWidgetInfo::TypeMainWidget;
     medialib.constructor = Medialib::constructor;
     widgetLibrary->push_back(medialib);
+
+    logviewer.internalName = QString("logviewer");
+    logviewer.friendlyName = QString("Log");
+    logviewer.type = DBWidgetInfo::TypeMainWidget;
+    logviewer.constructor = LogViewer::constructor;
+    widgetLibrary->push_back(logviewer);
 }
 
 DefaultPlugins::~DefaultPlugins() {

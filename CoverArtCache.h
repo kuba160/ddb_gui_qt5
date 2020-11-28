@@ -5,6 +5,9 @@
 #include <QHash>
 #include <QFutureWatcher>
 #include "include/artwork.h"
+#include <deadbeef/deadbeef.h>
+
+#define COVERARTCACHE_P(X) (static_cast<CoverArtCache *>(X))
 
 class CoverArtCache : public QObject {
     Q_OBJECT

@@ -11,6 +11,7 @@
 
 #include "Medialib.h"
 
+
 QStringList default_query = {"Album", "Artist", "Genre", "Folder"};
 
 static void listener_callback(ddb_mediasource_event_type_t event, void *user_data) {
