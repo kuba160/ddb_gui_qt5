@@ -1,37 +1,35 @@
 // This file defines class that allows interraction with deadbeef
 // TODO
 
-#ifndef DBAPIWRAPPER_H
-#define DBAPIWRAPPER_H
+#ifndef DBAPI_H
+#define DBAPI_H
 
 #include <deadbeef/deadbeef.h>
 
-#include <QUrl>
 #include <QObject>
-#include <QToolBar>
-#include <QDockWidget>
-#include <QtGuiSettings.h>
-#include "DeadbeefTranslator.h"
-#include "CoverArtCache.h"
+#include <QWidget>
+#include <QFuture>
+#include <QImage>
 
-//#define DBAPI (this->api->deadbeef)
-#define DBAPI deadbeef_internal
-
+// DBApi version
 #define DBAPI_VMAJOR 0
 #define DBAPI_VMINOR 1
 
 class DBApi : public QObject {
     Q_OBJECT
 public:
-    DBApi(QWidget *parent = nullptr, DB_functions_t *Api = nullptr);
+    DBApi(QObject *parent = nullptr, DB_functions_t *Api = nullptr);
     ~DBApi();
 
-    DB_functions_t *deadbeef = nullptr;
+    // DBApi compatibility version
     const char DBApi_vmajor = DBAPI_VMAJOR;
     const char DBApi_vminor = DBAPI_VMINOR;
 
+    // Access to deadbeef functions
+    DB_functions_t *deadbeef = nullptr;
+
     //// CoverArt
-    // functions might return invalid value if plugin is unavailable
+    // use this function to ensure cover art plugin is available before using any functions below
     bool isCoverArtPluginAvailable();
     // load CoverArt
     QFuture<QImage *> loadCoverArt(const char *fname, const char *artist, const char *album);
@@ -40,7 +38,7 @@ public:
     // Call after you are done with cover (not if used signal cover)
     void coverArt_unref(QImage *);
 
-
+    // Misc functions
     bool isPaused();
     void addTracksByUrl(const QUrl &url, int position = -1);
     float getVolume();
@@ -48,9 +46,10 @@ public:
     ddb_playback_state_t getInternalState();
 
     // plugin message handler
+    // TODO consider making it private/protected?
     int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
 
-
+    // Playlist
     QString const& playlistNameByIdx(int idx);
     unsigned long getPlaylistCount();
 
@@ -60,6 +59,8 @@ public:
     void autoSetValue(void *widget, const QString &key, const QVariant &value);
     QVariant autoGetValue(void *widget, const QString &key, const QVariant &defaultValue);
     
+    // Translate
+    const char *_(const char *);
 // Signals are subscribed by different parts of gui
 signals:
     // Volume
@@ -107,9 +108,9 @@ public slots:
     void setRepeat(ddb_repeat_t);
 
 private:
-    CoverArtCache coverart_cache;
+    void *coverart_cache;
     ddb_playback_state_t internal_state;
-    QtGuiSettings *qt_settings;
+    void *qt_settings;
 
     QStringList playlistNames;
 
@@ -130,7 +131,8 @@ public:
     enum DBWidgetType {
         TypeDummy = 0,
         TypeToolbar         = 1<<0,
-        TypeMainWidget      = 1<<1
+        TypeMainWidget      = 1<<1,
+        TypeWindow          = 1<<2
     };
     // Toolbar or MainWidget(dockable)
     DBWidgetType type;
@@ -139,7 +141,6 @@ public:
 };
 
 class DBWidget {
-
 public:
     DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr);
     ~DBWidget();
@@ -161,4 +162,9 @@ public:
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil);
 QDataStream &operator>>(QDataStream &ds, playItemList &pil);
 
-#endif // DBAPIWRAPPER_H
+#define DBAPI (this->api->deadbeef)
+#define CONFGET(X, Y) (this->confGetValue(_internalNameWidget, X,Y))
+#define CONFSET(X, Y) (this->confSetValue(_internalNameWidget, X,Y))
+#define _(X) (this->api->_(X))
+
+#endif // DBAPI_H

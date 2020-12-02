@@ -2,6 +2,8 @@
 #include "ui_NetworkPreferencesWidget.h"
 
 #include "QtGui.h"
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 #ifdef _MSC_VER
 //not #if defined(_WIN32) || defined(_WIN64) because we have strncasecmp in mingw

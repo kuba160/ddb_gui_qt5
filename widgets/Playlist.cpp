@@ -9,6 +9,8 @@
 #include <QtGuiSettings.h>
 
 #include "MainWindow.h"
+#undef _
+#include "DeadbeefTranslator.h"
 
 Playlist::Playlist(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(parent, Api), playlistModel(this, Api) {
     setAutoFillBackground(false);
@@ -61,10 +63,10 @@ Playlist::Playlist(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(pa
     connect(headerActions[3], SIGNAL(triggered(bool)), this, SLOT(lockColumns(bool)));
     headerContextMenu.addAction(headerActions[3]);
     headerActions.append(new QAction(_("Lock playlist"),&headerContextMenu));
+    connect(headerActions[4], SIGNAL(triggered(bool)), this, SLOT(lockPlaylist(bool)));
     headerActions[4]->setCheckable(true);
     headerActions[4]->setChecked(false);
-    // TODO implement such feature
-    headerActions[4]->setEnabled(false);
+    // save lock playlist
     headerContextMenu.addAction(headerActions[4]);
 
     headerGrouping = headerContextMenu.addMenu(_("Grouping"));
@@ -254,6 +256,10 @@ void Playlist::lockColumns(bool locked) {
     header()->setSectionResizeMode(locked ? QHeaderView::Fixed : QHeaderView::Interactive);
     header()->setSectionsMovable(!locked);
     saveHeaderState();
+}
+
+void Playlist::lockPlaylist(bool locked) {
+    playlistModel.setPlaylistLock(locked);
 }
 
 void Playlist::onTrackChanged(DB_playItem_t *from, DB_playItem_t *to) {

@@ -7,8 +7,9 @@
 #include <QFile>
 #include <QTextStream>
 
-AboutDialog::AboutDialog(QWidget *parent) :
+AboutDialog::AboutDialog(QWidget *parent, DBApi *Api) :
         QDialog(parent, Qt::Dialog),
+        DBWidget(parent, Api),
         ui(new Ui::AboutDialog) {
 
     ui->setupUi(this);

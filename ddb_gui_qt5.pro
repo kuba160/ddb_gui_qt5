@@ -4,6 +4,7 @@ CONFIG += no_plugin_name_prefix plugin
 INCLUDEPATH += "./include"
 
 SOURCES  =  include/callbacks.cpp \
+            ActionManager.cpp \
             include/parser.cpp \
             include/qticonloader.cpp \
             plugins/Hotkeys/HotkeyReadDialog.cpp \
@@ -15,6 +16,7 @@ SOURCES  =  include/callbacks.cpp \
             preferencesWidgets/PluginSettingsWidget.cpp \
             preferencesWidgets/SoundPreferencesWidget.cpp \
             widgets/CoverArt.cpp \
+            widgets/LogViewer.cpp \
             widgets/Medialib.cpp \
             widgets/PlaybackButtons.cpp \
             widgets/Playlist.cpp \
@@ -39,6 +41,7 @@ SOURCES  =  include/callbacks.cpp \
             SystemTrayIcon.cpp
 
 HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
+            ActionManager.h \
             plugins/Hotkeys/HotkeysTreeWidget.h \
             plugins/Hotkeys/HotkeysWidget.h \
             preferencesWidgets/InterfacePreferencesWidget.h \
@@ -47,6 +50,7 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             preferencesWidgets/PluginSettingsWidget.h \
             preferencesWidgets/SoundPreferencesWidget.h \
             widgets/CoverArt.h \
+            widgets/LogViewer.h \
             widgets/Medialib.h \
             widgets/PlaybackButtons.h \
             widgets/Playlist.h \
@@ -62,9 +66,10 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             DefaultPlugins.h \
             GuiUpdater.h \
             MainWindow.h \
-            PlaylistModel.h \
             PluginLoader.h \
+            PlaylistModel.h \
             PreferencesDialog.h \
+            QtGui.h \
             QtGuiSettings.h \
             SystemTrayIcon.h
 

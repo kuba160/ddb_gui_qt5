@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QMouseEvent>
 #include <QHeaderView>
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 HotkeysTreeWidget::HotkeysTreeWidget(QWidget* parent): QTreeWidget(parent) {
     QStringList labels;

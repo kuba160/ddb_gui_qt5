@@ -135,7 +135,7 @@ void MainWindow::on_actionPreferences_triggered() {
 // menu "Help"
 
 void MainWindow::on_actionAbout_triggered() {
-    AboutDialog().exec();
+    AboutDialog(this,api).exec();
 }
 
 void MainWindow::on_actionAboutQt_triggered() {

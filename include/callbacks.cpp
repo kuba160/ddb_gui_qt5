@@ -5,6 +5,8 @@
 
 #include "QtGui.h"
 //#include "qticonloader.h"
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 QIcon getStockIcon(QWidget *widget, const QString &freedesktop_name, int fallback) {
     QIcon fallbackIcon;

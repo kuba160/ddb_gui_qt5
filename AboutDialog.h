@@ -2,15 +2,16 @@
 #define ABOUTDIALOG_H
 
 #include <QDialog>
+#include "DBApi.h"
 
 namespace Ui {
 class AboutDialog;
 }
 
-class AboutDialog : public QDialog {
+class AboutDialog : public QDialog, public DBWidget {
     Q_OBJECT
 public:
-    explicit AboutDialog(QWidget *parent = 0);
+    explicit AboutDialog(QWidget *parent = 0, DBApi *Api = nullptr);
     virtual ~AboutDialog();
 
 private:

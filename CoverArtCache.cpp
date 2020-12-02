@@ -5,12 +5,19 @@
 #include "DBApi.h"
 #include "QtGui.h"
 
+#undef DBAPI
+#define DBAPI deadbeef_internal
+
 #define CACHE_SIZE 100
 
 extern DB_functions_t *deadbeef_internal;
 
 CoverArtCache::CoverArtCache(QObject *parent) : QObject(parent) {
     artwork = static_cast<DB_artwork_plugin_t *>(static_cast<void *>(DBAPI->plug_get_for_id ("artwork")));
+    if (artwork) {
+        // force artwork to load default cover art
+        getDefaultCoverArt();
+    }
 }
 
 CoverArtCache::~CoverArtCache() {

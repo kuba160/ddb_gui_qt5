@@ -45,6 +45,7 @@ public:
     ~PlaylistModel();
     void setColumns(QList<PlaylistHeader_t *> &columns);
     void setPlaylist(ddb_playlist_t *plt);
+    void setPlaylistLock(bool lock);
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     QModelIndex index(int row, int column, const QModelIndex &parent) const;
 
@@ -84,6 +85,7 @@ protected:
 
     QIcon playIcon;
     QIcon pauseIcon;
+    bool isLocked = false;
 
 public slots:
     void onPlaybackChanged();

@@ -1,6 +1,8 @@
 #include "PreferencesDialog.h"
 
 #include <include/callbacks.h>
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 PreferencesDialog::PreferencesDialog(QWidget *parent) :
         QDialog(parent, Qt::WindowTitleHint),

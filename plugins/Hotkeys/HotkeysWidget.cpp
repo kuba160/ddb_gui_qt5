@@ -2,6 +2,8 @@
 
 #include "QtGui.h"
 #include "HotkeyReadDialog.h"
+#undef DBAPI
+#define DBAPI deadbeef_internal
 
 HotkeysWidget::HotkeysWidget(QWidget *parent, Qt::WindowFlags f):
         QWidget(parent, f),
