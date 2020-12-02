@@ -34,6 +34,7 @@ SOURCES  =  include/callbacks.cpp \
             MainWindow.cpp \
             MainWindowActions.cpp \
             PlaylistModel.cpp \
+            PlaylistView.cpp \
             PluginLoader.cpp     \
             PreferencesDialog.cpp \
             QtGui.cpp \
@@ -68,6 +69,7 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             MainWindow.h \
             PluginLoader.h \
             PlaylistModel.h \
+            PlaylistView.h \
             PreferencesDialog.h \
             QtGui.h \
             QtGuiSettings.h \
