@@ -29,6 +29,7 @@
 #include "widgets/CoverArt.h"
 #include "widgets/Medialib.h"
 #include "widgets/LogViewer.h"
+#include "widgets/QueueManager.h"
 
 #undef _
 #include "DeadbeefTranslator.h"
@@ -40,7 +41,10 @@ public:
 
 QWidget *Dummy::constructor (QWidget *parent, DBApi *api) {
     Q_UNUSED(api);
-    return new QWidget(parent);
+    QWidget *widget = new QWidget(parent);
+    widget->resize(0,0);
+    widget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    return widget;
 }
 
 DefaultPlugins::DefaultPlugins() {
@@ -111,6 +115,12 @@ DefaultPlugins::DefaultPlugins() {
     logviewer.type = DBWidgetInfo::TypeMainWidget;
     logviewer.constructor = LogViewer::constructor;
     widgetLibrary->push_back(logviewer);
+
+    queueManager.internalName = QString("queuemanager");
+    queueManager.friendlyName = QString("Queue Manager");
+    queueManager.type = DBWidgetInfo::TypeMainWidget;
+    queueManager.constructor = QueueManager::constructor;
+    widgetLibrary->push_back(queueManager);
 }
 
 DefaultPlugins::~DefaultPlugins() {

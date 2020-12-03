@@ -12,6 +12,7 @@ PlaylistModel::PlaylistModel(QObject *parent, DBApi *Api) : QAbstractItemModel(p
     connect(api, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)), this, SLOT(onTrackChanged(DB_playItem_t*,DB_playItem_t*)));
     connect(api, SIGNAL(playbackPaused()), this, SLOT(onPlaybackChanged()));
     connect(api, SIGNAL(playbackUnPaused()), this, SLOT(onPlaybackChanged()));
+    connect(api, SIGNAL(queueChanged()), this, SLOT(onPlaybackChanged()));
 }
 
 PlaylistModel::~PlaylistModel() {
@@ -28,6 +29,11 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
     plt = plt_new;
     DBAPI->plt_ref(plt);
     emit endResetModel();
+}
+
+ddb_playlist_t *PlaylistModel::getPlaylist() {
+    DBAPI->plt_ref(plt);
+    return plt;
 }
 
 void PlaylistModel::setPlaylistLock(bool lock) {
@@ -172,6 +178,25 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role = Qt::DisplayRol
                 break;
             case HT_playing:
                 // TODO include information about queue here
+                if ((DBAPI->playqueue_test(context.it) != -1)) {
+                    QList<int> in_queue;
+                    int i;
+                    for (i = 0; i < DBAPI->playqueue_get_count(); i++) {
+                        DB_playItem_t *it_test = DBAPI->playqueue_get_item(i);
+                        if (it_test == context.it) {
+                            in_queue.append(i);
+                        }
+                        DBAPI->pl_item_unref(it_test);
+                    }
+                    QString s = "(";
+                    for (i = 0; i < in_queue.count(); i++) {
+                        s += QString("%1") .arg(in_queue[i] + 1);
+                        if (i+1 != in_queue.count())
+                            s += ",";
+                    }
+                    s += ")";
+                    return s;
+                }
                 //ret = QString::fromUtf8("");
                 //break;
             case HT_albumArt:
@@ -275,14 +300,12 @@ void PlaylistModel::deleteTracks(const QModelIndexList &tracks) {
     beginRemoveRows(QModelIndex(), tracks.first().row(), tracks.last().row());
 
     QModelIndex index;
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     foreach(index, tracks) {
         DBAPI->pl_set_selected(DBAPI->plt_get_item_for_idx(plt, index.row(), PL_MAIN), 1);
     }
 
     DBAPI->plt_delete_selected(plt);
     endRemoveRows();
-    DBAPI->plt_unref(plt);
 }
 
 void PlaylistModel::sort(int n, Qt::SortOrder order) {
@@ -294,25 +317,20 @@ void PlaylistModel::sort(int n, Qt::SortOrder order) {
 }
 
 void PlaylistModel::clearPlayList() {
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     beginRemoveRows(QModelIndex(), 0, DBAPI->plt_get_item_count(plt, PL_MAIN) - 1);
     DBAPI->plt_clear(plt);
     endRemoveRows();
-    DBAPI->plt_unref(plt);
 }
 
 void PlaylistModel::insertByURLAtPosition(const QUrl &url, int position) {
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int prev_track_count = DBAPI->plt_get_item_count(plt, PL_MAIN);
     api->addTracksByUrl(url, position);
     int count = DBAPI->plt_get_item_count(plt, PL_MAIN) - prev_track_count;
-    DBAPI->plt_unref(plt);
     beginInsertRows(QModelIndex(), position, position + count - 1);
     endInsertRows();
 }
 
 void PlaylistModel::insertByPlayItemAtPosition(DB_playItem_t *item, int position) {
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int prev_track_count = DBAPI->plt_get_item_count(plt, PL_MAIN);
     DB_playItem_t *after;
     if (position == -1) {
@@ -323,7 +341,6 @@ void PlaylistModel::insertByPlayItemAtPosition(DB_playItem_t *item, int position
     }
     DBAPI->plt_insert_item(plt,after,item);
     int count = DBAPI->plt_get_item_count(plt, PL_MAIN) - prev_track_count;
-    DBAPI->plt_unref(plt);
     beginInsertRows(QModelIndex(), position, position + count - 1);
     endInsertRows();
 }
@@ -334,7 +351,6 @@ void PlaylistModel::moveItems(QList<int> indices, int before) {
     for (i = 0; i < indices.length(); i++) {
         inds[i] = indices[i];
     }
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     int lastItem = DBAPI->plt_get_item_count(plt, PL_MAIN) - 1;
     DB_playItem_t *bef;
     if (before > lastItem) {
@@ -349,7 +365,6 @@ void PlaylistModel::moveItems(QList<int> indices, int before) {
     DBAPI->pl_unlock();
     if (bef)
         DBAPI->pl_item_unref(bef);
-    DBAPI->plt_unref(plt);
     beginRemoveRows(QModelIndex(), 0, lastItem);
     endRemoveRows();
     beginInsertRows(QModelIndex(), 0, lastItem);

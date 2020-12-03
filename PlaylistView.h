@@ -56,8 +56,7 @@ protected:
 
     PlaylistModel playlistModel;
 
-public slots:
-    void onPlaylistChanged();
+public slots:;
     void delSelectedTracks();
 
 private slots:

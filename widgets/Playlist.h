@@ -9,7 +9,12 @@ class Playlist : public PlaylistView {
 
 public:
     Playlist(QWidget *parent = nullptr, DBApi *Api = nullptr);
+    ~Playlist();
     static QWidget *constructor(QWidget *parent, DBApi *Api);
+
+private slots:
+    void onPlaylistChanged();
+    void onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
 };
 
 #endif // PLAYLIST_H

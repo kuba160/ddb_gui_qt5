@@ -24,6 +24,7 @@ SOURCES  =  include/callbacks.cpp \
             widgets/SeekSlider.cpp \
             widgets/TabBar.cpp \
             widgets/VolumeSlider.cpp \
+            widgets/QueueManager.cpp \
             AboutDialog.cpp \
             CoverArtCache.cpp \
             DBApi.cpp \
@@ -59,6 +60,7 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             widgets/SeekSlider.h \
             widgets/TabBar.h \
             widgets/VolumeSlider.h \
+            widgets/QueueManager.h \
             AboutDialog.h \
             CoverArtCache.h \
             DBApi.h \

@@ -5,6 +5,7 @@
 #include "QtGui.h"
 #include "CoverArtCache.h"
 #include "QtGuiSettings.h"
+#include "ActionManager.h"
 #include "DeadbeefTranslator.h"
 #undef _
 #undef DBAPI
@@ -12,6 +13,7 @@
 
 #define CAC (COVERARTCACHE_P(coverart_cache))
 #define CSET (static_cast<QtGuiSettings *>(qt_settings))
+#define AM (static_cast<ActionManager *>(action_manager))
 
 
 DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_cache(parent) {
@@ -52,6 +54,9 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_c
 
     // Settings
     qt_settings = new QtGuiSettings(this);
+
+    // Action Manager
+    action_manager = new ActionManager(this,this);
 }
 
 DBApi::~DBApi() {
@@ -73,6 +78,7 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
         case DB_EV_SONGCHANGED:
             ev = (ddb_event_trackchange_t *)ctx;
             emit trackChanged(ev->from, ev->to);
+            emit queueChanged();
             break;
         case DB_EV_PAUSED:
             state = p1 ? DDB_PLAYBACK_STATE_PAUSED : DDB_PLAYBACK_STATE_PLAYING;
@@ -104,8 +110,23 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             break;
         case DB_EV_STOP:
             emit playbackStopped();
+            emit queueChanged();
             break;
         case DB_EV_TRACKINFOCHANGED:
+            // detect queue
+            if (p1 == DDB_PLAYLIST_CHANGE_PLAYQUEUE) {
+                emit queueChanged();
+                ddb_event_track_t *track_event = reinterpret_cast<ddb_event_track_t *>(ctx);
+                if (DBAPI->playqueue_get_count() > queue_count) {
+                    qDebug() <<"queue: track added";
+                    emit queueTrackAdded(track_event->track);
+                }
+                else {
+                    qDebug() <<"queue: track removed";
+                    emit queueTrackRemoved(track_event->track);
+                }
+            }
+
             ddb_playback_state_t output_state = DBAPI->get_output()->state();
             if (internal_state != output_state) {
                 internal_state = output_state;
@@ -155,6 +176,10 @@ ddb_playback_state_t DBApi::getOutputState() {
 
 ddb_playback_state_t DBApi::getInternalState() {
     return internal_state;
+}
+
+void DBApi::playItemContextMenu(QPoint p, DB_playItem_t *it) {
+    AM->playItemContextMenu(p,it);
 }
 
 void DBApi::confSetValue(const QString &plugname, const QString &key, const QVariant &value) {

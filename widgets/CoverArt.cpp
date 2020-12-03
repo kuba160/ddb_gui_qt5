@@ -25,7 +25,6 @@ void CoverArt::currCoverChanged(QImage *img) {
 }
 
 void CoverArt::setCover(QImage *image) {
-    qDebug() << image << cover_image;
     if (cover_image != image) {
         cover_image = image;
         if (cover_image) {

@@ -34,6 +34,7 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     header()->setStretchLastSection(false);
     header()->setContextMenuPolicy(Qt::CustomContextMenu);
     header()->setSortIndicatorShown(false);
+    header()->setFirstSectionMovable(true);
     
     // Context menu (TODO into core)
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -128,7 +129,7 @@ PlaylistView::~PlaylistView() {
 }
 
 void PlaylistView::goToLastSelection() {
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    ddb_playlist_t *plt = playlistModel.getPlaylist();
     int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
     if (cursor < 0)
         restoreCursor();
@@ -138,16 +139,18 @@ void PlaylistView::goToLastSelection() {
 }
 
 void PlaylistView::restoreCursor() {
-    int currentPlaylist = DBAPI->plt_get_curr_idx();
-    int cursor = DBAPI->conf_get_int(QString("playlist.cursor.%1").arg(currentPlaylist).toUtf8().constData(), -1);
-    setCurrentIndex(playlistModel.index(cursor, 0, QModelIndex()));
+    // TODO
+    //int currentPlaylist = DBAPI->plt_get_curr_idx();
+    //int cursor = DBAPI->conf_get_int(QString("playlist.cursor.%1").arg(currentPlaylist).toUtf8().constData(), -1);
+    //setCurrentIndex(playlistModel.index(cursor, 0, QModelIndex()));
 }
 
 void PlaylistView::storeCursor() {
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
-    int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
-    DBAPI->conf_set_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8().constData(), cursor);
-    DBAPI->plt_unref(plt);
+    // TODO
+    //ddb_playlist_t *plt = playlistModel.getPlaylist();
+    //int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
+    //DBAPI->conf_set_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8().constData(), cursor);
+    //DBAPI->plt_unref(plt);
 }
 
 void PlaylistView::dragEnterEvent(QDragEnterEvent *event) {
@@ -162,7 +165,7 @@ void PlaylistView::dragEnterEvent(QDragEnterEvent *event) {
 
 void PlaylistView::dropEvent(QDropEvent *event) {
     if (event->mimeData()->hasUrls()) {
-        ddb_playlist_t *plt = DBAPI->plt_get_curr();
+        ddb_playlist_t *plt = playlistModel.getPlaylist();
         int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
         DBAPI->plt_unref(plt);
         int row = indexAt(event->pos()).row();
@@ -175,7 +178,7 @@ void PlaylistView::dropEvent(QDropEvent *event) {
         event->accept();
     } else if (event->mimeData()->hasFormat("playlist/track")) {
         int row = indexAt(event->pos()).row();
-        ddb_playlist_t *plt = DBAPI->plt_get_curr();
+        ddb_playlist_t *plt = playlistModel.getPlaylist();
         int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
         DBAPI->plt_unref(plt);
         row = (row >= 0) ? row : count;
@@ -200,7 +203,7 @@ void PlaylistView::dropEvent(QDropEvent *event) {
         stream >> a;
         //qDebug() <<"dropEven:" << a.list.at(0)->startsample << a.list.at(0)->endsample << a.list.at(0)->shufflerating << Qt::endl;
         qint64 i;
-        ddb_playlist_t *plt = DBAPI->plt_get_curr();
+        ddb_playlist_t *plt = playlistModel.getPlaylist();
         for (i = a.count-1; i >= 0; i--) {
             // TODO insert pos
             playlistModel.insertByPlayItemAtPosition(a.list.at(i),indexAt(event->pos()).row());
@@ -217,7 +220,7 @@ void PlaylistView::dropEvent(QDropEvent *event) {
 void PlaylistView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
     if (selected == deselected)
         return;
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    ddb_playlist_t *plt = playlistModel.getPlaylist();
     DBAPI->plt_set_cursor(plt, PL_MAIN, selected.indexes().count() == 0 ? -1 : selected.indexes().last().row());
     DBAPI->plt_unref(plt);
     storeCursor();
@@ -232,9 +235,10 @@ void PlaylistView::trackDoubleClicked(QModelIndex index) {
 void PlaylistView::showContextMenu(QPoint point) {
     if (indexAt(point).row() < 0)
         return;
-    QMenu menu(this);
-    menu.addActions(actions());
-    menu.exec(mapToGlobal(point));
+    api->playItemContextMenu(mapToGlobal(point),nullptr);
+    //QMenu menu(this);
+    //menu.addActions(actions());
+    //menu.exec(mapToGlobal(point));
 }
 
 void PlaylistView::headerContextMenuRequested(QPoint pos) {
@@ -284,12 +288,6 @@ void PlaylistView::saveHeaderState() {
         ds << *headers.at(i);
     }
     api->confSetValue(_internalNameWidget,"HeaderData",ar);
-}
-
-void PlaylistView::onPlaylistChanged() {
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
-    playlistModel.setPlaylist(plt);
-    DBAPI->plt_unref(plt);
 }
 
 void PlaylistView::headerDialogAdd(bool) {
@@ -409,6 +407,7 @@ void HeaderDialog::typeChanged(int index) {
         format.setText(PlaylistModel::formatFromHeaderType(static_cast<headerType>(index + 1)));
         if (type.itemText(h->type - 1) == title.text()) {
             title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(index + 1)));
+            h->title = title.text();
         }
     }
     h->type = static_cast<headerType>(index + 1);

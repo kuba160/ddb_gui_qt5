@@ -63,6 +63,8 @@ public:
     static QString formatFromHeaderType(headerType);
     static QString titleFromHeaderType(headerType);
 
+    ddb_playlist_t *getPlaylist();
+
 private:
     int columnCount(const QModelIndex &parent) const;
     QVariant data(const QModelIndex &index, int role) const;

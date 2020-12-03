@@ -6,14 +6,7 @@
 ActionManager::ActionManager (QObject *parent, DBApi *Api) : QObject(parent) {
     api = Api;
 
-    DB_plugin_t **list = DBAPI->plug_get_list();
-    int i = 0;
-    while (list[i]) {
-        if (list[i]->get_actions) {
-            actions.append(ActionItem::getActions(list[i]->get_actions(nullptr)));
-        }
-        i++;
-    }
+    loadActions();
     qDebug() << actions.length();
 }
 
@@ -22,27 +15,114 @@ ActionManager::~ActionManager() {
     for (i = 0; i < actions.length(); i++) {
         delete actions[i];
     }
-}
-
-QList <ActionItem *> ActionItem::getActions(DB_plugin_action_t *action) {
-    QList <ActionItem *> list;
-
-    DB_plugin_action_t *itr = action;
-    while(itr) {
-        ActionItem *n = new ActionItem;
-        n->title = action->title;
-        n->name = action->name;
-        n->callback2 = action->callback2;
-        n->ddb_flags = action->flags;
-        n->is_dir = false;
-        list.append(n);
-        itr = action->next;
+    for (i = 0; i < actions_main.length(); i++) {
+        delete actions_main[i];
     }
-    return list;
+    if (playItemMenu) {
+        delete playItemMenu;
+    }
+
+
 }
 
-/*
+void ActionManager::loadActions() {
+    QList <ActionItem *> *lp = &actions;
+
+    DB_plugin_t **pluglist = DBAPI->plug_get_list();
+    int i = 0;
+    while (pluglist[i]) {
+        if (pluglist[i]->get_actions) {
+
+            if (pluglist[i]->id && strcmp(pluglist[i]->id,"hotkeys") == 0) {
+                lp = &actions_main;
+            }
+            else {
+                lp = &actions;
+            }
+            // append all actions
+            DB_plugin_action_t *itr = pluglist[i]->get_actions(nullptr); // kinda off implementation :(
+            while(itr) {
+                ActionItem *n = new ActionItem;
+                n->title = itr->title;
+                n->name = itr->name;
+                n->callback2 = itr->callback2;
+                n->ddb_action = itr;
+                n->ddb_flags = itr->flags;
+                n->is_dir = false;
+                lp->append(n);
+                itr = itr->next;
+            }
+        }
+        i++;
+    }
+}
+
+
 void ActionManager::playItemContextMenu(QPoint p, DB_playItem_t *it) {
+    if (!playItemMenu) {
+        playItemMenu = new QMenu();
+
+        // generate
+        int i;
+        for (i = 0; i < actions_main.length(); i++) {
+            ActionItem *ac = actions_main[i];
+            if ( (ac->ddb_flags & DB_ACTION_MULTIPLE_TRACKS) &&
+                !(ac->ddb_flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST) &&
+                !(ac->ddb_flags & DB_ACTION_COMMON)) {
+                const char *title;
+                if ((title = strchr(ac->title.toUtf8(),'/')) == nullptr) {
+                    title = ac->title.toUtf8();
+                }
+                else {
+                    title++;
+                }
+
+                if (!ac->action) {
+                    ac->action = new QAction(_(title),playItemMenu);
+                    connect(ac->action,SIGNAL(triggered(bool)),this, SLOT(onAction(bool)));
+                    playItemMenu->addAction(ac->action);
+                }
+            }
+        }
+
+        // cut/copy/paste
+        // todo
+        playItemMenu->addSeparator();
+        playItemMenu->addAction(_("Cut"));
+        playItemMenu->addAction(_("Copy"));
+        playItemMenu->addAction(_("Paste"));
+        playItemMenu->addSeparator();
+
+        // plugin menus
+        for (i = 0; i < actions.length(); i++) {
+            ActionItem *ac = actions[i];
+            if ( (ac->ddb_flags & DB_ACTION_MULTIPLE_TRACKS) &&
+                !(ac->ddb_flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST) &&
+                !(ac->ddb_flags & DB_ACTION_COMMON)) {
+                const char *title;
+                if ((title = strchr(ac->title.toUtf8(),'/')) == nullptr) {
+                    title = ac->title.toUtf8();
+                }
+                else {
+                    title++;
+                }
+
+                if (!ac->action) {
+                    ac->action = new QAction(title,playItemMenu);
+                    connect(ac->action,SIGNAL(triggered(bool)),this, SLOT(onAction(bool)));
+                    playItemMenu->addAction(ac->action);
+                }
+            }
+        }
+
+        // Properties
+        playItemMenu->addSeparator();
+        playItemMenu->addAction(_("Track Properties"));
+    }
+    DB_playItem_t *playItemMenuRef = it;
+    playItemMenu->move(p);
+    playItemMenu->show();
+
     // Add to queue
     // Delete from queue
     // ---
@@ -70,7 +150,7 @@ void ActionManager::playItemContextMenu(QPoint p, DB_playItem_t *it) {
     //menu.add
     return;
 }
-
+/*
 void ActionManager::playlistContextMenu(QPoint p, int n) {
     // Change playlist name
     // Delete playlist
@@ -144,4 +224,28 @@ ActionTreeItem::ActionTreeItem(QObject *parent, DBApi *Api, DB_plugin_action_t *
 
         a_itr = a_itr->next;
     }
+}
+
+void ActionManager::onAction(bool checked) {
+    QObject *sendr = sender();
+
+    // find action
+    int i;
+    for (i = 0; i < actions_main.length(); i++) {
+        QAction *ac = actions_main[i]->action;
+        if (ac == sendr) {
+            // todo
+            actions_main[i]->callback2(actions_main[i]->ddb_action,DDB_ACTION_CTX_SELECTION);
+            return;
+        }
+    }
+    for (i = 0; i < actions.length(); i++) {
+        QAction *ac = actions[i]->action;
+        if (ac == sendr) {
+            // todo
+            actions[i]->callback2(actions[i]->ddb_action,DDB_ACTION_CTX_SELECTION);
+            return;
+        }
+    }
+    qDebug() << "ActionManager: onAction failed to find action!" << Qt::endl;
 }

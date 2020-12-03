@@ -53,6 +53,9 @@ public:
     QString const& playlistNameByIdx(int idx);
     unsigned long getPlaylistCount();
 
+    // Menus
+    void playItemContextMenu(QPoint p, DB_playItem_t *it);
+
     // Settings
     void confSetValue(const QString &plugname, const QString &key, const QVariant &value);
     QVariant confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue);
@@ -84,6 +87,10 @@ signals:
     void repeatChanged();
     // Cover
     void currCoverChanged(QImage *);
+    // Queue
+    void queueChanged();
+    void queueTrackAdded(DB_playItem_t *);
+    void queueTrackRemoved(DB_playItem_t *);
 
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
@@ -111,6 +118,7 @@ private:
     void *coverart_cache;
     ddb_playback_state_t internal_state;
     void *qt_settings;
+    void *action_manager;
 
     QStringList playlistNames;
 
@@ -118,6 +126,8 @@ private:
 
     ddb_repeat_t currRepeat;
     ddb_shuffle_t currShuffle;
+
+    int queue_count = 0;
 private slots:
     void onCurrCoverChanged();
 };

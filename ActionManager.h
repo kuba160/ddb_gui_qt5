@@ -7,12 +7,15 @@
 
 class ActionItem {
 public:
-    static QList <ActionItem *> getActions(DB_plugin_action_t *);
+
     QString title;
     QString name;
     uint32_t ddb_flags;
     DB_plugin_action_callback2_t callback2;
+    DB_plugin_action_t *ddb_action;
     bool is_dir;
+    QString plugin;
+    QAction *action;
 };
 
 class ActionManager : public QObject {
@@ -22,15 +25,25 @@ public:
     ActionManager(QObject *parent = nullptr, DBApi *Api = nullptr);
     ~ActionManager();
 
+    void loadActions();
+
 protected:
+    QList<ActionItem *> actions_main;
     QList<ActionItem *> actions;
+
+    QMenu *playItemMenu = nullptr;
+    DB_playItem_t *playItemMenuRef = nullptr;
 
     DBApi *api;
 public slots:
     // Create context menu in point p for playitem it
-    //void playItemContextMenu(QPoint p, DB_playItem_t *it);
+    void playItemContextMenu(QPoint p, DB_playItem_t *it);
+    //void playItemContextMenu(QPoint p, QList<DB_playItem_t *> it_list);
     // Create context menu in point p for playlist number n
     //void playlistContextMenu(QPoint p, int n);
+
+private slots:
+    void onAction(bool);
 };
 
 
