@@ -72,25 +72,29 @@ static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 }
 
 static int initializeApi() {
+    if (!dbtr) {
+        dbtr = new DeadbeefTranslator();
+    }
     if (!api) {
         while (!deadbeef_internal) {
             usleep(10000);
         }
+        if (!pl) {
+            pl = new PluginLoader(api);
+        }
         api = new DBApi(nullptr, deadbeef_internal);
-    }
-    if (!dbtr) {
-        dbtr = new DeadbeefTranslator();
     }
     return 0;
 }
 
 static int initializePluginLoader() {
-    if (!api) {
-        initializeApi();
-    }
     if (!pl) {
         pl = new PluginLoader(api);
     }
+    if (!api) {
+        initializeApi();
+    }
+    pl->api = api;
     return 0;
 }
 

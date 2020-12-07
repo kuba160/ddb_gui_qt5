@@ -35,7 +35,7 @@ protected:
     void loadIcons();
 
 private:
-    
+    QMenuBar *mainMenu;
     void loadConfig();
     void saveConfig();
     
@@ -45,16 +45,6 @@ private:
     Ui::MainWindow *ui;
     SystemTrayIcon *trayIcon;
     QMenu *trayMenu;
-
-    QMenu *main_widgets;
-    QActionGroup *main_widgets_list;
-    QMenu *new_plugins;
-    QMenu *remove_plugins;
-
-    QActionGroup *repeatGroup;
-    QAction *repeat[3];
-    QActionGroup *shuffleGroup;
-    QAction *shuffle[4];
 
     void createConnections();
 
@@ -97,13 +87,9 @@ public slots:
 
     void windowAddToolbar(QToolBar *);
     void windowAddDockable(QDockWidget *);
-    void windowViewActionAdd(QAction *);
-    void windowViewActionCreate(QAction *);
-    void windowViewActionRemove(QAction *);
-    void windowViewActionRemoveToggleHide(bool visible);
-    void windowViewActionMainWidget(QAction *);
 
-    void shuffleRepeatHandler();
+
+    //void windowViewActionMainWidget(QAction *);
 
 signals:
     void configLoaded();

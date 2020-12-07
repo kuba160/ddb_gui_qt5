@@ -11,6 +11,7 @@
 #include <QFuture>
 #include <QImage>
 #include <QMimeData>
+#include <QMenuBar>
 
 // DBApi version
 #define DBAPI_VMAJOR 0
@@ -57,6 +58,11 @@ public:
     // Menus
     void playItemContextMenu(QWidget *w, QPoint p);
 
+    // MenuBar
+    // TODO make use actions;
+    QMenuBar *getMainMenuBar();
+    QMenu *getMenu(const char *menu);
+
     // Mimedata
 
     QMimeData *mime_playItems(QList<DB_playItem_t *> playItems);
@@ -66,6 +72,7 @@ public:
     QVariant confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue);
     void autoSetValue(void *widget, const QString &key, const QVariant &value);
     QVariant autoGetValue(void *widget, const QString &key, const QVariant &defaultValue);
+
     
     // Translate
     const char *_(const char *);

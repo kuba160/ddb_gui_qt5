@@ -5,6 +5,7 @@ INCLUDEPATH += "./include"
 
 SOURCES  =  include/callbacks.cpp \
             ActionManager.cpp \
+            DefaultActions.cpp \
             include/parser.cpp \
             include/qticonloader.cpp \
             plugins/Hotkeys/HotkeyReadDialog.cpp \
@@ -44,6 +45,7 @@ SOURCES  =  include/callbacks.cpp \
 
 HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             ActionManager.h \
+            DefaultActions.h \
             plugins/Hotkeys/HotkeysTreeWidget.h \
             plugins/Hotkeys/HotkeysWidget.h \
             preferencesWidgets/InterfacePreferencesWidget.h \
@@ -82,6 +84,7 @@ FORMS =     preferencesWidgets/InterfacePreferencesWidget.ui \
             preferencesWidgets/PluginsPreferencesWidget.ui \
             preferencesWidgets/SoundPreferencesWidget.ui \
             AboutDialog.ui \
+            DefaultActions.ui \
             MainWindow.ui
 
 RESOURCES = Resources.qrc

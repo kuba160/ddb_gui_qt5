@@ -31,36 +31,11 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     loadActions();
     loadIcons();
 
-    main_widgets = ui->menuView->addMenu(dbtr->translate(nullptr,"Main Widget"));
-    main_widgets_list = new QActionGroup(nullptr);
-    new_plugins = ui->menuView->addMenu(QString("%1...") .arg(dbtr->translate(nullptr,"Add")));
-    remove_plugins = ui->menuView->addMenu(QString("%1...") .arg(dbtr->translate(nullptr,"Remove")));
-    remove_plugins->menuAction()->setVisible(false);
+    mainMenu = Api->getMainMenuBar();
+    setMenuBar(mainMenu);
+    mainMenu->setNativeMenuBar(true);
 
-    // Shuffle/Repeat connections
-    {
-        shuffleGroup = new QActionGroup(this);
-        repeatGroup  = new QActionGroup(this);
-        shuffle[0] = ui->actionNoShuffle;
-        shuffle[1] = ui->actionTrackShuffle;
-        shuffle[2] = ui->actionAlbumShuffle;
-        shuffle[3] = ui->actionRandomTrackShuffle;
-        repeat[0]  = ui->actionLoopAll;
-        repeat[1]  = ui->actionLoopTrack;
-        repeat[2]  = ui->actionLoopNothing;
-        int i;
-        for (i = 0; i < 4; i++) {
-            connect(shuffle[i],SIGNAL(triggered()),this, SLOT(shuffleRepeatHandler()));
-            shuffleGroup->addAction(shuffle[i]);
-        }
-        for (i = 0; i < 3; i++) {
-            connect(repeat[i],SIGNAL(triggered()),this, SLOT(shuffleRepeatHandler()));
-            repeatGroup->addAction(repeat[i]);
-        }
-        // Restore
-        shuffle[DBAPI->streamer_get_shuffle()]->setChecked(true);
-        repeat[DBAPI->streamer_get_repeat()]->setChecked(true);
-    }
+
 
 
     //// PluginLoader
@@ -70,32 +45,7 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
 
     connect (pl, SIGNAL(actionToggleVisibleCreated(QAction *)), this, SLOT(windowViewActionAdd(QAction *)));
 
-    // New widget creation
-    {
-        // add already loaded widgets
-        unsigned int i = 0;
-        QAction *a;
-        for (i = 0; (a = pl->actionNewGet(i)); i++) {
-            new_plugins->addAction(a);
-        }
-        // subscribe for future actions
-        connect (pl, SIGNAL(actionPluginAddCreated(QAction *)), this, SLOT(windowViewActionCreate(QAction *)));
-    }
 
-    // Deletion of existent plugins
-    {
-        // subscribe for future actions
-        connect (pl, SIGNAL(actionPluginRemoveCreated(QAction *)), this, SLOT(windowViewActionRemove(QAction *)));
-    }
-
-    // MainWidget selection
-    connect (pl, SIGNAL(actionPluginMainWidgetCreated(QAction *)), this, SLOT(windowViewActionMainWidget(QAction *)));
-
-    connect (this, SIGNAL(configLoaded()), pl, SLOT(updateActionChecks()));
-
-    connect (this->ui->actionBlockToolbarChanges, SIGNAL(toggled(bool)), pl, SLOT(lockWidgets(bool)));
-
-    connect (this->ui->actionExit, SIGNAL(triggered()), pl, SLOT(actionChecksSave()));
 
     trayIcon = nullptr;
     trayMenu = nullptr;
@@ -106,9 +56,7 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     pl->RestoreWidgets(this);
 
     setCentralWidget(pl->getMainWidget());
-    if (pl->getTotalMainWidgets() <= 1) {
-        main_widgets->menuAction()->setVisible(false);
-    }
+
 
 
     loadConfig();
@@ -136,39 +84,12 @@ void MainWindow::windowAddDockable(QDockWidget *dock) {
     addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
-void MainWindow::windowViewActionAdd(QAction *action) {
-    this->ui->menuView->addAction(action);
-}
 
-void MainWindow::windowViewActionCreate(QAction *action) {
-    new_plugins->addAction(action);
-}
-
-void MainWindow::windowViewActionRemove(QAction *action) {
-    remove_plugins->addAction(action);
-    remove_plugins->menuAction()->setVisible(true);
-}
-
+/*
 void MainWindow::windowViewActionRemoveToggleHide(bool visible) {
     remove_plugins->menuAction()->setVisible(visible);
-}
+}*/
 
-void MainWindow::windowViewActionMainWidget(QAction *action) {
-    if (action == nullptr) {
-        if (pl->getTotalMainWidgets() > 1) {
-            main_widgets->menuAction()->setVisible(true);
-        }
-        else {
-            main_widgets->menuAction()->setVisible(false);
-        }
-        return;
-    }
-    main_widgets_list->addAction(action);
-    main_widgets->addAction(action);
-    if (pl->getTotalMainWidgets() > 1) {
-        main_widgets->menuAction()->setVisible(true);
-    }
-}
 
 void MainWindow::createConnections() {
     connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
@@ -443,23 +364,6 @@ void MainWindow::loadConfig() {
 
 }
 
-void MainWindow::shuffleRepeatHandler() {
-    QObject *s = sender();
-    int i;
-    for (i = 0; i < 4; i++) {
-        if (s == shuffle[i]) {
-            api->setShuffle(static_cast<ddb_shuffle_t>(i));
-            return;
-        }
-    }
-    for (i = 0; i < 3; i++) {
-        if (s == repeat[i]) {
-            api->setRepeat(static_cast<ddb_repeat_t>(i));
-            return;
-        }
-    }
-    qDebug() << "MainWindow: shuffleRepeatHandler failed!";
-}
 
 void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowSize, size());

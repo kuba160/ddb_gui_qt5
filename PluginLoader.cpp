@@ -326,7 +326,8 @@ void PluginLoader::removeWidget(unsigned long num) {
             }
             delete lw->widget;
         }
-        w->windowViewActionMainWidget(nullptr);
+        //TODO
+        //w->windowViewActionMainWidget(nullptr);
         break;
     default:
         qDebug() << "qt5: PluginLoader: Unknown widget type?";
@@ -498,7 +499,8 @@ void PluginLoader::actionHandlerRemove(bool check) {
             removeWidget(i);
             loadedWidgets->erase(loadedWidgets->begin() + i);
             if (loadedWidgets->size() == 0) {
-               w->windowViewActionRemoveToggleHide(false);
+                // TODO
+               //w->windowViewActionRemoveToggleHide(false);
             }
             return;
         }

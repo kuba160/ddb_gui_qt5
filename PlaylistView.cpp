@@ -192,6 +192,8 @@ void PlaylistView::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void PlaylistView::dropEvent(QDropEvent *event) {
+    // TODO: row calculation is not dependent on which half of the item it is being dropped
+    // it might be either over the row or under the row
     if (event->mimeData()->hasUrls()) {
         ddb_playlist_t *plt = playlistModel.getPlaylist();
         int count = DBAPI->plt_get_item_count(plt, PL_MAIN);

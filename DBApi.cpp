@@ -171,6 +171,15 @@ void DBApi::playItemContextMenu(QWidget *w, QPoint p) {
     AM->playItemContextMenu(w,p);
 }
 
+QMenuBar * DBApi::getMainMenuBar() {
+    return AM->mainMenuBar;
+}
+
+QMenu * DBApi::getMenu(const char *menu) {
+    QMenuBar *mb = AM->mainMenuBar;
+    return mb->findChild<QMenu *>(_(menu));
+}
+
 QMimeData *DBApi::mime_playItems(QList<DB_playItem_t *> playItems) {
     QMimeData *md = new QMimeData();
     QByteArray ba;

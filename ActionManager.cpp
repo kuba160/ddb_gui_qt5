@@ -3,10 +3,27 @@
 #include <QMenu>
 #include <QGuiApplication>
 #include "MainWindow.h"
+#include "DefaultActions.h"
 
 ActionManager::ActionManager (QObject *parent, DBApi *Api) : QObject(parent) {
     api = Api;
     clipboard = QGuiApplication::clipboard();
+    DefaultActions *da = new DefaultActions(Api);
+
+    mainMenuBar = da->getDefaultMenuBar();
+    QList<QMenu *> l = da->findChildren<QMenu *>();
+    // translate
+    for (int i = 0; i < l.length(); i++) {
+        qDebug() << "Renaming" << l[i]->menuAction()->text() << "to" << _(l[i]->menuAction()->text().toUtf8());
+        l[i]->menuAction()->setText(_(l[i]->menuAction()->text().toUtf8()));
+        QList<QAction *> acs = da->findChildren<QAction *>();
+        for (int j = 0; i == 0 & j < acs.length(); j++) {
+            if (!acs[j]->text().isEmpty()) {
+                qDebug() << "RRR:" << acs[j]->text() << "to" << _(acs[j]->text().toUtf8());
+                acs[j]->setText(_(acs[j]->text().toUtf8()));
+            }
+        }
+    }
     loadActions();
     qDebug() << actions.length();
 }
@@ -50,7 +67,7 @@ void ActionManager::loadActions() {
                 n->callback2 = itr->callback2;
                 n->ddb_action = itr;
                 n->ddb_flags = itr->flags;
-                n->is_dir = false;
+                n->action_type = ActionItem::TYPE_VIRTUAL;
                 lp->append(n);
                 itr = itr->next;
             }
@@ -207,9 +224,10 @@ void ActionManager::playlistContextMenu(QPoint p, int n) {
     return;
 }*/
 
-ActionTreeItem::ActionTreeItem(QObject *parent, DBApi *Api, DB_plugin_action_t *action) {
+ActionTreeItem::ActionTreeItem(ActionTreeItem *parent, DBApi *Api, DB_plugin_action_t *action) : QTreeWidgetItem(parent),
+                                                                                                 DBWidget(nullptr,Api) {
     if (!action) {
-        is_dir = true;
+        action_type = ActionItem::TYPE_VIRTUAL;
         ddb_flags = 0;
         callback2 = nullptr;
         return;
@@ -242,7 +260,7 @@ ActionTreeItem::ActionTreeItem(QObject *parent, DBApi *Api, DB_plugin_action_t *
                 ActionTreeItem *new_child = new ActionTreeItem();
                 new_child->setText(0, strlist[i].replace("\\/","/"));
                 new_child->title = "";
-                new_child->is_dir = true;
+                new_child->action_type = TYPE_VIRTUAL;
                 p->addChild(new_child);
                 p = new_child;
             }
@@ -251,7 +269,7 @@ ActionTreeItem::ActionTreeItem(QObject *parent, DBApi *Api, DB_plugin_action_t *
         ActionTreeItem *final_child = new ActionTreeItem();
         final_child->title = strlist[i];
         final_child->setText(0, strlist[i].replace("\\/","/"));
-        final_child->is_dir = false;
+        final_child->action_type = ActionItem::TYPE_QTGUI; // ?? DEADBEEF TYPE ??
         final_child->ddb_flags = action->flags;
         final_child->name = action->name;
         final_child->callback2 = action->callback2;
@@ -262,6 +280,7 @@ ActionTreeItem::ActionTreeItem(QObject *parent, DBApi *Api, DB_plugin_action_t *
 }
 
 void ActionManager::onAction(bool checked) {
+    Q_UNUSED(checked)
     QObject *sendr = sender();
 
     // find action
