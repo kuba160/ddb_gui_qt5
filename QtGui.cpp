@@ -100,8 +100,6 @@ static int pluginStop() {
     return 0;
 }
 static int pluginConnect() {
-    initializeApi();
-
     hotkeys_plugin = (DB_hotkeys_plugin_t *)DBAPI->plug_get_for_id("hotkeys");
     if (hotkeys_plugin)
         qDebug() << "qtui: found global hotkeys plugin";
