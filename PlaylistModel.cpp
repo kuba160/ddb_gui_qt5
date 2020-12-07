@@ -27,7 +27,9 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
         DBAPI->plt_unref(plt);
     }
     plt = plt_new;
-    DBAPI->plt_ref(plt);
+    if (plt) {
+        DBAPI->plt_ref(plt);
+    }
     emit endResetModel();
 }
 
@@ -39,6 +41,15 @@ ddb_playlist_t *PlaylistModel::getPlaylist() {
 void PlaylistModel::setPlaylistLock(bool lock) {
     isLocked = lock;
 }
+
+void PlaylistModel::modelBeginReset() {
+    emit beginResetModel();
+}
+
+void PlaylistModel::modelEndReset() {
+    emit endResetModel();
+}
+
 
 void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
     emit beginResetModel();
@@ -68,7 +79,8 @@ void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
 }
 
 // Taken from DeaDBeeF gtkui (plcommon.h)
-#define COLUMN_FORMAT_ARTISTALBUM "$if(%artist%,%artist%,Unknown Artist)[ - %album%]"
+//#define COLUMN_FORMAT_ARTISTALBUM "$if(%artist%,%artist%,Unknown Artist)[ - %album%]"
+#define COLUMN_FORMAT_ARTISTALBUM "$if(%album artist%,%album artist%,$if(%artist%,%artist%,Unknown Artist))[ - %album%]"
 #define COLUMN_FORMAT_ARTIST "$if(%artist%,%artist%,Unknown Artist)"
 #define COLUMN_FORMAT_ALBUM "%album%"
 #define COLUMN_FORMAT_TITLE "%title%"
@@ -195,10 +207,9 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role = Qt::DisplayRol
                             s += ",";
                     }
                     s += ")";
-                    return s;
+                    ret = s;
                 }
-                //ret = QString::fromUtf8("");
-                //break;
+                break;
             case HT_albumArt:
                 ret = QString::fromUtf8("");
                 break;
@@ -209,7 +220,9 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role = Qt::DisplayRol
                 /* fall through */
             default:
                 if (h->_format_compiled) {
+                    DBAPI->pl_lock();
                     DBAPI->tf_eval (&context, h->_format_compiled, buffer, 1024);
+                    DBAPI->pl_unlock();
                     ret = QString::fromUtf8(buffer);
                 }
                 break;
@@ -345,6 +358,7 @@ void PlaylistModel::insertByPlayItemAtPosition(DB_playItem_t *item, int position
     endInsertRows();
 }
 void PlaylistModel::moveItems(QList<int> indices, int before) {
+    // TODO FIX THIS
     uint32_t *inds = new uint32_t[indices.length()];
     //uint32_t inds[indices.length()];
     int i;
@@ -369,13 +383,11 @@ void PlaylistModel::moveItems(QList<int> indices, int before) {
     endRemoveRows();
     beginInsertRows(QModelIndex(), 0, lastItem);
     endInsertRows();
+    emit rowsChanged();
 }
 
 QStringList PlaylistModel::mimeTypes () const {
-    QStringList qstrList;
-    qstrList.append("playlist/track");
-    qstrList.append("medialib/tracks");
-    qstrList.append("text/uri-list");
+    QStringList qstrList = {"deadbeef/playitems"};
     return qstrList;
 }
 
@@ -383,22 +395,21 @@ Qt::DropActions PlaylistModel::supportedDropActions () const {
     return Qt::CopyAction | Qt::MoveAction;
 }
 
-QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const
-{
-    QMimeData *mimeData = new QMimeData();
-    QByteArray encodedData;
-
-    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
+    QList<DB_playItem_t *> items;
+    QList<int> rows;
 
     foreach (QModelIndex index, indexes) {
         if (index.isValid()) {
-            QString text = data(index, Qt::DisplayRole).toString();
-            stream << index.row() << text;
+            if (!rows.contains(index.row())) {
+                DB_playItem_t *it = DBAPI->plt_get_item_for_idx(plt,index.row(),PL_MAIN);
+                items.append(it);
+                rows.append(index.row());
+            }
         }
     }
 
-    mimeData->setData("playlist/track", encodedData);
-    return mimeData;
+    return api->mime_playItems(items);
 }
 
 QDataStream &operator<<(QDataStream &ds, const PlaylistHeader_t &pil) {

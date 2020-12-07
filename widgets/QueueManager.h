@@ -29,7 +29,7 @@ protected:
     void dropEvent(QDropEvent *event);
 private:
 
-    QCache<DB_playItem_t *, PlayItemWrapper> table;
+    QCache<DB_playItem_t *, PlayItemWrapper> cache_table;
     ddb_playlist_t *qplt = nullptr;
 };
 

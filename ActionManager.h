@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTreeWidgetItem>
+#include <QClipboard>
 #include "DBApi.h"
 
 class ActionItem {
@@ -32,15 +33,23 @@ protected:
     QList<ActionItem *> actions;
 
     QMenu *playItemMenu = nullptr;
+    QPoint playItemMenuPosition;
+    QList<QAction *> clipboard_actions;
     DB_playItem_t *playItemMenuRef = nullptr;
 
     DBApi *api;
+    QClipboard *clipboard;
 public slots:
     // Create context menu in point p for playitem it
-    void playItemContextMenu(QPoint p, DB_playItem_t *it);
+    void playItemContextMenu(QWidget *obj, QPoint p);
     //void playItemContextMenu(QPoint p, QList<DB_playItem_t *> it_list);
     // Create context menu in point p for playlist number n
     //void playlistContextMenu(QPoint p, int n);
+
+private slots:
+    void cut(bool);
+    void copy(bool);
+    void paste(bool);
 
 private slots:
     void onAction(bool);

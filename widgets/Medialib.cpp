@@ -33,13 +33,11 @@ void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event) {
         return;
 
     QDrag *drag = new QDrag(this);
-    QMimeData *mimeData = new QMimeData;
-
-    QList<DB_playItem_t *> list = static_cast<MedialibTreeWidgetItem *>(selectedItems().at(0))->getTracks();
-    QByteArray encodedData;
-    QDataStream stream(&encodedData, QIODevice::WriteOnly);
-    stream << (playItemList) {list.count(),list};
-    mimeData->setData("medialib/tracks",encodedData);
+    QList<DB_playItem_t *> list;
+    for (int i = 0; i < selectedItems().length(); i++) {
+        list.append(static_cast<MedialibTreeWidgetItem *>(selectedItems().at(i))->getTracks());
+    }
+    QMimeData *mimeData = static_cast<MedialibTreeWidgetItem *>(selectedItems().at(0))->api->mime_playItems(list);
     drag->setMimeData(mimeData);
     drag->exec(Qt::CopyAction | Qt::MoveAction);
 }
@@ -69,14 +67,15 @@ QList<DB_playItem_t *> MedialibTreeWidgetItem::getTracks() {
 Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     // GUI
     tree = new MedialibTreeWidget();
+    tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree->setHeaderHidden(true);
     tree->setDragDropMode(QAbstractItemView::DragDrop);
     tree->setDragEnabled(true);
     tree->viewport()->setAcceptDrops(true);
     main_layout = new QVBoxLayout(this);
-    search_layout = new QHBoxLayout();
-    search_query = new QComboBox();
-    search_box = new QLineEdit();
+    search_layout = new QHBoxLayout(this);
+    search_query = new QComboBox(this);
+    search_box = new QLineEdit(this);
     search_layout->addWidget(search_query);
     search_layout->addWidget(search_box);
     search_layout->setContentsMargins(0,0,0,0);

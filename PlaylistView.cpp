@@ -74,10 +74,6 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     headerGrouping->setEnabled(false);
     //TODO
 
-    // Connections (kinda old)
-    connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
-    connect(this, SIGNAL(enterRelease(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
-
     connect(header(), SIGNAL(customContextMenuRequested(QPoint)), SLOT(headerContextMenuRequested(QPoint)));
     connect(header(), SIGNAL(sectionResized(int,int,int)), SLOT(saveHeaderState()));
     connect(header(), SIGNAL(sectionMoved(int,int,int)), SLOT(saveHeaderState()));
@@ -153,12 +149,44 @@ void PlaylistView::storeCursor() {
     //DBAPI->plt_unref(plt);
 }
 
+QMimeData *PlaylistView::copy() {
+    //
+    QList<DB_playItem_t *> list;
+    QModelIndexList qmil = selectionModel()->selectedRows();
+    int i;
+    for (i = 0; i < qmil.length(); i++) {
+        DB_playItem_t *it_new = DBAPI->pl_item_alloc();
+        DBAPI->pl_item_copy(it_new, DBAPI->plt_get_item_for_idx(playlistModel.getPlaylist(), qmil[i].row(), PL_MAIN));
+        list.append(it_new);
+    }
+    return api->mime_playItems(list);
+}
+
+bool PlaylistView::canCopy() {
+    return true;
+}
+
+bool PlaylistView::canPaste(const QMimeData *mime) {
+    if (mime->hasFormat("deadbeef/playitems")) {
+        return true;
+    }
+    return false;
+}
+
+void PlaylistView::paste(const QMimeData *mime, QPoint p) {
+    //
+    QList<DB_playItem_t *> list = api->mime_playItems(mime);
+    QDropEvent *event = new QDropEvent(mapFromGlobal(p),Qt::CopyAction,mime,Qt::NoButton,Qt::NoModifier);
+    dropEvent(event);
+}
+
 void PlaylistView::dragEnterEvent(QDragEnterEvent *event) {
     if (event->mimeData()->hasUrls() || event->mimeData()->hasFormat("playlist/track")
-                                     || event->mimeData()->hasFormat("medialib/tracks")) {
+                                     || event->mimeData()->hasFormat("deadbeef/playitems")) {
         event->setDropAction(Qt::MoveAction);
         event->accept();
     } else {
+        //event->accept();
         event->ignore();
     }
 }
@@ -196,22 +224,29 @@ void PlaylistView::dropEvent(QDropEvent *event) {
         playlistModel.moveItems(rows, row);
         event->setDropAction(Qt::CopyAction);
         event->accept();
-    } else if (event->mimeData()->hasFormat("medialib/tracks")) {
-        QByteArray encodedData = event->mimeData()->data("medialib/tracks");
-        QDataStream stream(&encodedData, QIODevice::ReadOnly);
-        playItemList a;
-        stream >> a;
-        //qDebug() <<"dropEven:" << a.list.at(0)->startsample << a.list.at(0)->endsample << a.list.at(0)->shufflerating << Qt::endl;
-        qint64 i;
-        ddb_playlist_t *plt = playlistModel.getPlaylist();
-        for (i = a.count-1; i >= 0; i--) {
-            // TODO insert pos
-            playlistModel.insertByPlayItemAtPosition(a.list.at(i),indexAt(event->pos()).row());
-            //DBAPI->plt_insert_item(plt,nullptr,a.list.at(i));
+    } else if (event->mimeData()->hasFormat("deadbeef/playitems")) {
+        QList<DB_playItem_t *>list = api->mime_playItems(event->mimeData());
+        int row = indexAt(event->pos()).row();
+        if (event->source() == this) {
+            // Move items inside
+            QList<int> rows;
+            int i;
+            for (i = 0; i < list.length(); i++) {
+                rows.append(DBAPI->pl_get_idx_of(list[i]));
+            }
+            playlistModel.moveItems(rows,row);
+
         }
-        DBAPI->plt_unref(plt);
-        event->setDropAction(Qt::CopyAction);
-        event->accept();
+        else {
+            // Insert foreign items
+            int i;
+            for (i = 0; i < list.length(); i++) {
+                playlistModel.insertByPlayItemAtPosition(list.at(i),row++);
+                //DBAPI->plt_insert_item(plt,nullptr,a.list.at(i));
+            }
+            event->setDropAction(Qt::CopyAction);
+            event->accept();
+        }
     } else {
         event->ignore();
     }
@@ -235,10 +270,7 @@ void PlaylistView::trackDoubleClicked(QModelIndex index) {
 void PlaylistView::showContextMenu(QPoint point) {
     if (indexAt(point).row() < 0)
         return;
-    api->playItemContextMenu(mapToGlobal(point),nullptr);
-    //QMenu menu(this);
-    //menu.addActions(actions());
-    //menu.exec(mapToGlobal(point));
+    api->playItemContextMenu(this, viewport()->mapTo(this,point));
 }
 
 void PlaylistView::headerContextMenuRequested(QPoint pos) {
@@ -354,7 +386,7 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
                          _("Artist"), _("Album"), _("Title"), _("Year"), _("Duration"), _("Track Number"),
                          _("Band / Album Artist"), _("Codec"), _("Bitrate"), _("Custom")};
     type.addItems(items);
-    format.setEnabled(false);
+    //format.setEnabled(false);
     format_parent.setLayout(&format_layout);
     format_layout.addWidget(&format);
     format_layout.addWidget(&format_help);
@@ -370,8 +402,8 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
     if (editting) {
         title.setText(header->title);
         type.setCurrentIndex(header->type-1);
-        if (type.currentIndex() + 1 == HT_custom) {
-            format.setEnabled(true);
+        if (type.currentIndex() + 1 != HT_custom) {
+            format.setReadOnly(true);
         }
         format.setText(header->format);
     }
@@ -398,12 +430,12 @@ void HeaderDialog::titleEdited(const QString &text) {
 }
 void HeaderDialog::typeChanged(int index) {
     if (index + 1 == HT_custom) {
-        format.setEnabled(true);
+        format.setReadOnly(false);
         format.setText(format_saved);
     }
     else {
         format_saved = format.text();
-        format.setEnabled(false);
+        format.setReadOnly(true);
         format.setText(PlaylistModel::formatFromHeaderType(static_cast<headerType>(index + 1)));
         if (type.itemText(h->type - 1) == title.text()) {
             title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(index + 1)));

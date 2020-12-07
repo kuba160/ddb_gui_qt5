@@ -65,6 +65,9 @@ public:
 
     ddb_playlist_t *getPlaylist();
 
+    void modelBeginReset();
+    void modelEndReset();
+
 private:
     int columnCount(const QModelIndex &parent) const;
     QVariant data(const QModelIndex &index, int role) const;
@@ -95,6 +98,7 @@ public slots:
 
 signals:
     void columnsChanged();
+    void rowsChanged();
 };
 
 #endif // PLAYLISTMODEL_H

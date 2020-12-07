@@ -22,6 +22,10 @@ Playlist::Playlist(QWidget *parent, DBApi *Api) : PlaylistView(parent,Api) {
     connect(this->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
             this, SLOT(onSelectionChanged(const QItemSelection &, const QItemSelection &)));
 
+    // enter / doubleclick
+    connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
+    connect(this, SIGNAL(enterRelease(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
+
 }
 
 Playlist::~Playlist() {

@@ -10,6 +10,7 @@
 #include <QWidget>
 #include <QFuture>
 #include <QImage>
+#include <QMimeData>
 
 // DBApi version
 #define DBAPI_VMAJOR 0
@@ -54,8 +55,12 @@ public:
     unsigned long getPlaylistCount();
 
     // Menus
-    void playItemContextMenu(QPoint p, DB_playItem_t *it);
+    void playItemContextMenu(QWidget *w, QPoint p);
 
+    // Mimedata
+
+    QMimeData *mime_playItems(QList<DB_playItem_t *> playItems);
+    QList<DB_playItem_t *> mime_playItems(const QMimeData *playItems);
     // Settings
     void confSetValue(const QString &plugname, const QString &key, const QVariant &value);
     QVariant confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue);
@@ -89,8 +94,6 @@ signals:
     void currCoverChanged(QImage *);
     // Queue
     void queueChanged();
-    void queueTrackAdded(DB_playItem_t *);
-    void queueTrackRemoved(DB_playItem_t *);
 
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
@@ -154,6 +157,12 @@ class DBWidget {
 public:
     DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr);
     ~DBWidget();
+    //
+    virtual QMimeData *cut();
+    virtual QMimeData *copy();
+    virtual void paste(const QMimeData *, QPoint);
+    virtual bool canCopy(void);
+    virtual bool canPaste(const QMimeData *);
     DBApi *api;
     QString _internalNameWidget;
 };

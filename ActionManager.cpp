@@ -1,11 +1,12 @@
 #include "ActionManager.h"
 #include "DBApi.h"
 #include <QMenu>
-
+#include <QGuiApplication>
+#include "MainWindow.h"
 
 ActionManager::ActionManager (QObject *parent, DBApi *Api) : QObject(parent) {
     api = Api;
-
+    clipboard = QGuiApplication::clipboard();
     loadActions();
     qDebug() << actions.length();
 }
@@ -19,7 +20,8 @@ ActionManager::~ActionManager() {
         delete actions_main[i];
     }
     if (playItemMenu) {
-        delete playItemMenu;
+        // child of window
+        //delete playItemMenu;
     }
 
 
@@ -58,9 +60,9 @@ void ActionManager::loadActions() {
 }
 
 
-void ActionManager::playItemContextMenu(QPoint p, DB_playItem_t *it) {
+void ActionManager::playItemContextMenu(QWidget *parent, QPoint p) {
     if (!playItemMenu) {
-        playItemMenu = new QMenu();
+        playItemMenu = new QMenu(parent);
 
         // generate
         int i;
@@ -81,24 +83,41 @@ void ActionManager::playItemContextMenu(QPoint p, DB_playItem_t *it) {
                     ac->action = new QAction(_(title),playItemMenu);
                     connect(ac->action,SIGNAL(triggered(bool)),this, SLOT(onAction(bool)));
                     playItemMenu->addAction(ac->action);
+                    // special icons
+                    if (ac->name == "add_to_playback_queue") {
+                        ac->action->setIcon(QIcon::fromTheme("list-add"));
+                    }
+                    else if (ac->name == "remove_from_playback_queue") {
+                        ac->action->setIcon(QIcon::fromTheme("list-remove"));
+                    }
+                    else if (ac->name == "reload_metadata") {
+                        ac->action->setIcon(QIcon::fromTheme("view-refresh"));
+                    }
+
                 }
+                // do not allow to remove from playback queue if track is not queued
+                // TODO DBAPI->pl_is_selected
             }
         }
 
         // cut/copy/paste
         // todo
         playItemMenu->addSeparator();
-        playItemMenu->addAction(_("Cut"));
-        playItemMenu->addAction(_("Copy"));
-        playItemMenu->addAction(_("Paste"));
+        QAction *add;
+        connect(add = playItemMenu->addAction(QIcon::fromTheme("edit-cut"), _("Cut")),SIGNAL(triggered(bool)),this,SLOT(cut(bool)));
+        clipboard_actions.append(add);
+        connect(add = playItemMenu->addAction(QIcon::fromTheme("edit-copy"),_("Copy")),SIGNAL(triggered(bool)),this,SLOT(copy(bool)));
+        clipboard_actions.append(add);
+        connect(add = playItemMenu->addAction(QIcon::fromTheme("edit-paste"),_("Paste")),SIGNAL(triggered(bool)),this,SLOT(paste(bool)));
+        clipboard_actions.append(add);
         playItemMenu->addSeparator();
+
+        // TODO INSERT "Delete", ReplayGain and "Refresh Cover"
 
         // plugin menus
         for (i = 0; i < actions.length(); i++) {
             ActionItem *ac = actions[i];
-            if ( (ac->ddb_flags & DB_ACTION_MULTIPLE_TRACKS) &&
-                !(ac->ddb_flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST) &&
-                !(ac->ddb_flags & DB_ACTION_COMMON)) {
+            if (!(ac->ddb_flags & (DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST | DB_ACTION_COMMON))) {
                 const char *title;
                 if ((title = strchr(ac->title.toUtf8(),'/')) == nullptr) {
                     title = ac->title.toUtf8();
@@ -119,8 +138,27 @@ void ActionManager::playItemContextMenu(QPoint p, DB_playItem_t *it) {
         playItemMenu->addSeparator();
         playItemMenu->addAction(_("Track Properties"));
     }
-    DB_playItem_t *playItemMenuRef = it;
-    playItemMenu->move(p);
+    // update clipboard actions
+    DBWidget *widget = dynamic_cast<DBWidget *>(playItemMenu->parent());
+    if (widget->canCopy()) {
+        clipboard_actions[0]->setEnabled(true);
+        clipboard_actions[1]->setEnabled(true);
+    }
+    else {
+        clipboard_actions[0]->setEnabled(false);
+        clipboard_actions[1]->setEnabled(false);
+    }
+    const QMimeData *data = QGuiApplication::clipboard()->mimeData();
+    if (data && widget->canPaste(data)) {
+        clipboard_actions[2]->setEnabled(true);
+    }
+    else {
+        clipboard_actions[2]->setEnabled(false);
+    }
+
+
+    playItemMenu->move(parent->mapToGlobal(QPoint(0,0)) + p);
+    playItemMenuPosition = parent->mapToGlobal(QPoint(0,0)) + p;
     playItemMenu->show();
 
     // Add to queue
@@ -145,9 +183,6 @@ void ActionManager::playItemContextMenu(QPoint p, DB_playItem_t *it) {
     // Search on Last.fm
     // ---
     // Track properties
-
-    //QMenu menu(nullptr);
-    //menu.add
     return;
 }
 /*
@@ -248,4 +283,35 @@ void ActionManager::onAction(bool checked) {
         }
     }
     qDebug() << "ActionManager: onAction failed to find action!" << Qt::endl;
+}
+
+
+void ActionManager::cut(bool triggered) {
+    Q_UNUSED(triggered);
+    DBWidget *widget = dynamic_cast<DBWidget *>(playItemMenu->parent());
+    QMimeData *data = widget->cut();
+    if(data) {
+        clipboard->setMimeData(data);
+    }
+}
+
+void ActionManager::copy(bool triggered) {
+    Q_UNUSED(triggered);
+    // todo - have one general menu
+    DBWidget *widget = dynamic_cast<DBWidget *>(playItemMenu->parent());
+    QMimeData *data = widget->copy();
+    if(data) {
+        QGuiApplication::clipboard()->setMimeData(data);
+    }
+}
+
+
+void ActionManager::paste(bool triggered) {
+    Q_UNUSED(triggered);
+    DBWidget *widget = dynamic_cast<DBWidget *>(playItemMenu->parent());
+    const QMimeData *data = QGuiApplication::clipboard()->mimeData();
+    if (data && widget->canPaste(data)) {
+        widget->paste(data, playItemMenuPosition);
+        clipboard->clear();
+    }
 }

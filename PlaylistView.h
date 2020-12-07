@@ -11,6 +11,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QMimeData>
 #include "DBApi.h"
 #include "PlaylistModel.h"
 
@@ -31,6 +32,11 @@ public:
     void goToLastSelection();
 
     void insertByURLAtPosition(const QUrl &url, int position = -1);
+
+    QMimeData *copy();
+    bool canCopy();
+    bool canPaste(const QMimeData *mime);
+    void paste(const QMimeData *, QPoint);
 
 signals:
     // Enter event

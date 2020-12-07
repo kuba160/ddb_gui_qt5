@@ -73,7 +73,7 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     Q_UNUSED(p2);
 
     ddb_event_trackchange_t *ev;
-     ddb_playback_state_t state;
+    ddb_playback_state_t state;
     switch (id) {
         case DB_EV_SONGCHANGED:
             ev = (ddb_event_trackchange_t *)ctx;
@@ -93,9 +93,6 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
                 }
             }
             break;
-        case DB_EV_PLAYLISTCHANGED:
-            emit playlistChanged();
-            break;
         case DB_EV_ACTIVATED:
             emit deadbeefActivated();
             break;
@@ -112,21 +109,13 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             emit playbackStopped();
             emit queueChanged();
             break;
+        case DB_EV_PLAYLISTCHANGED:
         case DB_EV_TRACKINFOCHANGED:
             // detect queue
             if (p1 == DDB_PLAYLIST_CHANGE_PLAYQUEUE) {
                 emit queueChanged();
-                ddb_event_track_t *track_event = reinterpret_cast<ddb_event_track_t *>(ctx);
-                if (DBAPI->playqueue_get_count() > queue_count) {
-                    qDebug() <<"queue: track added";
-                    emit queueTrackAdded(track_event->track);
-                }
-                else {
-                    qDebug() <<"queue: track removed";
-                    emit queueTrackRemoved(track_event->track);
-                }
             }
-
+            // output state?
             ddb_playback_state_t output_state = DBAPI->get_output()->state();
             if (internal_state != output_state) {
                 internal_state = output_state;
@@ -178,8 +167,34 @@ ddb_playback_state_t DBApi::getInternalState() {
     return internal_state;
 }
 
-void DBApi::playItemContextMenu(QPoint p, DB_playItem_t *it) {
-    AM->playItemContextMenu(p,it);
+void DBApi::playItemContextMenu(QWidget *w, QPoint p) {
+    AM->playItemContextMenu(w,p);
+}
+
+QMimeData *DBApi::mime_playItems(QList<DB_playItem_t *> playItems) {
+    QMimeData *md = new QMimeData();
+    QByteArray ba;
+    QDataStream ds(&ba,QIODevice::WriteOnly);
+    for(int i = 0; i < playItems.length() ; i++) {
+        auto ptr= reinterpret_cast<quintptr>(playItems.at(i));
+        ds << ptr;
+    }
+    md->setData("deadbeef/playitems",ba);
+    return md;
+}
+
+QList<DB_playItem_t *> DBApi::mime_playItems(const QMimeData *playItems) {
+    QList<DB_playItem_t *> list;
+    if (playItems->hasFormat("deadbeef/playitems")) {
+        QByteArray ba = playItems->data("deadbeef/playitems");
+        QDataStream ds(ba);
+        while (!ds.atEnd()) {
+            quintptr p;
+            ds >> p;
+            list.append(reinterpret_cast<DB_playItem_t *>(p));
+        }
+    }
+    return list;
 }
 
 void DBApi::confSetValue(const QString &plugname, const QString &key, const QVariant &value) {
@@ -334,6 +349,33 @@ DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
 DBWidget::~DBWidget() {
     // exit
     //delete _internalNameWidget;
+}
+
+QMimeData * DBWidget::cut() {
+    qDebug() << QString("DBWidget[%1]: cut() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    return nullptr;
+}
+
+QMimeData * DBWidget::copy() {
+    qDebug() << QString("DBWidget[%1]: copy() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    return nullptr;
+}
+
+void DBWidget::paste(const QMimeData *data, QPoint point) {
+    Q_UNUSED(data)
+    Q_UNUSED(point)
+    qDebug() << QString("DBWidget[%1]: paste() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+}
+
+bool DBWidget::canCopy(void) {
+    qDebug() << QString("DBWidget[%1]: canCopy() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    return false;
+}
+
+bool DBWidget::canPaste(const QMimeData *data) {
+    Q_UNUSED(data)
+    qDebug() << QString("DBWidget[%1]: canPaste() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    return false;
 }
 
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {
