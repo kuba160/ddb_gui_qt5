@@ -87,7 +87,6 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     search_layout->addWidget(search_box);
     search_layout->setContentsMargins(0,0,0,0);
     search_layout->setSpacing(0);
-    this->setContentsMargins(2,4,2,0);
     search_layout_widget = new QWidget();
     search_layout_widget->setLayout(search_layout);
     this->layout()->addWidget(search_layout_widget);

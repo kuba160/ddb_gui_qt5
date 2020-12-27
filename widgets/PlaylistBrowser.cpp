@@ -1,6 +1,7 @@
 #include "PlaylistBrowser.h"
 
 #include <QStyle>
+#include <QLayout>
 #include <QtGui>
 
 PlaylistBrowser::PlaylistBrowser(QWidget * parent, DBApi *Api) : QListWidget(parent), DBWidget(parent, Api) {
@@ -38,7 +39,10 @@ void PlaylistBrowser::mousePressEvent(QMouseEvent *event) {
 }
 
 QWidget *PlaylistBrowser::constructor(QWidget *parent, DBApi *Api) {
-    return new PlaylistBrowser(parent, Api);
+    QWidget *w = new QWidget();
+    w->setLayout(new QHBoxLayout());
+    w->layout()->addWidget(new PlaylistBrowser(parent, Api));
+    return w;
 }
 
 void PlaylistBrowser::selectPlaylist(int pl) {
