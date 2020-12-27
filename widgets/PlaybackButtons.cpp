@@ -38,9 +38,10 @@ PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent)
         connect(a, SIGNAL(triggered()), Api, buttons[i].slot);
     }
 
+    // Menu initial setup
     parent->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(parent,SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customContextMenuRequested(QPoint)));
-    //menu
+    this->setContextMenuPolicy(Qt::PreventContextMenu);
     menu.addAction("Edit playback buttons... (TODO)")->setEnabled(false);
 
 }
