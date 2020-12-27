@@ -10,7 +10,7 @@ namespace Ui {
 class NetworkPreferencesWidget : public QWidget {
     Q_OBJECT
 public:
-    NetworkPreferencesWidget(QWidget* parent = 0, Qt::WindowFlags f = 0);
+    NetworkPreferencesWidget(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::Window);
 private:
     Ui::NetworkPreferencesWidget *ui;
 

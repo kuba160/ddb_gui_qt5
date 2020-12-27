@@ -6,6 +6,13 @@
 
 #include <deadbeef/deadbeef.h>
 
+#include <QtGlobal>
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+#define ENDL Qt::endl
+#else
+#define ENDL endl
+#endif
+
 #include <QObject>
 #include <QWidget>
 #include <QFuture>
@@ -149,15 +156,19 @@ public:
     DB_plugin_t *plugin;
 
     enum DBWidgetType {
-        TypeDummy = 0,
+        TypeDummy           = 0,
         TypeToolbar         = 1<<0,
         TypeMainWidget      = 1<<1,
-        TypeWindow          = 1<<2
+        TypeWindowUNUSED    = 1<<2
     };
-    // Toolbar or MainWidget(dockable)
+    // Type
     DBWidgetType type;
-    // widget constructor (save to cast parent to QDockWidget* for Toolbar)
+    // widget constructor (save to cast parent to (QToolbar * / QDockWidget *) for Toolbar / MainWindow[if in dock])
     QWidget *(*constructor)(QWidget *parent, DBApi *api);
+    // Parent Properties:
+    // - FriendlyName - name (QString)
+    // - InternalName - internal name (QString)
+    // - DesignMode - design mode enabled (bool)
 };
 
 class DBWidget {
@@ -188,9 +199,14 @@ public:
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil);
 QDataStream &operator>>(QDataStream &ds, playItemList &pil);
 
+/// Macros to be used in DBWidget
+// Pointer to deadbeef functions
 #define DBAPI (this->api->deadbeef)
-#define CONFGET(X, Y) (this->confGetValue(_internalNameWidget, X,Y))
-#define CONFSET(X, Y) (this->confSetValue(_internalNameWidget, X,Y))
+// Macro to read entry X with default value Y to config (instance specific, returns QVariant)
+#define CONFGET(X, Y) (this->api->confGetValue(_internalNameWidget, X,Y))
+// Macro to save entry X with value Y to config (instance specific, returns void)
+#define CONFSET(X, Y) (this->api->confSetValue(_internalNameWidget, X,Y))
+// Translate (char *) X using gettext
 #define _(X) (this->api->_(X))
 
 #endif // DBAPI_H

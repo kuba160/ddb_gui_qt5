@@ -57,7 +57,7 @@ void PlaylistModel::setColumns(QList<PlaylistHeader_t *> &c_new) {
     int i;
     for (i = 0; i < columns.size(); i++) {
         if (columns.at(i)->type != HT_custom) {
-            columns.at(i)->format = QString(formatFromHeaderType(columns.at(i)->type));
+            columns.at(i)->format = QString(formatFromHeaderType((headerType) columns.at(i)->type));
             if (!columns.at(i)->format.isEmpty()) {
                 columns.at(i)->_format_compiled = DBAPI->tf_compile(columns.at(i)->format.toUtf8());
             }
@@ -134,7 +134,7 @@ QList<PlaylistHeader_t *> *PlaylistModel::setDefaultHeaders() {
             temp->_format_compiled = DBAPI->tf_compile(a[i].format.toUtf8());
         }
         else {
-            temp->format = formatFromHeaderType(temp->type);
+            temp->format = formatFromHeaderType((headerType) temp->type);
             if (!temp->format.isEmpty()) {
                 temp->_format_compiled = DBAPI->tf_compile(temp->format.toUtf8());
             }
@@ -269,10 +269,13 @@ QModelIndex PlaylistModel::parent(const QModelIndex &child) const {
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
-    DBAPI->pl_lock ();
-    int rowCount = DBAPI->plt_get_item_count(plt, PL_MAIN);
-    DBAPI->pl_unlock ();
-    return rowCount;
+    if (plt) {
+        DBAPI->pl_lock ();
+        int rowCount = DBAPI->plt_get_item_count(plt, PL_MAIN);
+        DBAPI->pl_unlock ();
+        return rowCount;
+    }
+    return 0;
 }
 
 QVariant PlaylistModel::headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const {
@@ -410,6 +413,13 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
     }
 
     return api->mime_playItems(items);
+}
+
+bool PlaylistModel::canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const {
+    if (data->hasFormat("deadbeef/playitems")) {
+        return true;
+    }
+    return false;
 }
 
 QDataStream &operator<<(QDataStream &ds, const PlaylistHeader_t &pil) {

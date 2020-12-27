@@ -31,7 +31,7 @@ QStringList DBFileDialog::exec2() {
         //return 0;
         return fileNames;
     
-    if (fileMode() != QFileDialog::DirectoryOnly) {
+    if (fileMode() != QFileDialog::Directory && testOption(QFileDialog::ShowDirsOnly)) {
         QStringList path = fileNames.last().split("/");
         path.pop_back();
         QString lastdir = path.join("/");

@@ -12,6 +12,31 @@
 #undef _
 #include "DeadbeefTranslator.h"
 
+class myViewStyle: public QProxyStyle{
+public:
+    myViewStyle(QStyle* style = 0);
+
+    void drawPrimitive ( PrimitiveElement element, const QStyleOption * option, QPainter * painter, const QWidget * widget = 0 ) const;
+};
+
+myViewStyle::myViewStyle(QStyle* style)
+     :QProxyStyle(style)
+{}
+
+void myViewStyle::drawPrimitive ( PrimitiveElement element, const QStyleOption * option, QPainter * painter, const QWidget * widget) const{
+    if (element == QStyle::PE_IndicatorItemViewItemDrop){
+        QStyleOption opt(*option);
+        opt.rect.setLeft(0);
+        if (widget) {
+            opt.rect.setRight(widget->width());
+        }
+        // TODO fix drawing when pos = -1
+        QProxyStyle::drawPrimitive(element, &opt, painter, widget);
+        return;
+    }
+    QProxyStyle::drawPrimitive(element, option, painter, widget);
+}
+
 PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(parent, Api), playlistModel(this, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -29,12 +54,20 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     setWordWrap(false);
     setExpandsOnDoubleClick(false);
     setAcceptDrops(true);
+    viewport()->setAcceptDrops(true);
+    setAcceptDrops(true);
+    setDropIndicatorShown(true);
+    setDragDropMode(QAbstractItemView::DragDrop);
     setModel(&playlistModel);
+    setStyle(new myViewStyle);
 
     header()->setStretchLastSection(false);
     header()->setContextMenuPolicy(Qt::CustomContextMenu);
     header()->setSortIndicatorShown(false);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
     header()->setFirstSectionMovable(true);
+#endif
+
     
     // Context menu (TODO into core)
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -180,21 +213,34 @@ void PlaylistView::paste(const QMimeData *mime, QPoint p) {
     dropEvent(event);
 }
 
+void PlaylistView::startDrag(Qt::DropActions supportedActions) {
+    QDrag* drag = new QDrag(this);
+    QMimeData* mimeData = model()->mimeData(selectedIndexes());
+    drag->setMimeData(mimeData);
+    drag->exec(Qt::MoveAction);
+    return;
+}
+
+void PlaylistView::dragMoveEvent(QDragMoveEvent* event) {
+
+    QAbstractItemView::dragMoveEvent(event);
+    QAbstractItemView::setDropIndicatorShown(true);
+}
+
 void PlaylistView::dragEnterEvent(QDragEnterEvent *event) {
     if (event->mimeData()->hasUrls() || event->mimeData()->hasFormat("playlist/track")
                                      || event->mimeData()->hasFormat("deadbeef/playitems")) {
-        event->setDropAction(Qt::MoveAction);
+        event->setDropAction(Qt::CopyAction);
         event->accept();
-    } else {
-        //event->accept();
+    }
+    else {
         event->ignore();
     }
 }
 
 void PlaylistView::dropEvent(QDropEvent *event) {
-    // TODO: row calculation is not dependent on which half of the item it is being dropped
-    // it might be either over the row or under the row
     if (event->mimeData()->hasUrls()) {
+        // TODO Deprecate this
         ddb_playlist_t *plt = playlistModel.getPlaylist();
         int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
         DBAPI->plt_unref(plt);
@@ -207,6 +253,7 @@ void PlaylistView::dropEvent(QDropEvent *event) {
         event->setDropAction(Qt::CopyAction);
         event->accept();
     } else if (event->mimeData()->hasFormat("playlist/track")) {
+        // TODO Deprecate this
         int row = indexAt(event->pos()).row();
         ddb_playlist_t *plt = playlistModel.getPlaylist();
         int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
@@ -229,6 +276,10 @@ void PlaylistView::dropEvent(QDropEvent *event) {
     } else if (event->mimeData()->hasFormat("deadbeef/playitems")) {
         QList<DB_playItem_t *>list = api->mime_playItems(event->mimeData());
         int row = indexAt(event->pos()).row();
+        // Adjust position based on indicator
+        if(row != -1 && dropIndicatorPosition() == QAbstractItemView::BelowItem) {
+            row++;
+        }
         if (event->source() == this) {
             // Move items inside
             QList<int> rows;
@@ -241,10 +292,12 @@ void PlaylistView::dropEvent(QDropEvent *event) {
         }
         else {
             // Insert foreign items
+            if (row == -1) {
+                row = model()->rowCount() - 1;
+            }
             int i;
             for (i = 0; i < list.length(); i++) {
                 playlistModel.insertByPlayItemAtPosition(list.at(i),row++);
-                //DBAPI->plt_insert_item(plt,nullptr,a.list.at(i));
             }
             event->setDropAction(Qt::CopyAction);
             event->accept();

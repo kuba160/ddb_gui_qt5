@@ -11,7 +11,7 @@ namespace Ui {
 class SoundPreferencesWidget : public QWidget {
     Q_OBJECT
 public:
-    SoundPreferencesWidget(QWidget* parent = 0, Qt::WindowFlags f = 0);
+    SoundPreferencesWidget(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::Window);
     
     void addDevice(const char *name, const char *desc);
     

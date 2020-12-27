@@ -16,6 +16,11 @@ class PlaybackButtons : public QToolBar, public DBWidget {
 public:
     PlaybackButtons(QWidget *parent = nullptr, DBApi *Api = nullptr);
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api =nullptr);
+
+private:
+    QMenu menu;
+public slots:
+    void customContextMenuRequested(QPoint pos);
 };
 
 #endif // PLAYBACKBUTTONS_H

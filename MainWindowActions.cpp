@@ -39,7 +39,7 @@ void MainWindow::on_actionAddFolder_triggered() {
     DBFileDialog fileDialog(this,
                             tr("Add folder(s) to playlist..."),
                             QStringList(),
-                            QFileDialog::DirectoryOnly,
+                            QFileDialog::Directory,
                             QFileDialog::ShowDirsOnly | QFileDialog::ReadOnly);
     QStringList fileNames = fileDialog.exec2();
     if (fileNames.isEmpty())

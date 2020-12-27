@@ -11,7 +11,7 @@ class HotkeysWidget : public QWidget
 {
     Q_OBJECT
 public:
-    HotkeysWidget(QWidget* parent = 0, Qt::WindowFlags f = 0);
+    HotkeysWidget(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::Window);
 private:
     void createConnections();
     

@@ -42,8 +42,8 @@ QStringList default_plugins = { QString("playbackButtons"),
                                 QString("tabBar"),
                                 QString("playlist") };
 
-PluginLoader::PluginLoader(DBApi* Api) : QObject(nullptr), DBWidget (nullptr, Api) {
-    qDebug() << "qt5: PluginLoader initialized";
+PluginLoader::PluginLoader() : QObject(nullptr){
+    qDebug() << "qt5: PluginLoader initialize:";
     // List of plugins that can be loaded
     widgetLibrary = new std::vector<ExternalWidget_t>();
     // List of plugins/widgets that are used
@@ -60,7 +60,7 @@ PluginLoader::PluginLoader(DBApi* Api) : QObject(nullptr), DBWidget (nullptr, Ap
             i++;
         }
     }
-    // External widgets will be appended to widgetLibrary
+    // External widgets will be appended to widgetLibrary in pluginConnect
 }
 
 PluginLoader::~PluginLoader() {
@@ -141,10 +141,10 @@ LoadedWidget_t * PluginLoader::widgetByNum(unsigned long num) {
     return nullptr;
 }
 
-LoadedWidget_t * PluginLoader::widgetByName(QString *name) {
+LoadedWidget_t * PluginLoader::widgetByName(const QString *name) {
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {
-        if (loadedWidgets->at(i).internalName == *name) {
+        if (QString::compare(*loadedWidgets->at(i).internalName, *name)) {
             return &loadedWidgets->at(i);
         }
     }
@@ -156,12 +156,14 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         return -1;
     }
 
+    // Initialize new widget instance "temp" for *p
     ExternalWidget_t *p = &widgetLibrary->at(num);
     LoadedWidget_t temp;
     temp.header = p;
     temp.instance = getTotalInstances(p->info.internalName);
     temp.empty_titlebar_toolbar = nullptr;
 
+    // Tranlate friendly name and set up name with instance number
     QString frname = dbtr->translate(nullptr, p->info.friendlyName.toUtf8());
     if (temp.instance) {
         qDebug() << "qt5: PluginLoader: Loading new instance of plugin" << p->info.internalName;
@@ -173,35 +175,39 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         temp.internalName = new QString(p->info.internalName);
     }
 
-    qDebug() << "qt5: PluginLoader: Loading widget" << *temp.friendlyName;
+    // fake parent
+    temp.fake_parent = p->info.type == DBWidgetInfo::TypeToolbar ? new QToolBar() :
+                       p->info.type == DBWidgetInfo::TypeMainWidget ? new QDockWidget(*temp.friendlyName, mainWindow) :
+                       new QWidget();
+    temp.fake_parent->setObjectName(*temp.friendlyName);
+    temp.fake_parent->setProperty("FriendlyName",*temp.friendlyName);
+    temp.fake_parent->setProperty("InternalName",*temp.internalName);
 
-    temp.actionMainWidget = nullptr;
-    QWidget dummyName;
     switch (p->info.type) {
     case DBWidgetInfo::TypeToolbar:
-        temp.toolbar = new QToolBar(mainWindow);
-        temp.toolbar->setObjectName(*temp.internalName);
-        temp.widget = p->info.constructor(temp.toolbar, api);
+        temp.toolbar = static_cast<QToolBar *>(temp.fake_parent);
+        temp.widget = p->info.constructor(temp.fake_parent, api);
         temp.toolbar->addWidget(temp.widget);
         temp.dockWidget = nullptr;
         break;
     case DBWidgetInfo::TypeMainWidget:
-        dummyName.setObjectName(*temp.internalName);
         temp.actionMainWidget = new QAction(*temp.friendlyName);
         temp.actionMainWidget->setCheckable(true);
+        temp.dockWidget = static_cast<QDockWidget *>(temp.fake_parent);//new QDockWidget(*temp.friendlyName, mainWindow);
         // if widget of TypeMainWidget is not selected as main widget, make it as dockwidget
         if (temp.internalName->compare(settings->getValue(QString("PluginLoader"), QString("MainWidget"), QString("playlist")).toString()) == 0 || \
                 QString("").compare(settings->getValue(QString("PluginLoader"), QString("MainWidget"), QString("")).toString()) == 0) {
-            temp.widget = p->info.constructor(&dummyName, api);
+            temp.widget = p->info.constructor(temp.fake_parent, api);
             temp.widget->setParent(mainWindow);
-            temp.dockWidget = nullptr;
+            temp.dockWidget->setVisible(false);
             setMainWidget(&temp);
             temp.actionMainWidget->setChecked(true);
 
         }
         else {
-            temp.widget = p->info.constructor(&dummyName, api);
-            temp.dockWidget = new QDockWidget(*temp.friendlyName, mainWindow);
+            temp.widget = p->info.constructor(temp.dockWidget, api);
+            //temp.dockWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+            //connect(temp.dockWidget,SIGNAL(customContextMenuRequested(QPoint)),this, SLOT(customContextMenu(QPoint)));
             temp.dockWidget->setObjectName(*temp.internalName);
             temp.dockWidget->setWidget(temp.widget);
             temp.actionMainWidget->setChecked(false);
@@ -212,6 +218,7 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         break;
     default:
         qDebug() << "qt5: PluginLoader: Unknown widget type?";
+        temp.fake_parent->setVisible(false);
         break;
     }
 
@@ -234,7 +241,7 @@ int PluginLoader::loadFromWidgetLibrary(unsigned long num) {
         temp.toolbar->setVisible(isEnabled);
         // HACK FOR DEFAULT LAYOUT CREATION
         QVariant deflayout = settings->QSGETCONF(QString("BuildDefaultLayout"),QVariant(true));
-        if (deflayout.toBool() && (temp.internalName == QString("tabBar"))){
+        if (deflayout.toBool() && (*temp.internalName == QString("tabBar"))){
             mainWindow->addToolBarBreak();
             settings->QSSETCONF(QString("BuildDefaultLayout"), QVariant(false));
         }
@@ -359,7 +366,7 @@ void PluginLoader::setMainWidget(LoadedWidget_t *lw) {
         // probably main widget initialization on startup, make it easy
         //w->setCentralWidget(lw->widget);
         mainWidget = lw->widget;
-        if (settings->getValue(QString("PluginLoader"), QString("MainWidget"),QString("")).toString().compare(lw->internalName))
+        if (settings->getValue(QString("PluginLoader"), QString("MainWidget"),QString("")).toString().compare(*lw->internalName))
             settings->QSSETCONF(QString("MainWidget"),QString(*lw->internalName));
         emit centralWidgetChanged(lw->widget);
         return;
@@ -402,7 +409,7 @@ void PluginLoader::setMainWidget(LoadedWidget_t *lw) {
     lw->dockWidget = nullptr;
 
     mainWidget = lw->widget;
-    w->setCentralWidget(lw->widget);
+    //w->setCentralWidget(lw->widget);
     lw->actionMainWidget->setChecked(true);
 
     settings->QSSETCONF(QString("MainWidget"),QString(*lw->internalName));
@@ -628,6 +635,10 @@ void PluginLoader::lockWidgets(bool lock) {
     //for
     unsigned long i;
     for (i = 0; i < loadedWidgets->size(); i++) {
+        // fake parent
+        if (loadedWidgets->at(i).fake_parent) {
+            loadedWidgets->at(i).fake_parent->setProperty("DesignMode",!lock);
+        }
         if (loadedWidgets->at(i).header->info.type == DBWidgetInfo::TypeToolbar) {
             loadedWidgets->at(i).toolbar->setMovable(!lock);
         }
@@ -661,7 +672,19 @@ QAction *PluginLoader::actionNewGet(unsigned long num) {
     return widgetLibrary->at(num).actionCreateWidget;
 }
 
-void PluginLoader::contextMenuBuilder(QPoint &pos) {
+void PluginLoader::customContextMenu(QPoint pos) {
+    return;
+    QObject *s = sender();
+    unsigned long i;
+    for (i = 0; i < loadedWidgets->size(); i++) {
+        if (loadedWidgets->at(i).dockWidget && s == loadedWidgets->at(i).dockWidget) {
+            QMenu *m = new QMenu();
+            m->addAction(*loadedWidgets->at(i).friendlyName);
+            m->move(loadedWidgets->at(i).dockWidget->mapToGlobal(pos));
+            m->show();
+            return;
+        }
+    }
     // todo
     //QMenu *headerContextMenu = new QMenu();
     //headerContextMenu->addAction(QString("test"));

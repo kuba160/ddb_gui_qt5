@@ -1,4 +1,3 @@
-
 #ifndef MEDIALIB_H
 #define MEDIALIB_H
 
@@ -7,6 +6,10 @@
 #include <QHBoxLayout>
 #include <QComboBox>
 #include <QLineEdit>
+
+#include <QListWidget>
+#include <QPushButton>
+
 #include <deadbeef/deadbeef.h>
 #include "DBApi.h"
 
@@ -50,10 +53,14 @@ public:
 
     void updateTree();
 
+    void setFolders(QStringList *strlist);
+
 public slots:
     void searchQueryChanged(int index);
     void searchBoxChanged(const QString &text);
-
+    void folderSetupDialog();
+    void folderSetupDialogHandler(bool checked);
+    void folderSetupDialogItemHandler(QListWidgetItem *item);
 private:
     // DeaDBeeF
     ddb_mediasource_source_t pl_mediasource;
@@ -64,12 +71,21 @@ private:
     ddb_medialib_item_t *curr_it = nullptr;
 
     // Widget
-    QVBoxLayout *main_layout = nullptr;
     QHBoxLayout *search_layout = nullptr;
+    QWidget *search_layout_widget;
     QTreeWidget *tree = nullptr;
     QComboBox *search_query = nullptr;
     int search_query_count = 0;
     QLineEdit *search_box = nullptr;
+
+    // Action
+    QAction *set_up_folders= nullptr;
+
+    // Dialog
+    QListWidget *lwidget = nullptr;
+    QLineEdit * ledit = nullptr;
+    QPushButton *plus = nullptr;
+    QPushButton *minus = nullptr;
 };
 
-#endif // VOLUMESLIDER_H
+#endif // MEDIALIB_H

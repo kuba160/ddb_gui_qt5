@@ -38,6 +38,9 @@ public:
     bool canPaste(const QMimeData *mime);
     void paste(const QMimeData *, QPoint);
 
+protected:
+    void startDrag(Qt::DropActions supportedActions);
+    void dragMoveEvent(QDragMoveEvent* event);
 signals:
     // Enter event
     void enterRelease(QModelIndex);

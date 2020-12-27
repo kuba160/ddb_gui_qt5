@@ -10,7 +10,7 @@ namespace Ui {
 class InterfacePreferencesWidget : public QWidget {
     Q_OBJECT
 public:
-    InterfacePreferencesWidget(QWidget *parent = 0, Qt::WindowFlags f = 0);
+    InterfacePreferencesWidget(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::Window);
 private:
     Ui::InterfacePreferencesWidget *ui;
     void loadSettings();

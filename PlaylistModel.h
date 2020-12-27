@@ -27,7 +27,11 @@ enum headerType{
 
 typedef struct PlaylistHeader_s {
     QString title;
+#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
     headerType type;
+#else
+    unsigned int type;
+#endif
     // Format if type is HT_custom
     QString format = "";
     // In PlaylistModel - compiled format
@@ -74,6 +78,7 @@ private:
     
     QMimeData *mimeData(const QModelIndexList &indexes) const;
     QStringList mimeTypes() const;
+    bool canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const;
     
 
     int rowCount(const QModelIndex &parent) const;

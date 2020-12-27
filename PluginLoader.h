@@ -8,13 +8,6 @@
 #include <QToolBar>
 #include "DBApi.h"
 
-#include <QtGlobal>
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-#define ENDL Qt::endl
-#else
-#define ENDL endl
-#endif
-
 extern DBApi *api;
 extern QStringList default_plugins;
 
@@ -38,21 +31,31 @@ typedef struct ExternalWidget_s{
 
 typedef struct LoadedWidget_s{
     // Default widget info (read-only)
-    ExternalWidget_t *header;
+    const ExternalWidget_t *header;
     // instance of same plugin
     unsigned char instance;
-    // Widget friendly name (multiple instance support)
+
+    // NOTE: friendlyName/internalName can be different than values provided in header
+    // this includes translation, multitple instances etc.
+    // it is safe to assume that friendlyName and internalName are unique to that widget
+
+    // Widget friendly name
     QString *friendlyName;
-    // Widget internal name (multiple instance support)
+    // Widget internal name
     QString *internalName;
-    // Pointer to widget (if DBWidgetInfo::TypeWidgetToolbar)
+
+    // Pointers
+
+    // Pointer to plugin widget (QWidget */DBWidget *)
     QWidget *widget;
-    // Pointer to toolbar (if DBWidgetInfo::TypeWidgetToolbar or  DBWidgetInfo::TypeToolbar)
+    // Pointer to toolbar (if type is toolbar)
     QToolBar *toolbar;
-    // Pointer to dockable widget (if DBWidgetInfo::TypeDockable)
+    // Pointer to dockable widget (if type is dockable widget)
     QDockWidget *dockWidget;
-    // empty titlebar, used for dockable widgets
+    // empty titlebar, used for dockable widgets, internal use only (to show/hide titlebar)
     QWidget *empty_titlebar_toolbar;
+
+    // TODO MOVE ACTIONS TO ActionManager
     // Action to make this widget visible
     QAction *actionToggleVisible;
     // Action to destroy this widget
@@ -60,13 +63,16 @@ typedef struct LoadedWidget_s{
     // Action to select this widget as mainwidget
     QAction *actionMainWidget;
 
+    // can be toolbar
+    QWidget *fake_parent;
+
 } LoadedWidget_t;
 
 
-class PluginLoader : public QObject, public DBWidget{
+class PluginLoader : public QObject{
     Q_OBJECT
 public:
-    PluginLoader (DBApi *Api);
+    PluginLoader ();
     ~PluginLoader();
 
     //// widgetLibrary
@@ -104,7 +110,7 @@ public:
     // get LoadedWidget_t by num
     LoadedWidget_t *widgetByNum(unsigned long num);
     // get LoadedWidget_t by name (multiple instances support)
-    LoadedWidget_t *widgetByName(QString *);
+    LoadedWidget_t *widgetByName(const QString *);
     // get widget internal name
     QString *widgetName(unsigned long num);
     // get widget internal name from widget pointer
@@ -120,6 +126,7 @@ public:
     // ?
     void setMainWindow(QMainWindow *);
 
+    DBApi *api;
 private:
     // list of widgets that can be added
     std::vector<ExternalWidget_t> *widgetLibrary;
@@ -147,7 +154,7 @@ public slots:
     // save information if the widgets are visible
     void actionChecksSave();
     // context menu TODO
-    void contextMenuBuilder(QPoint &pos);
+    void customContextMenu(QPoint pos);
     // lock widgets toggle
     void lockWidgets(bool lock);
 

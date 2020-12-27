@@ -80,7 +80,7 @@ static int initializeApi() {
             usleep(10000);
         }
         if (!pl) {
-            pl = new PluginLoader(api);
+            pl = new PluginLoader();
         }
         api = new DBApi(nullptr, deadbeef_internal);
     }
@@ -89,7 +89,7 @@ static int initializeApi() {
 
 static int initializePluginLoader() {
     if (!pl) {
-        pl = new PluginLoader(api);
+        pl = new PluginLoader();
     }
     if (!api) {
         initializeApi();

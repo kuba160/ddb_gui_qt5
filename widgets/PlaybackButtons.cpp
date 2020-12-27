@@ -37,8 +37,21 @@ PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent)
         a->setIcon (this->style()->standardIcon(buttons[i].icon));
         connect(a, SIGNAL(triggered()), Api, buttons[i].slot);
     }
+
+    parent->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(parent,SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customContextMenuRequested(QPoint)));
+    //menu
+    menu.addAction("Edit playback buttons... (TODO)")->setEnabled(false);
+
 }
 
 QWidget * PlaybackButtons::constructor(QWidget *parent, DBApi *Api) {
     return new PlaybackButtons(parent, Api);
+}
+
+void PlaybackButtons::customContextMenuRequested(QPoint pos) {
+    if (parent()->property("DesignMode").toBool()) {
+        menu.move(parentWidget()->mapToGlobal(pos));
+        menu.show();
+    }
 }

@@ -35,17 +35,10 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     setMenuBar(mainMenu);
     mainMenu->setNativeMenuBar(true);
 
-
-
-
     //// PluginLoader
     // Create links for widget creation
     connect (pl,SIGNAL(toolBarCreated(QToolBar *)),this,SLOT(windowAddToolbar(QToolBar *)));
     connect (pl, SIGNAL(dockableWidgetCreated(QDockWidget *)), this, SLOT(windowAddDockable(QDockWidget *)));
-
-    connect (pl, SIGNAL(actionToggleVisibleCreated(QAction *)), this, SLOT(windowViewActionAdd(QAction *)));
-
-
 
     trayIcon = nullptr;
     trayMenu = nullptr;

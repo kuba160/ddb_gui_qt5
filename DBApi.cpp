@@ -351,7 +351,7 @@ DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
     api = api_a;
     if (parent) {
         _internalNameWidget = parent->objectName();
-        //qDebug() << _internalNameWidget << Qt::endl;
+        //qDebug() << _internalNameWidget << ENDL;
     }
 }
 
@@ -361,29 +361,29 @@ DBWidget::~DBWidget() {
 }
 
 QMimeData * DBWidget::cut() {
-    qDebug() << QString("DBWidget[%1]: cut() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    qDebug() << QString("DBWidget[%1]: cut() not implemented!") .arg(_internalNameWidget) << ENDL;
     return nullptr;
 }
 
 QMimeData * DBWidget::copy() {
-    qDebug() << QString("DBWidget[%1]: copy() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    qDebug() << QString("DBWidget[%1]: copy() not implemented!") .arg(_internalNameWidget) << ENDL;
     return nullptr;
 }
 
 void DBWidget::paste(const QMimeData *data, QPoint point) {
     Q_UNUSED(data)
     Q_UNUSED(point)
-    qDebug() << QString("DBWidget[%1]: paste() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    qDebug() << QString("DBWidget[%1]: paste() not implemented!") .arg(_internalNameWidget) << ENDL;
 }
 
 bool DBWidget::canCopy(void) {
-    qDebug() << QString("DBWidget[%1]: canCopy() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    qDebug() << QString("DBWidget[%1]: canCopy() not implemented!") .arg(_internalNameWidget) << ENDL;
     return false;
 }
 
 bool DBWidget::canPaste(const QMimeData *data) {
     Q_UNUSED(data)
-    qDebug() << QString("DBWidget[%1]: canPaste() not implemented!") .arg(_internalNameWidget) << Qt::endl;
+    qDebug() << QString("DBWidget[%1]: canPaste() not implemented!") .arg(_internalNameWidget) << ENDL;
     return false;
 }
 

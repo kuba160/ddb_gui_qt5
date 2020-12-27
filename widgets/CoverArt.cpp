@@ -28,13 +28,22 @@ void CoverArt::setCover(QImage *image) {
     if (cover_image != image) {
         cover_image = image;
         if (cover_image) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
             cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(this->size().shrunkBy(m),Qt::KeepAspectRatio,Qt::SmoothTransformation)));
+#else
+            QSize size = this->size() - QSize(m.left() + m.right(), m.top() + m.bottom());
+            cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(size, Qt::KeepAspectRatio,Qt::SmoothTransformation)));
+#endif
         }
     }
 }
 
 void CoverArt::resizeEvent(QResizeEvent *event) {
     if (cover_image) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
         cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(event->size().shrunkBy(m),Qt::KeepAspectRatio,Qt::SmoothTransformation)));
+#else
+            cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(event->size(), Qt::KeepAspectRatio,Qt::SmoothTransformation)));
+#endif
     }
 }

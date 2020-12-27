@@ -101,32 +101,9 @@ QSize TabBar::tabSizeHint(int index) const {
 }
 
 void TabBar::wheelEvent(QWheelEvent *event) {
-    if (!(event->orientation() == Qt::Horizontal)) {
-        if (receivers(SIGNAL(wheelDelta(int)))) {
-            emit(wheelDelta(event->delta()));
-            return;
-        }
-        int lastIndex = count() - 1;
-        int targetIndex = -1;
-        bool forward = event->delta() < 0;
-        if (forward && lastIndex == currentIndex()) {
-            event->ignore();
-            return;
-            targetIndex = 0;
-        }
-        else
-            if (!forward && 0 == currentIndex()) {
-                targetIndex = lastIndex;
-                event->ignore();
-                return;
-            }
-        setCurrentIndex(targetIndex);
-        if (targetIndex != currentIndex() || !isTabEnabled(targetIndex))
-            QTabBar::wheelEvent(event);
-        event->accept();
-        emit tabSelected(currentIndex());
-    } else
-        event->ignore();
+    // TODO
+    QTabBar::wheelEvent(event);
+    emit tabSelected(currentIndex());
 }
 
 int TabBar::selectTab(const QPoint &pos) const {

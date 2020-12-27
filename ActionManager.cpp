@@ -13,19 +13,14 @@ ActionManager::ActionManager (QObject *parent, DBApi *Api) : QObject(parent) {
     mainMenuBar = da->getDefaultMenuBar();
     QList<QMenu *> l = da->findChildren<QMenu *>();
     // translate
-    for (int i = 0; i < l.length(); i++) {
-        qDebug() << "Renaming" << l[i]->menuAction()->text() << "to" << _(l[i]->menuAction()->text().toUtf8());
-        l[i]->menuAction()->setText(_(l[i]->menuAction()->text().toUtf8()));
-        QList<QAction *> acs = da->findChildren<QAction *>();
-        for (int j = 0; i == 0 & j < acs.length(); j++) {
-            if (!acs[j]->text().isEmpty()) {
-                qDebug() << "RRR:" << acs[j]->text() << "to" << _(acs[j]->text().toUtf8());
-                acs[j]->setText(_(acs[j]->text().toUtf8()));
-            }
+    l[0]->menuAction()->setText(_(l[0]->menuAction()->text().toUtf8()));
+    QList<QAction *> acs = da->findChildren<QAction *>();
+    for (int j = 0; j < acs.length(); j++) {
+        if (!acs[j]->text().isEmpty()) {
+            acs[j]->setText(_(acs[j]->text().toUtf8()));
         }
     }
     loadActions();
-    qDebug() << actions.length();
 }
 
 ActionManager::~ActionManager() {
@@ -202,8 +197,108 @@ void ActionManager::playItemContextMenu(QWidget *parent, QPoint p) {
     // Track properties
     return;
 }
-/*
-void ActionManager::playlistContextMenu(QPoint p, int n) {
+
+void ActionManager::playlistContextMenu(QWidget *parent, QPoint p, int n) {
+    // TODO
+    if (!playlistMenu) {
+        playlistMenu = new QMenu(parent);
+
+        // generate
+        int i;
+        for (i = 0; i < actions_main.length(); i++) {
+            ActionItem *ac = actions_main[i];
+            if ( (ac->ddb_flags & DB_ACTION_MULTIPLE_TRACKS) &&
+                !(ac->ddb_flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST) &&
+                !(ac->ddb_flags & DB_ACTION_COMMON)) {
+                const char *title;
+                if ((title = strchr(ac->title.toUtf8(),'/')) == nullptr) {
+                    title = ac->title.toUtf8();
+                }
+                else {
+                    title++;
+                }
+
+                if (!ac->action) {
+                    ac->action = new QAction(_(title),playlistMenu);
+                    connect(ac->action,SIGNAL(triggered(bool)),this, SLOT(onAction(bool)));
+                    playlistMenu->addAction(ac->action);
+                    // special icons
+                    if (ac->name == "add_to_playback_queue") {
+                        ac->action->setIcon(QIcon::fromTheme("list-add"));
+                    }
+                    else if (ac->name == "remove_from_playback_queue") {
+                        ac->action->setIcon(QIcon::fromTheme("list-remove"));
+                    }
+                    else if (ac->name == "reload_metadata") {
+                        ac->action->setIcon(QIcon::fromTheme("view-refresh"));
+                    }
+
+                }
+                // do not allow to remove from playback queue if track is not queued
+                // TODO DBAPI->pl_is_selected
+            }
+        }
+
+        // cut/copy/paste
+        // todo
+        playlistMenu->addSeparator();
+        QAction *add;
+        connect(add = playlistMenu->addAction(QIcon::fromTheme("edit-cut"), _("Cut")),SIGNAL(triggered(bool)),this,SLOT(cut(bool)));
+        clipboard_actions.append(add);
+        connect(add = playlistMenu->addAction(QIcon::fromTheme("edit-copy"),_("Copy")),SIGNAL(triggered(bool)),this,SLOT(copy(bool)));
+        clipboard_actions.append(add);
+        connect(add = playlistMenu->addAction(QIcon::fromTheme("edit-paste"),_("Paste")),SIGNAL(triggered(bool)),this,SLOT(paste(bool)));
+        clipboard_actions.append(add);
+        playlistMenu->addSeparator();
+
+        // TODO INSERT "Delete", ReplayGain and "Refresh Cover"
+
+        // plugin menus
+        for (i = 0; i < actions.length(); i++) {
+            ActionItem *ac = actions[i];
+            if (!(ac->ddb_flags & (DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST | DB_ACTION_COMMON))) {
+                const char *title;
+                if ((title = strchr(ac->title.toUtf8(),'/')) == nullptr) {
+                    title = ac->title.toUtf8();
+                }
+                else {
+                    title++;
+                }
+
+                if (!ac->action) {
+                    ac->action = new QAction(title,playlistMenu);
+                    connect(ac->action,SIGNAL(triggered(bool)),this, SLOT(onAction(bool)));
+                    playlistMenu->addAction(ac->action);
+                }
+            }
+        }
+
+        // Properties
+        playlistMenu->addSeparator();
+        playlistMenu->addAction(_("Track Properties"));
+    }
+    // update clipboard actions
+    DBWidget *widget = dynamic_cast<DBWidget *>(playlistMenu->parent());
+    if (widget->canCopy()) {
+        clipboard_actions[0]->setEnabled(true);
+        clipboard_actions[1]->setEnabled(true);
+    }
+    else {
+        clipboard_actions[0]->setEnabled(false);
+        clipboard_actions[1]->setEnabled(false);
+    }
+    const QMimeData *data = QGuiApplication::clipboard()->mimeData();
+    if (data && widget->canPaste(data)) {
+        clipboard_actions[2]->setEnabled(true);
+    }
+    else {
+        clipboard_actions[2]->setEnabled(false);
+    }
+
+
+    playItemMenu->move(parent->mapToGlobal(QPoint(0,0)) + p);
+    playItemMenuPosition = parent->mapToGlobal(QPoint(0,0)) + p;
+    playItemMenu->show();
     // Change playlist name
     // Delete playlist
     // Add new playlist
@@ -222,7 +317,7 @@ void ActionManager::playlistContextMenu(QPoint p, int n) {
     // -/ Delete from queue
     // Reload metadata
     return;
-}*/
+}
 
 ActionTreeItem::ActionTreeItem(ActionTreeItem *parent, DBApi *Api, DB_plugin_action_t *action) : QTreeWidgetItem(parent),
                                                                                                  DBWidget(nullptr,Api) {
@@ -301,7 +396,7 @@ void ActionManager::onAction(bool checked) {
             return;
         }
     }
-    qDebug() << "ActionManager: onAction failed to find action!" << Qt::endl;
+    qDebug() << "ActionManager: onAction failed to find action!" << ENDL;
 }
 
 

@@ -49,7 +49,7 @@ CoverArtCache *cac_current = nullptr;
 
 void cover_avail_callback(const char *fname, const char *artist, const char *album, void *user_data) {
     if (!user_data) {
-        qDebug() << "cover_avail_callback: no user_data!" << Qt::endl;
+        qDebug() << "cover_avail_callback: no user_data!" << ENDL;
         return;
     }
     CoverArtCache *cac = static_cast<CoverArtCache *>(user_data);

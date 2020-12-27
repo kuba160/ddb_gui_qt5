@@ -62,6 +62,9 @@ protected:
     QList<QAction *> clipboard_actions;
     DB_playItem_t *playItemMenuRef = nullptr;
 
+    QMenu *playlistMenu = nullptr;
+    QPoint playlistMenuPosition;
+
     DBApi *api;
     QClipboard *clipboard;
 public slots:
@@ -69,7 +72,7 @@ public slots:
     void playItemContextMenu(QWidget *obj, QPoint p);
     //void playItemContextMenu(QPoint p, QList<DB_playItem_t *> it_list);
     // Create context menu in point p for playlist number n
-    //void playlistContextMenu(QPoint p, int n);
+    void playlistContextMenu(QWidget *obj, QPoint p, int n);
 
 private slots:
     void cut(bool);

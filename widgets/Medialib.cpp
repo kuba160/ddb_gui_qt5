@@ -4,6 +4,10 @@
 #include <QMouseEvent>
 #include <QApplication>
 #include <QDrag>
+// Dialog
+#include <QDialog>
+#include <QListView>
+#include <QPushButton>
 #include <cstdint>
 
 // used for sleep()
@@ -16,6 +20,7 @@ QStringList default_query = {"Album", "Artist", "Genre", "Folder"};
 
 static void listener_callback(ddb_mediasource_event_type_t event, void *user_data) {
     Q_UNUSED(event); Q_UNUSED(user_data)
+    qDebug() <<"Callback";
     static_cast<Medialib *>(user_data)->updateTree();
 }
 
@@ -31,7 +36,9 @@ void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event) {
     if ((event->pos() - dragStartPosition).manhattanLength()
          < QApplication::startDragDistance())
         return;
-
+    if (selectedItems().length() == 0) {
+        return;
+    }
     QDrag *drag = new QDrag(this);
     QList<DB_playItem_t *> list;
     for (int i = 0; i < selectedItems().length(); i++) {
@@ -39,7 +46,7 @@ void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event) {
     }
     QMimeData *mimeData = static_cast<MedialibTreeWidgetItem *>(selectedItems().at(0))->api->mime_playItems(list);
     drag->setMimeData(mimeData);
-    drag->exec(Qt::CopyAction | Qt::MoveAction);
+    drag->exec(Qt::MoveAction);
 }
 
 MedialibTreeWidgetItem::MedialibTreeWidgetItem(QWidget *parent, DBApi *api, ddb_medialib_item_t *it) : DBWidget(parent,api) {
@@ -72,18 +79,19 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     tree->setDragDropMode(QAbstractItemView::DragDrop);
     tree->setDragEnabled(true);
     tree->viewport()->setAcceptDrops(true);
-    main_layout = new QVBoxLayout(this);
-    search_layout = new QHBoxLayout(this);
+    setLayout(new QVBoxLayout());
+    search_layout = new QHBoxLayout();
     search_query = new QComboBox(this);
     search_box = new QLineEdit(this);
     search_layout->addWidget(search_query);
     search_layout->addWidget(search_box);
     search_layout->setContentsMargins(0,0,0,0);
     search_layout->setSpacing(0);
-    main_layout->setContentsMargins(2,4,2,0);
-    //main_layout->setSpacing(5);
-    main_layout->addLayout(search_layout);
-    main_layout->addWidget(tree);
+    this->setContentsMargins(2,4,2,0);
+    search_layout_widget = new QWidget();
+    search_layout_widget->setLayout(search_layout);
+    this->layout()->addWidget(search_layout_widget);
+    this->layout()->addWidget(tree);
     search_box->setPlaceholderText(QString(_("Search")) + "...");
     connect(search_query, SIGNAL(currentIndexChanged(int)), this, SLOT(searchQueryChanged(int)));
     connect(search_box, SIGNAL(textChanged(const QString &)), this, SLOT(searchBoxChanged(const QString &)));
@@ -92,16 +100,15 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     DB_plugin_t *medialib = api->deadbeef->plug_get_for_id("medialib");
     ml = static_cast<DB_mediasource_t *>((void *)medialib);
     ml_source = static_cast<ddb_medialib_plugin_t *>((void *)medialib);
-
     pl_mediasource = ml->create_source("ddb_gui_qt5");
+
     // medialib thread unsafe at time of programming, wait for it to calm down :)
     sleep(1);
 
     listener_id = ml->add_listener(pl_mediasource,listener_callback,this);
-    // TODO, allow setting folders
-    const char *folders[] = {"/media/kuba-kubuntu/Archiwum/Muzyka/", "A:/Muzyka/FLAC", nullptr};
-    ml_source->set_folders(pl_mediasource,folders,2);
 
+    QStringList folders = CONFGET("folders",QStringList()).toStringList();
+    setFolders(&folders);
     // selectors
     ml_selector = ml->get_selectors(pl_mediasource);
     const char* selector;
@@ -114,6 +121,12 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     search_query->addItem(QString("Local"));
     // remove after sleep fix
     updateTree();
+
+    // Options
+    parent->setContextMenuPolicy(Qt::ActionsContextMenu);
+    set_up_folders = new QAction(QIcon::fromTheme("document-properties"),"Set up medialib folders...");
+    connect(set_up_folders,SIGNAL(triggered()),this, SLOT(folderSetupDialog()));
+    parent->addAction(set_up_folders);
 }
 
 Medialib::~Medialib() {
@@ -136,7 +149,7 @@ QWidget *Medialib::constructor(QWidget *parent, DBApi *api) {
 }
 
 void Medialib::updateTree() {
-    int index = search_query->currentIndex();
+   int index = search_query->currentIndex();
     QString text = search_box->text();
     if (curr_it) {
         ml->free_list(pl_mediasource, curr_it);
@@ -145,7 +158,7 @@ void Medialib::updateTree() {
                                ml_selector[index],
                                text.length() ? text.toUtf8() : " ");
     if (!curr_it) {
-        qDebug() << "QtMedialib: Tried to updateTree, but medialib failed" << Qt::endl;
+        qWarning() << "qtMedialib: Tried to updateTree, but medialib failed" << ENDL;
         return;
     }
     tree->clear();
@@ -153,9 +166,10 @@ void Medialib::updateTree() {
     items.append (new MedialibTreeWidgetItem(this, api, curr_it));
 
     tree->insertTopLevelItems(0, items);
-    tree->expandItem(tree->itemAt(0,0));
-    if (tree->itemAt(0,0))
+    if (tree->itemAt(0,0)) {
+        tree->expandItem(tree->itemAt(0,0));
         tree->itemAt(0,0)->sortChildren(0,Qt::AscendingOrder);
+    }
 }
 
 void Medialib::searchQueryChanged(int index) {
@@ -164,7 +178,7 @@ void Medialib::searchQueryChanged(int index) {
         updateTree();
     }
     else if (search_query_count !=0){
-        qDebug() << "qtMedialib: backend change" << Qt::endl;
+        qDebug() << "qtMedialib: backend change" << ENDL;
         search_query->setCurrentIndex(1);
         //updateTree();
     }
@@ -173,4 +187,106 @@ void Medialib::searchQueryChanged(int index) {
 void Medialib::searchBoxChanged(const QString &text) {
     Q_UNUSED(text);
     updateTree();
+}
+
+void Medialib::setFolders(QStringList *folders) {
+    if (folders->length() > 0) {
+        const char *arr[folders->length()];
+        int i = 0;
+        QString str;
+        foreach(str, *folders) {
+            arr[i] = strdup(str.toUtf8().constData());
+            i++;
+        }
+        ml_source->set_folders(pl_mediasource,arr,folders->length());
+        for (i = 0; i < folders->length(); i++) {
+            if (arr[i]) {
+                free((void *) arr[i]);
+            }
+        }
+        CONFSET("folders",*folders);
+    }
+    else {
+        const char *arr[1] = {nullptr};
+        ml_source->set_folders(pl_mediasource,arr,1);
+        CONFSET("folders",QStringList());
+    }
+}
+
+void Medialib::folderSetupDialog() {
+    QDialog d(this);
+    d.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
+    d.setMinimumWidth(405);
+    d.setWindowTitle("Set up medialib folders...");
+    d.setLayout(new QVBoxLayout());
+
+    d.layout()->addWidget(new QLabel("Directories for medialib to scan:"));
+
+    // List
+    lwidget = new QListWidget(&d);
+    lwidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    d.layout()->addWidget(lwidget);
+    // restore
+    QString n;
+    foreach(n,CONFGET("folders",QStringList()).toStringList()) {
+        QListWidgetItem *item = new QListWidgetItem(n,lwidget);
+        item->setFlags (item->flags() | Qt::ItemIsEditable);
+    }
+
+    // Hbox / line
+    QWidget *hbox_widget = new QWidget(&d);
+    QHBoxLayout *hbox = new QHBoxLayout(hbox_widget);
+    hbox->setContentsMargins(0,0,0,0);
+    d.layout()->addWidget(hbox_widget);
+
+    ledit = new QLineEdit(&d);
+    hbox->addWidget(ledit);
+    // todo translate
+    plus = new QPushButton(QIcon::fromTheme("list-add"),"",&d);
+    minus = new QPushButton(QIcon::fromTheme("list-remove"),"",&d);
+    hbox->addWidget(plus);
+    hbox->addWidget(minus);
+    // connections
+    connect(lwidget, SIGNAL(itemChanged(QListWidgetItem *)),this, SLOT(folderSetupDialogItemHandler(QListWidgetItem *)));
+    connect(plus,SIGNAL(clicked(bool)), this, SLOT(folderSetupDialogHandler(bool)));
+    connect(minus,SIGNAL(clicked(bool)), this, SLOT(folderSetupDialogHandler(bool)));
+
+    d.exec();
+}
+
+void Medialib::folderSetupDialogHandler(bool checked) {
+    Q_UNUSED(checked);
+    QObject *s = sender();
+    if (s == plus) {
+        QString str = ledit->text();
+        if (str.length() > 0) {
+            QListWidgetItem *item = new QListWidgetItem(str,lwidget);
+            item->setFlags (item->flags() | Qt::ItemIsEditable);
+            ledit->setText("");
+            // item gets created and appended onto lwidget, itemhandler will handle it, no need to do it here
+            ledit->setPlaceholderText("Restart might be needed to update medialib...");
+        }
+    }
+    else if (s == minus) {
+        QList<QListWidgetItem *> list = lwidget->selectedItems();
+        QStringList folders = CONFGET("folders",QStringList()).toStringList();
+        for (int i = 0; i < list.length(); i++) {
+            int row = lwidget->row(list[i]);
+            lwidget->takeItem(row);
+            folders.takeAt(row);
+        }
+        setFolders(&folders);
+    }
+}
+
+void Medialib::folderSetupDialogItemHandler(QListWidgetItem *item) {
+    if (item->text().length() == 0) {
+        lwidget->takeItem(lwidget->row(item));
+    }
+    int i;
+    QStringList list;
+    for (i = 0; i < lwidget->count(); i++) {
+        list.append(lwidget->item(i)->text());
+    }
+    setFolders(&list);
 }

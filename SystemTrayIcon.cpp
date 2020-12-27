@@ -12,7 +12,8 @@ SystemTrayIcon::SystemTrayIcon(QObject *parent) : QSystemTrayIcon(parent) {
 bool SystemTrayIcon::event(QEvent *event) {
     if (event->type() == QEvent::Wheel) {
         QWheelEvent *wheelevent = (QWheelEvent *)event;
-        emit wheelScroll(SIGNUM(wheelevent->delta()));
+        // TODO
+        //emit wheelScroll(SIGNUM(wheelevent->delta()));
         event->accept();
         return true;
     }

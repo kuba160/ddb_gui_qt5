@@ -23,7 +23,9 @@ AboutDialog::AboutDialog(QWidget *parent, DBApi *Api) :
 
     if (aboutDBFile.open(QFile::ReadOnly)) {
         QTextStream s(&aboutDBFile);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
         s.setCodec("UTF-8");
+#endif
         QString about = s.readAll();
         ui->deadbeefAboutText->setText(about);
     }

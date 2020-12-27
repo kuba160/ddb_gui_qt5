@@ -11,7 +11,7 @@
 class CopyrightDialog : public QDialog {
   Q_OBJECT
 public:
-    CopyrightDialog(QWidget *parent = 0, Qt::WindowFlags f = 0);
+    CopyrightDialog(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::Window);
     void setText(const QString &);
 private:
     QVBoxLayout vbox;
@@ -25,7 +25,7 @@ namespace Ui {
 class PluginsPreferencesWidget : public QWidget {
     Q_OBJECT
 public:
-    PluginsPreferencesWidget(QWidget *parent = 0, Qt::WindowFlags f = 0);
+    PluginsPreferencesWidget(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::Window);
     ~PluginsPreferencesWidget();
     
 private:
