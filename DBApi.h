@@ -77,6 +77,7 @@ public:
     // Settings
     void confSetValue(const QString &plugname, const QString &key, const QVariant &value);
     QVariant confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue);
+    // Settings (deprecated, use macros at the end)
     void autoSetValue(void *widget, const QString &key, const QVariant &value);
     QVariant autoGetValue(void *widget, const QString &key, const QVariant &defaultValue);
 
@@ -169,6 +170,12 @@ public:
     // - FriendlyName - name (QString)
     // - InternalName - internal name (QString)
     // - DesignMode - design mode enabled (bool)
+    // POSSIBLE FUTURE Properties:
+    // - Stylesheet - user-entered stylesheet for plugin (QString)
+    // - StylesheetOverride - disable widget stylesheet (bool)
+    // - DBApi - DBApi pointer (qintptr), could remove DBApi argument requirement
+    // - WidgetType - one of DBWidgetTypes
+
 };
 
 class DBWidget {
