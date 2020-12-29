@@ -10,10 +10,10 @@
 
 QIcon getStockIcon(QWidget *widget, const QString &freedesktop_name, int fallback) {
     QIcon fallbackIcon;
-    if (fallback > 0)
+    if (fallback > 0) {
         fallbackIcon = widget->style()->standardIcon(QStyle::StandardPixmap(fallback), 0, widget);
-    return fallbackIcon;
-  //  return QtIconLoader::icon(freedesktop_name, fallbackIcon);
+    }
+    return fallbackIcon.isNull() ? QIcon::fromTheme(freedesktop_name, fallbackIcon) : fallbackIcon;
 }
 
 void loadPlaylist(const QString &fname) {

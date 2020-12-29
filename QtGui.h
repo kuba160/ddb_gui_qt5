@@ -11,12 +11,6 @@
 
 #include "include/artwork.h"
 
-#ifdef HOTKEYS_ENABLED
-#include <plugins/Hotkeys/include/hotkeys.h>
-#define HOTKEYS hotkeys_plugin
-extern DB_hotkeys_plugin_t *hotkeys_plugin;
-#endif
-
 #define PLUGIN plugin
 //#define DBAPI deadbeef
 

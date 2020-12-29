@@ -24,10 +24,8 @@
 
 MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
-        DBWidget (parent, Api),
-        ui(new Ui::MainWindow) {
-    ui->setupUi(this);
-    
+        DBWidget (parent, Api) {
+
     loadActions();
     loadIcons();
 
@@ -50,16 +48,15 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
 
     setCentralWidget(pl->getMainWidget());
 
+    setWindowIcon(QIcon(":/root/images/deadbeef.png"));
 
 
     loadConfig();
-    pl->lockWidgets(ui->actionBlockToolbarChanges->isChecked());
     updateTitle();
 }
 
 MainWindow::~MainWindow() {
     delete trayIcon;
-    delete ui;
 }
 
 DBApi* MainWindow::Api() {
@@ -91,6 +88,7 @@ void MainWindow::createConnections() {
 }
 
 void MainWindow::loadIcons() {
+    /*
     ui->actionPlay->setIcon(getStockIcon(this, "media-playback-start", QStyle::SP_MediaPlay));
     ui->actionPause->setIcon(getStockIcon(this, "media-playback-pause", QStyle::SP_MediaPause));
     ui->actionStop->setIcon(getStockIcon(this, "media-playback-stop", QStyle::SP_MediaStop));
@@ -105,12 +103,13 @@ void MainWindow::loadIcons() {
     ui->actionNewPlaylist->setIcon(getStockIcon(this, "document-new", QStyle::SP_FileDialogNewFolder));
     ui->actionPreferences->setIcon(getStockIcon(this, "preferences-system", QStyle::SP_CustomBase));
     ui->actionAbout->setIcon(getStockIcon(this, "help-about", QStyle::SP_DialogHelpButton));
-
+q   */
     //pauseIcon = getStockIcon(this, "media-playback-pause", QStyle::SP_MediaPause);
     //playIcon = getStockIcon(this, "media-playback-start", QStyle::SP_MediaPlay);
 }
 
 void MainWindow::loadActions() {
+    /*
     addAction(ui->actionAddFolder);
     addAction(ui->actionExit);
     addAction(ui->actionPreferences);
@@ -121,11 +120,14 @@ void MainWindow::loadActions() {
     addAction(ui->actionNewPlaylist);
     addAction(ui->actionHideMenuBar);
     addAction(ui->actionFind);
+    */
 }
 
 void MainWindow::createTray() {
     trayIcon = new SystemTrayIcon(this);
     trayMenu = new QMenu(this);
+    // TODO
+    /*
     trayMenu->addAction(ui->actionPlay);
     trayMenu->addAction(ui->actionPause);
     trayMenu->addAction(ui->actionStop);
@@ -134,7 +136,7 @@ void MainWindow::createTray() {
     trayMenu->addSeparator();
     trayMenu->addAction(ui->actionExit);
     trayIcon->setContextMenu(trayMenu);
-
+    */
     QIcon icon(":/root/images/deadbeef.png");
     trayIcon->setIcon(icon);
 
@@ -200,7 +202,7 @@ void MainWindow::changeEvent(QEvent *e) {
     QMainWindow::changeEvent(e);
     switch (e->type()) {
     case QEvent::LanguageChange:
-        ui->retranslateUi(this);
+        //ui->retranslateUi(this);
         break;
     default:
         break;
@@ -211,7 +213,7 @@ void MainWindow::closeEvent(QCloseEvent *e) {
     switch (actionOnClose) {
     case Exit:
         e->accept();
-        on_actionExit_triggered();
+        //on_actionExit_triggered();
         break;
     case Hide:
         e->ignore();
@@ -253,7 +255,7 @@ void MainWindow::createToolBars() {
 
 QMenu *MainWindow::createPopupMenu() {
     QMenu *popupMenu = new QMenu();
-    popupMenu->addAction(ui->actionHideMenuBar);
+    //popupMenu->addAction(ui->actionHideMenuBar);
     //popupMenu->addSeparator();
     //popupMenu->addSeparator();
     //popupMenu->addSeparator();
@@ -305,9 +307,9 @@ void MainWindow::loadConfig() {
 
     resize(size);
     move(point);
-    ui->actionBlockToolbarChanges->setChecked(tbIsLocked);
+    //ui->actionBlockToolbarChanges->setChecked(tbIsLocked);
     menuBar()->setHidden(mmIsHidden);
-    ui->actionHideMenuBar->setChecked(!menuBar()->isHidden());
+    //ui->actionHideMenuBar->setChecked(!menuBar()->isHidden());
 
 
     if (!trayIconIsHidden) {
@@ -344,13 +346,13 @@ void MainWindow::loadConfig() {
 
     switch (DBAPI->conf_get_int("playback.loop", PLAYBACK_MODE_NOLOOP)) {
     case PLAYBACK_MODE_LOOP_ALL:
-        ui->actionLoopAll->setChecked(true);
+        //ui->actionLoopAll->setChecked(true);
         break;
     case PLAYBACK_MODE_LOOP_SINGLE:
-        ui->actionLoopTrack->setChecked(true);
+        //ui->actionLoopTrack->setChecked(true);
         break;
     case PLAYBACK_MODE_NOLOOP:
-        ui->actionLoopNothing->setChecked(true);
+        //ui->actionLoopNothing->setChecked(true);
         break;
     }
     emit configLoaded();
@@ -362,7 +364,7 @@ void MainWindow::saveConfig() {
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowSize, size());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowPosition, pos());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, saveState());
-    SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
+   //SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
     SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
 
     //playList.saveConfig();

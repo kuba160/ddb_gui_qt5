@@ -46,7 +46,6 @@ DB_functions_t *deadbeef_internal;
 DB_qtgui_t qt_plugin;
 DB_gui_t &plugin = qt_plugin.gui;
 // TODO make casual plugin list
-DB_hotkeys_plugin_t *hotkeys_plugin;
 DB_artwork_plugin_t *coverart_plugin;
 
 
@@ -104,9 +103,6 @@ static int pluginStop() {
     return 0;
 }
 static int pluginConnect() {
-    hotkeys_plugin = (DB_hotkeys_plugin_t *)DBAPI->plug_get_for_id("hotkeys");
-    if (hotkeys_plugin)
-        qDebug() << "qtui: found global hotkeys plugin";
     return 0;
 }
 
@@ -125,6 +121,14 @@ static int pluginStart() {
     QApplication::setOrganizationName("deadbeef");
     QApplication::setApplicationName("DeaDBeeF");
     //QApplication::setStyle(QStyleFactory::create("breeze"));
+
+#ifdef __MINGW32__
+    QStringList theme_search_paths = QIcon::themeSearchPaths();
+    theme_search_paths.append("./share/icons");
+    QIcon::setThemeSearchPaths(theme_search_paths);
+    qDebug() << QIcon::themeSearchPaths();
+    QIcon::setThemeName("Windows-10-Icons");
+#endif
 
     initializeApi();
     app.installTranslator(dbtr);

@@ -10,9 +10,6 @@
 #include "DBApi.h"
 
 
-namespace Ui {
-class MainWindow;
-}
 
 enum ActionOnClose {
     Exit = 0,
@@ -42,7 +39,6 @@ private:
     ActionOnClose actionOnClose;
     void configureActionOnClose(bool minimizeOnClose, bool hideTrayIcon);
 
-    Ui::MainWindow *ui;
     SystemTrayIcon *trayIcon;
     QMenu *trayMenu;
 
@@ -60,18 +56,10 @@ public slots:
     void on_actionAddURL_triggered();
     void on_actionAddAudioCD_triggered();
     void on_actionAddFiles_triggered();
-    void on_actionPreferences_triggered();
-    void on_actionAboutQt_triggered();
-    void on_actionAbout_triggered();
-    void on_actionExit_triggered();
     void on_actionAddFolder_triggered();
 
     void on_actionSaveAsPlaylist_triggered();
     void on_actionLoadPlaylist_triggered();
-
-    // TODO: These were disabled, so now there is no way to enable artwork back :D
-    //void on_actionHideCoverArt_triggered();
-    // void onCoverartClose();
 
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
 
@@ -84,12 +72,8 @@ public slots:
     void windowActivate();
     void windowShowHide();
 
-
     void windowAddToolbar(QToolBar *);
     void windowAddDockable(QDockWidget *);
-
-
-    //void windowViewActionMainWidget(QAction *);
 
 signals:
     void configLoaded();

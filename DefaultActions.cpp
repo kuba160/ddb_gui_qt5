@@ -4,6 +4,8 @@
 #include <QStyle>
 #include "include/callbacks.h"
 
+#include "AboutDialog.h"
+
 #include "QtGui.h"
 
 
@@ -11,12 +13,7 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
     ui->setupUi(this);
 
     // Icons
-    ui->actionPlay->setIcon(getStockIcon(this, "media-playback-start", QStyle::SP_MediaPlay));
-    ui->actionPause->setIcon(getStockIcon(this, "media-playback-pause", QStyle::SP_MediaPause));
-    ui->actionStop->setIcon(getStockIcon(this, "media-playback-stop", QStyle::SP_MediaStop));
-    ui->actionPrev->setIcon(getStockIcon(this, "media-skip-backward", QStyle::SP_MediaSkipBackward));
-    ui->actionNext->setIcon(getStockIcon(this, "media-skip-forward", QStyle::SP_MediaSkipForward));
-    ui->actionExit->setIcon(getStockIcon(this, "application-exit", QStyle::SP_DialogCloseButton));
+    //ui->actionExit->setIcon(getStockIcon(this, "application-exit", QStyle::SP_DialogCloseButton));
     ui->actionClearAll->setIcon(getStockIcon(this, "edit-clear", QStyle::SP_TrashIcon));
     ui->actionAddFiles->setIcon(getStockIcon(this, "document-open", QStyle::SP_FileIcon));
     ui->actionAddFolder->setIcon(getStockIcon(this, "folder-m", QStyle::SP_DirIcon));
@@ -86,9 +83,10 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
 
     connect (this->ui->actionBlockToolbarChanges, SIGNAL(toggled(bool)), pl, SLOT(lockWidgets(bool)));
 
-    connect (this->ui->actionExit, SIGNAL(triggered()), pl, SLOT(actionChecksSave()));
+    //connect (this->ui->actionExit, SIGNAL(triggered()), pl, SLOT(actionChecksSave()));
 
     connect (pl, SIGNAL(actionToggleVisibleCreated(QAction *)), this, SLOT(onActionToggleCreated(QAction *)));
+
 
 }
 
@@ -143,4 +141,21 @@ void DefaultActions::onMainWidgetAdded(QAction *action) {
     if (pl->getTotalMainWidgets() > 1) {
         main_widgets->menuAction()->setVisible(true);
     }
+}
+
+void DefaultActions::on_actionAboutQt_triggered() {
+    QMessageBox::aboutQt(this);
+}
+
+void DefaultActions::on_actionAbout_triggered() {
+    AboutDialog dialog(this,api);
+    dialog.exec();
+}
+
+void DefaultActions::on_actionPreferences_triggered() {
+
+}
+
+void DefaultActions::on_actionQuit_triggered() {
+    qDebug() << "test";
 }

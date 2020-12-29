@@ -112,35 +112,14 @@ void MainWindow::on_actionSaveAsPlaylist_triggered() {
 }
 
 // separator
-
+/*
 void MainWindow::on_actionExit_triggered() {
     actionOnClose = Exit;
     saveConfig();
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     close();
 }
-
-// actionFind missing?
-
-void MainWindow::on_actionPreferences_triggered() {
-    PreferencesDialog *prefDialog = new PreferencesDialog(this);
-    connect(prefDialog, SIGNAL(setCloseOnMinimize(bool)), this, SLOT(setCloseOnMinimized(bool)));
-    connect(prefDialog, SIGNAL(setTrayIconHidden(bool)), this, SLOT(setTrayIconHidden(bool)));
-    connect(prefDialog, SIGNAL(titlePlayingChanged()), this, SLOT(titleSettingChanged()));
-    connect(prefDialog, SIGNAL(titleStoppedChanged()), this, SLOT(titleSettingChanged()));
-    prefDialog->exec();
-    delete prefDialog;
-}
-
-// menu "Help"
-
-void MainWindow::on_actionAbout_triggered() {
-    AboutDialog(this,api).exec();
-}
-
-void MainWindow::on_actionAboutQt_triggered() {
-    QMessageBox::aboutQt(this);
-}
+*/
 
 // misc
 
