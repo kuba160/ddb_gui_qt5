@@ -17,7 +17,7 @@ public:
     ~CoverArtCache();
 
     // Get Cover Art plugin
-    inline DB_artwork_plugin_t *getCoverArtPlugin ();
+    DB_artwork_plugin_t *getCoverArtPlugin ();
 
     // QFuture pointer for cover loading
     QFuture<QImage *> loadCoverArt(const char *fname, const char *artist, const char *album);
