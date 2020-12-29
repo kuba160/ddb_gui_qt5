@@ -4,10 +4,7 @@ CONFIG += no_plugin_name_prefix plugin
 INCLUDEPATH += "./include"
 
 SOURCES  =  include/callbacks.cpp \
-            ActionManager.cpp \
-            DefaultActions.cpp \
             include/parser.cpp \
-            include/qticonloader.cpp \
             plugins/Hotkeys/HotkeyReadDialog.cpp \
             plugins/Hotkeys/HotkeysTreeWidget.cpp \
             plugins/Hotkeys/HotkeysWidget.cpp \
@@ -27,10 +24,12 @@ SOURCES  =  include/callbacks.cpp \
             widgets/VolumeSlider.cpp \
             widgets/QueueManager.cpp \
             AboutDialog.cpp \
+            ActionManager.cpp \
             CoverArtCache.cpp \
             DBApi.cpp \
             DBFileDialog.cpp \
             DeadbeefTranslator.cpp \
+            DefaultActions.cpp \
             DefaultPlugins.cpp \
             GuiUpdater.cpp \
             MainWindow.cpp \
@@ -43,10 +42,7 @@ SOURCES  =  include/callbacks.cpp \
             QtGuiSettings.cpp \
             SystemTrayIcon.cpp
 
-HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
-            ActionManager.h \
-            DefaultActions.h \
-            plugins/Hotkeys/HotkeysTreeWidget.h \
+HEADERS =   plugins/Hotkeys/HotkeysTreeWidget.h \
             plugins/Hotkeys/HotkeysWidget.h \
             preferencesWidgets/InterfacePreferencesWidget.h \
             preferencesWidgets/NetworkPreferencesWidget.h \
@@ -64,10 +60,12 @@ HEADERS =   plugins/Hotkeys/HotkeyReadDialog.h \
             widgets/VolumeSlider.h \
             widgets/QueueManager.h \
             AboutDialog.h \
+            ActionManager.h \
             CoverArtCache.h \
             DBApi.h \
             DBFileDialog.h \
             DeadbeefTranslator.h \
+            DefaultActions.h \
             DefaultPlugins.h \
             GuiUpdater.h \
             MainWindow.h \
