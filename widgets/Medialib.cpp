@@ -8,6 +8,7 @@
 #include <QDialog>
 #include <QListView>
 #include <QPushButton>
+#include <QFileDialog>
 #include <cstdint>
 
 // used for sleep()
@@ -21,7 +22,11 @@ QStringList default_query = {"Album", "Artist", "Genre", "Folder"};
 static void listener_callback(ddb_mediasource_event_type_t event, void *user_data) {
     Q_UNUSED(event); Q_UNUSED(user_data)
     qDebug() <<"Callback";
-    static_cast<Medialib *>(user_data)->updateTree();
+    //static_cast<Medialib *>(user_data)->updateTree();
+}
+
+MedialibTreeWidget::MedialibTreeWidget(QWidget *parent, DBApi *Api) : QTreeWidget(parent) {
+    api = Api;
 }
 
 void MedialibTreeWidget::mousePressEvent(QMouseEvent *event) {
@@ -44,7 +49,17 @@ void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event) {
     for (int i = 0; i < selectedItems().length(); i++) {
         list.append(static_cast<MedialibTreeWidgetItem *>(selectedItems().at(i))->getTracks());
     }
-    QMimeData *mimeData = static_cast<MedialibTreeWidgetItem *>(selectedItems().at(0))->api->mime_playItems(list);
+    // clone
+
+    QList<DB_playItem_t *> list_copy;
+    DB_playItem_t *it;
+    foreach(it,list) {
+        DB_playItem_t *it_new = DBAPI->pl_item_alloc();
+        DBAPI->pl_item_copy(it_new,it);
+        //DBAPI->pl_item_unref(it_new);
+        list_copy.append(it_new);
+    }
+    QMimeData *mimeData = api->mime_playItems(list_copy);
     drag->setMimeData(mimeData);
     drag->exec(Qt::MoveAction);
 }
@@ -73,7 +88,7 @@ QList<DB_playItem_t *> MedialibTreeWidgetItem::getTracks() {
 
 Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     // GUI
-    tree = new MedialibTreeWidget();
+    tree = new MedialibTreeWidget(this,Api);
     tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree->setHeaderHidden(true);
     tree->setDragDropMode(QAbstractItemView::DragDrop);
@@ -241,12 +256,15 @@ void Medialib::folderSetupDialog() {
     ledit = new QLineEdit(&d);
     hbox->addWidget(ledit);
     // todo translate
-    plus = new QPushButton(QIcon::fromTheme("list-add"),"",&d);
-    minus = new QPushButton(QIcon::fromTheme("list-remove"),"",&d);
+    browse = new QPushButton(QIcon::fromTheme(""), "Browse...");
+    plus = new QPushButton(QIcon::fromTheme("list-add"),QIcon::fromTheme("list-add").isNull() ? "Add" : "", &d);
+    minus = new QPushButton(QIcon::fromTheme("list-remove"),QIcon::fromTheme("list-remove").isNull() ? "Remove": "", &d);
+    hbox->addWidget(browse);
     hbox->addWidget(plus);
     hbox->addWidget(minus);
     // connections
     connect(lwidget, SIGNAL(itemChanged(QListWidgetItem *)),this, SLOT(folderSetupDialogItemHandler(QListWidgetItem *)));
+    connect(browse,SIGNAL(clicked(bool)), this, SLOT(folderSetupDialogHandler(bool)));
     connect(plus,SIGNAL(clicked(bool)), this, SLOT(folderSetupDialogHandler(bool)));
     connect(minus,SIGNAL(clicked(bool)), this, SLOT(folderSetupDialogHandler(bool)));
 
@@ -275,6 +293,21 @@ void Medialib::folderSetupDialogHandler(bool checked) {
             folders.takeAt(row);
         }
         setFolders(&folders);
+    }
+    else if (s == browse) {
+        QFileDialog dialog(lwidget,_("Select folder..."),ledit->text().length() ? ledit->text() : "");
+        dialog.setFileMode(QFileDialog::Directory);
+        //dialog.setOption(QFileDialog::ShowDirsOnly, false);
+
+        if(dialog.exec()) {
+            QStringList list = dialog.selectedFiles();
+            QString str;
+            foreach(str,list) {
+                QListWidgetItem *item = new QListWidgetItem(str,lwidget);
+                item->setFlags (item->flags() | Qt::ItemIsEditable);
+            }
+            ledit->setPlaceholderText("Restart might be needed to update medialib...");
+        }
     }
 }
 

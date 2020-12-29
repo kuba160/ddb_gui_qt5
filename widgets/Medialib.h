@@ -36,7 +36,10 @@ public:
 
 // MedialibTreeWidget
 class MedialibTreeWidget : public QTreeWidget {
+public:
+    MedialibTreeWidget(QWidget *parent = nullptr, DBApi *Api = nullptr);
 protected:
+    DBApi *api = nullptr;
     QPoint dragStartPosition;
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
@@ -84,6 +87,8 @@ private:
     // Dialog
     QListWidget *lwidget = nullptr;
     QLineEdit * ledit = nullptr;
+    QObject *filedialog = nullptr;
+    QPushButton *browse = nullptr;
     QPushButton *plus = nullptr;
     QPushButton *minus = nullptr;
 };
