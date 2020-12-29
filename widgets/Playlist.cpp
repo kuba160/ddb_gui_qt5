@@ -78,3 +78,10 @@ void Playlist::onPlaylistChanged() {
     DBAPI->plt_unref(plt);
     DBAPI->pl_unlock();
 }
+
+void Playlist::mouseDoubleClickEvent(QMouseEvent* event ) {
+    if (event->button() == Qt::LeftButton) {
+        QTreeView::mouseDoubleClickEvent(event);
+    }
+
+}

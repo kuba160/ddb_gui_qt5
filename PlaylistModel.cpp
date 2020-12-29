@@ -356,11 +356,16 @@ void PlaylistModel::insertByPlayItemAtPosition(DB_playItem_t *item, int position
         after = DBAPI->pl_get_for_idx(position);
     }
     DBAPI->plt_insert_item(plt,after,item);
+    DBAPI->pl_item_unref(item);
+    if (after) {
+        DBAPI->pl_item_unref(after);
+    }
     int count = DBAPI->plt_get_item_count(plt, PL_MAIN) - prev_track_count;
     beginInsertRows(QModelIndex(), position, position + count - 1);
     endInsertRows();
 }
 void PlaylistModel::moveItems(QList<int> indices, int before) {
+    qDebug() << "moveItems:" << indices.length() << "items to be put before" << before;
     // TODO FIX THIS
     uint32_t *inds = new uint32_t[indices.length()];
     //uint32_t inds[indices.length()];
@@ -408,6 +413,7 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
                 DB_playItem_t *it = DBAPI->plt_get_item_for_idx(plt,index.row(),PL_MAIN);
                 items.append(it);
                 rows.append(index.row());
+                DBAPI->pl_item_unref(it);
             }
         }
     }

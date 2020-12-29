@@ -12,6 +12,8 @@ public:
     ~Playlist();
     static QWidget *constructor(QWidget *parent, DBApi *Api);
 
+protected:
+    void mouseDoubleClickEvent(QMouseEvent *event);
 private slots:
     void onPlaylistChanged();
     void onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);

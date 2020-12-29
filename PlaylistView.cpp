@@ -297,7 +297,9 @@ void PlaylistView::dropEvent(QDropEvent *event) {
             }
             int i;
             for (i = 0; i < list.length(); i++) {
+                qDebug() << "Inserting item" << list.at(i) << "at" << row;
                 playlistModel.insertByPlayItemAtPosition(list.at(i),row++);
+                //DBAPI->pl_item_ref(list.at(i));
             }
             event->setDropAction(Qt::CopyAction);
             event->accept();
@@ -319,7 +321,9 @@ void PlaylistView::selectionChanged(const QItemSelection &selected, const QItemS
 }
 
 void PlaylistView::trackDoubleClicked(QModelIndex index) {
-    api->playTrackByIndex(index.row());
+    if (index.isValid()) {
+        api->playTrackByIndex(index.row());
+    }
 }
 
 void PlaylistView::showContextMenu(QPoint point) {
