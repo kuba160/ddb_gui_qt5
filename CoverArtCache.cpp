@@ -31,7 +31,7 @@ CoverArtCache::~CoverArtCache() {
     }
 }
 
-DB_artwork_plugin_t * CoverArtCache::getCoverArtPlugin () {
+inline DB_artwork_plugin_t * CoverArtCache::getCoverArtPlugin () {
     return artwork;
 }
 
