@@ -1,5 +1,4 @@
 #include "MainWindow.h"
-#include "ui_MainWindow.h"
 
 #include <QSettings>
 #include <QMenu>
