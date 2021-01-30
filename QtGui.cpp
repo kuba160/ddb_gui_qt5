@@ -71,9 +71,6 @@ static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 }
 
 static int initializeApi() {
-    if (!dbtr) {
-        dbtr = new DeadbeefTranslator();
-    }
     if (!api) {
         while (!deadbeef_internal) {
             usleep(10000);
@@ -120,6 +117,8 @@ static int pluginStart() {
     QApplication app(argc, argv);
     QApplication::setOrganizationName("deadbeef");
     QApplication::setApplicationName("DeaDBeeF");
+    dbtr = new DeadbeefTranslator(&app);
+    app.installTranslator(dbtr);
     //QApplication::setStyle(QStyleFactory::create("breeze"));
 
 #ifdef __MINGW32__
@@ -131,10 +130,6 @@ static int pluginStart() {
 #endif
 
     initializeApi();
-    app.installTranslator(dbtr);
-
-    QString locale = QLocale::system().name();
-    //QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
     //initialize settings
     QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG)) .arg("qt5");
     QtGuiSettings::setDefaultFormat(QSettings::IniFormat);

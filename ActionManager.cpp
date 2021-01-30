@@ -11,18 +11,6 @@ ActionManager::ActionManager (QObject *parent, DBApi *Api) : QObject(parent) {
     DefaultActions *da = new DefaultActions(Api);
 
     mainMenuBar = da->getDefaultMenuBar();
-    QList<QMenu *> l = da->findChildren<QMenu *>();
-    // translate
-    // TODO fix this
-    //qDebug() << l[0]->menuAction()->text() << " ->" << _(l[0]->menuAction()->text().toUtf8().constData());
-    // l[0]->menuAction()->setText(_(l[0]->menuAction()->text().toUtf8().constData()));
-    QList<QAction *> acs = da->findChildren<QAction *>();
-    for (int j = 0; j < acs.length(); j++) {
-        if (!acs[j]->text().isEmpty()) {
-            //() << acs[j]->text().toUtf8() << "R->" <<_(acs[j]->text().toUtf8());
-            //acs[j]->setText(_(acs[j]->text().toUtf8().constData()));
-        }
-    }
     loadActions();
 }
 
