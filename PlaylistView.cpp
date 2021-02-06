@@ -138,7 +138,11 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
 
     // Actions provider
     QActionGroup *ag = new QActionGroup(this);
+#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
     ag->setExclusionPolicy(QActionGroup::ExclusionPolicy::None);
+#else
+    ag->setExclusive(false);
+#endif
     add_to_playback_queue = ag->addAction(tr("Add To Playback Queue"));
     add_to_playback_queue->setObjectName("add_to_playback_queue");
     add_to_playback_queue->setIcon(QIcon::fromTheme("list-add"));
