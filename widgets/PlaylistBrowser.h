@@ -31,14 +31,14 @@ signals:
     // playlist got selected by this widget
     void playlistSelected(int);
 
-public slots:
+private slots:
     // select playlist in this widget
     void selectPlaylist(int);
     // move playlist pl to before
     void playlistOrderChanged(int pl, int before);
     //
-    void playlistRenamed(int pl);
-
+    void onPlaylistRenamed(int);
+    void onPlaylistRemoved(int);
 };
 
 #endif // PLAYLISTBROWSER_H

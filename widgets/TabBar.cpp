@@ -18,8 +18,9 @@ TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBWidget(parent, 
     selectLastTab();
     createConnections();
 
-    connect (api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
-    connect (this, SIGNAL(tabRenamed(int,const QString *)), api, SLOT(renamePlaylist(int,const QString *)));
+    connect(api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
+    connect(this, SIGNAL(tabRenamed(int,const QString *)), api, SLOT(renamePlaylist(int,const QString *)));
+    connect(api, SIGNAL(playlistRenamed(int)), this, SLOT(onPlaylistRenamed(int)));
 }
 
 TabBar::~TabBar() {
@@ -177,6 +178,10 @@ void TabBar::playlistOrderChanged(int plt, int before) {
     QTabBar::moveTab(plt, before);
 }
 
+void TabBar::onPlaylistRenamed(int tab) {
+    setTabText(tab,api->playlistNameByIdx(tab));
+}
+
 void TabBar::newPlaylist() {
     int cnt = DBAPI->plt_get_count();
     int i;
@@ -224,12 +229,7 @@ void TabBar::closeTab() {
 }
 
 void TabBar::renamePlaylist() {
-    bool ok;
-    QString newName = QInputDialog::getText(this, tr("Choose new name"), tr("Enter new playlist name: "), QLineEdit::Normal, tabText(indexForAction), &ok);
-    if (ok && !newName.isEmpty()) {
-        setTabText(indexForAction, newName);
-        emit tabRenamed(indexForAction, &newName);
-    }
+    api->renamePlaylist(indexForAction);
 }
 
 void TabBar::setBottomPosition() {

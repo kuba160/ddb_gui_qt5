@@ -7,39 +7,31 @@
 #include <QMenuBar>
 #include "DBApi.h"
 
-class ActionItem {
+class ActionItem : public QAction {
+    Q_OBJECT
 public:
-    enum ActionItemType {
-
-        // Not an action
-        TYPE_VIRTUAL = 1,
-        // DeaDBeeF hotkeys action
-        TYPE_DEADBEEF,
-        // QtGui Action (QAction)
-        TYPE_QTGUI
-    };
-    // Type
-    ActionItemType action_type;
-
-    // Action title/path (deadbef path like "File\\/Open")
-    QString title;
-    // Internal action name
-    QString name;
+    ActionItem(DB_plugin_action_t *);
+    // text - deadbeef action text
+    // object name - deadbeef action name
+    // Properties:
+    // Title - original text before translation
+    // DBACTION - original DB_plugin_action_t pointer
+    //
     // DeaDBeeF Action flags (used for all types)
     uint32_t ddb_flags;
     // DeaDBeeF Action callback (TYPE_DEADBEEF)
     DB_plugin_action_callback2_t callback2;
-    // DeaDBeeF original action pointer (TYPE_DEADBEEF)
-    DB_plugin_action_t *ddb_action;
-    // DeaDBeeF Action plugin owner (TYPE_DEADBEEF)
-    char *plugin_name;
-    // QtGui Action plugin owner (TYPE_QTGUI)
-    QString plugin_name_qstring;
-    // QtGui Action pointer (TYPE_QTGUI, this will be generated automatically for TYPE_DEADBEEF)
-    QAction *action;
-    // Action text (from QAction *action)
-    QString *action_text;
-    QString action_text_untranslated;
+    DB_plugin_action_t *plug_action;
+
+    // check if this action is nested one and needs menu creation
+    bool isNested();
+
+    static QString iconOnAction(QString action);
+    static void setDefaultIcon(QAction *);
+protected:
+    bool nested = false;
+private slots:
+    void onActionTriggered();
 };
 
 class ActionManager : public QObject {
@@ -49,46 +41,46 @@ public:
     ActionManager(QObject *parent = nullptr, DBApi *Api = nullptr);
     ~ActionManager();
 
-    void loadActions();
+
 
     QMenuBar *mainMenuBar = nullptr;
 protected:
+    enum ActionGroup {
+        ActionsEmpty     = 0,
+        ActionsPlayback  = 1 << 0,
+        ActionsClipboard = 1 << 1,
+        ActionsDelete    = 1 << 2,
+        ActionsPlugins   = 1 << 3,
+        ActionsCustom    = 1 << 4,
+        ActionsTrackProp = 1 << 5
+    };
+    //
+    int menuActionsAvailable(QObject *);
+    static void insertActionWithName(QMenu *, QList<QAction*> *, QString name);
+    QList<QAction *> defaultPlaylistActions();
 
-    QList<ActionItem *> actions_main;
+
+    void fillMenuBar();
+    void loadActions();
+
     QList<ActionItem *> actions;
 
-    QMenu *playItemMenu = nullptr;
     QPoint playItemMenuPosition;
-    QList<QAction *> clipboard_actions;
-    DB_playItem_t *playItemMenuRef = nullptr;
-
-    QMenu *playlistMenu = nullptr;
     QPoint playlistMenuPosition;
+    // playlist number playlist menu is referring to (TODO support multiple playlists?)
+    int playlist_number = -1;
 
     DBApi *api;
-    QClipboard *clipboard;
 public slots:
     // Create context menu in point p for playitem it
     void playItemContextMenu(QWidget *obj, QPoint p);
-    //void playItemContextMenu(QPoint p, QList<DB_playItem_t *> it_list);
-    // Create context menu in point p for playlist number n
-    void playlistContextMenu(QWidget *obj, QPoint p, int n);
+    // Create context menu in point p for playlist number plt
+    void playlistContextMenu(QWidget *obj, QPoint p, int plt);
 
-private slots:
-    void cut(bool);
-    void copy(bool);
-    void paste(bool);
-
-private slots:
-    void onAction(bool);
-};
-
-
-
-class ActionTreeItem: public QTreeWidgetItem, public DBWidget, public ActionItem {
-    //Q_OBJECT
-public:
-    ActionTreeItem(ActionTreeItem *parent = nullptr, DBApi *Api = nullptr, DB_plugin_action_t *action = nullptr);
+    // Playlist default actions
+    void onChangePlaylistName();
+    void onDeletePlaylist();
+    void onAddNewPlaylist();
 };
 
 #endif // ACTIONMANAGER_H

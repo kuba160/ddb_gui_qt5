@@ -18,11 +18,11 @@
 */
 #include "PlaybackButtons.h"
 
-button_t buttons[] = {{QString("stop") , QStyle::SP_MediaStop,  SLOT(stop())},
-                      {QString("play") , QStyle::SP_MediaPlay,  SLOT(play())},
-                      {QString("pause"), QStyle::SP_MediaPause, SLOT(togglePause())},
-                      {QString("prev"),  QStyle::SP_MediaSkipBackward, SLOT(playPrev())},
-                      {QString("next"),  QStyle::SP_MediaSkipForward, SLOT(playNext())},
+button_t buttons[] = {{QString("Stop") , QStyle::SP_MediaStop,  SLOT(stop())},
+                      {QString("Play") , QStyle::SP_MediaPlay,  SLOT(play())},
+                      {QString("Pause"), QStyle::SP_MediaPause, SLOT(togglePause())},
+                      {QString("Previous"),  QStyle::SP_MediaSkipBackward, SLOT(playPrev())},
+                      {QString("Next"),  QStyle::SP_MediaSkipForward, SLOT(playNext())},
                       {QString(),        QStyle::SP_TitleBarMenuButton, 0}};
 
 PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent), DBWidget(parent, Api) {
@@ -33,7 +33,7 @@ PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent)
     // Add actions
     int i;
     for (i = 0; buttons[i].slot; i++) {
-        QAction *a = this->addAction(buttons[i].name);
+        QAction *a = this->addAction(tr(buttons[i].name.toUtf8()));
         a->setIcon (this->style()->standardIcon(buttons[i].icon));
         connect(a, SIGNAL(triggered()), Api, buttons[i].slot);
     }

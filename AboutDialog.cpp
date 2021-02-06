@@ -16,7 +16,7 @@ AboutDialog::AboutDialog(QWidget *parent, DBApi *Api) :
 
     char str[64];
     DBAPI->pl_format_title(nullptr, -1, str, sizeof(str), -1, "DeaDBeeF-%V");
-    setWindowTitle(QString("%1 %2").arg(tr("About")).arg(QString::fromUtf8(str)));
+    setWindowTitle(tr("About") + " " + str);
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
     QFile aboutDBFile(QString::fromUtf8(DBAPI->get_doc_dir()) + "/about.txt");

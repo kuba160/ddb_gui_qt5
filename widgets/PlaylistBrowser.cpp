@@ -18,7 +18,8 @@ PlaylistBrowser::PlaylistBrowser(QWidget * parent, DBApi *Api) : QListWidget(par
     connect (this, SIGNAL(playlistSelected(int)), api, SLOT(changePlaylist(int)));
     connect (api, SIGNAL(playlistChanged(int)), this, SLOT(selectPlaylist(int)));
     connect (api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
-    //connect (api, SIGNAL(playlistRenamed(int)), this, SLOT(playlistRenamed(int)));
+    connect (api, SIGNAL(playlistRenamed(int)), this, SLOT(onPlaylistRenamed(int)));
+    connect (api, SIGNAL(playlistRemoved(int)), this, SLOT(onPlaylistRemoved(int)));
 
     // Stylesheet
     this->setStyleSheet(QString("QListView::item {padding: 5px}"));
@@ -32,6 +33,10 @@ void PlaylistBrowser::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         QListWidget::mousePressEvent(event);
     }
+    else if (event->button() == Qt::RightButton) {
+        api->playlistContextMenu(this,event->pos(),row(itemAt(event->pos())));
+        event->accept();
+    }
     else {
         event->accept();
         return;
@@ -39,10 +44,7 @@ void PlaylistBrowser::mousePressEvent(QMouseEvent *event) {
 }
 
 QWidget *PlaylistBrowser::constructor(QWidget *parent, DBApi *Api) {
-    QWidget *w = new QWidget();
-    w->setLayout(new QHBoxLayout());
-    w->layout()->addWidget(new PlaylistBrowser(parent, Api));
-    return w;
+    return new PlaylistBrowser(parent, Api);
 }
 
 void PlaylistBrowser::selectPlaylist(int pl) {
@@ -78,6 +80,10 @@ void PlaylistBrowser::playlistOrderChanged(int pl, int before) {
     insertItem(before, currentItem);
 }
 
-void PlaylistBrowser::playlistRenamed(int plt) {
+void PlaylistBrowser::onPlaylistRenamed(int plt) {
     this->item(plt)->setText(api->playlistNameByIdx(plt));
+}
+
+void PlaylistBrowser::onPlaylistRemoved(int plt) {
+    removeItemWidget(item(plt));
 }

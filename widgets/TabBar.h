@@ -69,6 +69,7 @@ private slots:
     void setRightPosition();
     void setLeftPosition();
     void playlistOrderChanged(int to, int from);
+    void onPlaylistRenamed(int);
 
 
 signals:

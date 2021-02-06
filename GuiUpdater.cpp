@@ -5,6 +5,7 @@
 GuiUpdater *GuiUpdater::instance;
 
 GuiUpdater::GuiUpdater(QObject *parent) {
+    Q_UNUSED(parent)
     startSpecificTimer();
 }
 

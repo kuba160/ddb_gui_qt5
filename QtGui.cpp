@@ -29,6 +29,7 @@
 #include "MainWindow.h"
 #include "QtGuiSettings.h"
 #include <QStyleFactory>
+#include <QLocale>
 
 #include "PluginLoader.h"
 #include "DeadbeefTranslator.h"
@@ -119,6 +120,8 @@ static int pluginStart() {
     QApplication::setApplicationName("DeaDBeeF");
     dbtr = new DeadbeefTranslator(&app);
     app.installTranslator(dbtr);
+
+    qDebug() << QLocale::system().name();
     //QApplication::setStyle(QStyleFactory::create("breeze"));
 
 #ifdef __MINGW32__

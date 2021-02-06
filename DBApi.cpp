@@ -57,6 +57,9 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_c
 
     // Action Manager
     action_manager = new ActionManager(this,this);
+
+    // clipboard
+    clipboard = QGuiApplication::clipboard();
 }
 
 DBApi::~DBApi() {
@@ -171,6 +174,10 @@ void DBApi::playItemContextMenu(QWidget *w, QPoint p) {
     AM->playItemContextMenu(w,p);
 }
 
+void DBApi::playlistContextMenu(QWidget *w, QPoint p, int plt) {
+    AM->playlistContextMenu(w,p, plt);
+}
+
 QMenuBar * DBApi::getMainMenuBar() {
     return AM->mainMenuBar;
 }
@@ -185,10 +192,11 @@ QMimeData *DBApi::mime_playItems(QList<DB_playItem_t *> playItems) {
     QByteArray ba;
     QDataStream ds(&ba,QIODevice::WriteOnly);
     for(int i = 0; i < playItems.length() ; i++) {
-        auto ptr= reinterpret_cast<quintptr>(playItems.at(i));
+        // original
+        auto ptr = reinterpret_cast<quintptr>(playItems.at(i));
         ds << ptr;
     }
-    md->setData("deadbeef/playitems",ba);
+    md->setData("deadbeef/playitems", ba);
     return md;
 }
 
@@ -201,6 +209,23 @@ QList<DB_playItem_t *> DBApi::mime_playItems(const QMimeData *playItems) {
             quintptr p;
             ds >> p;
             list.append(reinterpret_cast<DB_playItem_t *>(p));
+        }
+    }
+    return list;
+}
+
+QList<DB_playItem_t *> DBApi::mime_playItemsCopy(const QMimeData *playItems) {
+    QList<DB_playItem_t *> list;
+    if (playItems->hasFormat("deadbeef/playitems")) {
+        QByteArray ba = playItems->data("deadbeef/playitems");
+        QDataStream ds(ba);
+        while (!ds.atEnd()) {
+            quintptr p;
+            ds >> p;
+            DB_playItem_t *it = reinterpret_cast<DB_playItem_t *>(p);
+            DB_playItem_t *it_new = DBAPI->pl_item_alloc();
+            DBAPI->pl_item_copy(it_new,it);
+            list.append(it_new);
         }
     }
     return list;
@@ -288,9 +313,11 @@ void DBApi::movePlaylist(int plt, int before) {
     }
 }
 
-void DBApi::newPlaylist(QString *name) {
-    DBAPI->plt_add (-1, name->toUtf8());
-    playlistNames.append(*name);
+void DBApi::newPlaylist(QString name) {
+    // todo check if name exists, if thats the case add (%1)
+    // todo add newPlaylist with int before argument
+    DBAPI->plt_add (DBAPI->plt_get_count(), name.toUtf8());
+    playlistNames.append(name);
     emit playlistCreated();
 }
 
@@ -304,6 +331,32 @@ void DBApi::renamePlaylist(int plt, const QString *name) {
         playlistNames.insert(plt, *name);
         playlistNames.removeAt(plt+1);
         emit playlistRenamed(plt);
+    }
+}
+
+void DBApi::renamePlaylist(int plt) {
+    if (plt < playlistNames.size()) {
+        bool ok;
+        QString newName = QInputDialog::getText(w, tr("Rename Playlist"), tr("Rename Playlist") + ":",
+                                                QLineEdit::Normal, playlistNameByIdx(plt), &ok);
+        if (ok && !newName.isEmpty()) {
+            renamePlaylist(plt, &newName);
+        }
+    }
+}
+
+void DBApi::removePlaylist(int plt) {
+    if (plt < playlistNames.size()) {
+        // Dialog?
+        QString question = tr("Do you really want to remove the playlist '%s'?");
+        question.replace("%s", playlistNameByIdx(plt));
+        QMessageBox confirmation(QMessageBox::Question,tr("Remove Playlist"),
+                                 question, QMessageBox::Yes | QMessageBox::No, w);
+        int ret = confirmation.exec();
+        if (ret == QMessageBox::Yes) {
+            DBAPI->plt_remove(plt);
+            emit playlistRemoved(plt);
+        }
     }
 }
 
@@ -358,33 +411,6 @@ DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
 DBWidget::~DBWidget() {
     // exit
     //delete _internalNameWidget;
-}
-
-QMimeData * DBWidget::cut() {
-    qDebug() << QString("DBWidget[%1]: cut() not implemented!") .arg(_internalNameWidget) << ENDL;
-    return nullptr;
-}
-
-QMimeData * DBWidget::copy() {
-    qDebug() << QString("DBWidget[%1]: copy() not implemented!") .arg(_internalNameWidget) << ENDL;
-    return nullptr;
-}
-
-void DBWidget::paste(const QMimeData *data, QPoint point) {
-    Q_UNUSED(data)
-    Q_UNUSED(point)
-    qDebug() << QString("DBWidget[%1]: paste() not implemented!") .arg(_internalNameWidget) << ENDL;
-}
-
-bool DBWidget::canCopy(void) {
-    qDebug() << QString("DBWidget[%1]: canCopy() not implemented!") .arg(_internalNameWidget) << ENDL;
-    return false;
-}
-
-bool DBWidget::canPaste(const QMimeData *data) {
-    Q_UNUSED(data)
-    qDebug() << QString("DBWidget[%1]: canPaste() not implemented!") .arg(_internalNameWidget) << ENDL;
-    return false;
 }
 
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {

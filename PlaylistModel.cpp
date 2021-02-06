@@ -190,7 +190,10 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role = Qt::DisplayRol
                 break;
             case HT_playing:
                 // TODO include information about queue here
-                if ((DBAPI->playqueue_test(context.it) != -1)) {
+                if (property("queueManager").toBool()) {
+                    ret = QString("%1") .arg(index.row()+1);
+                }
+                else if ((DBAPI->playqueue_test(context.it) != -1)) {
                     QList<int> in_queue;
                     int i;
                     for (i = 0; i < DBAPI->playqueue_get_count(); i++) {
@@ -315,12 +318,15 @@ void PlaylistModel::deleteTracks(const QModelIndexList &tracks) {
         return;
     beginRemoveRows(QModelIndex(), tracks.first().row(), tracks.last().row());
 
-    QModelIndex index;
-    foreach(index, tracks) {
-        DBAPI->pl_set_selected(DBAPI->plt_get_item_for_idx(plt, index.row(), PL_MAIN), 1);
-    }
 
-    DBAPI->plt_delete_selected(plt);
+    QList<DB_playItem_t *> list;
+    for (int i = 0; i < tracks.length(); i++) {
+        list.append(DBAPI->plt_get_item_for_idx(plt, tracks[i].row(), PL_MAIN));
+    }
+    for (int i = 0; i < list.length(); i++) {
+        DBAPI->plt_remove_item(plt,list.at(i));
+        DBAPI->pl_item_unref(list.at(i));
+    }
     endRemoveRows();
 }
 
@@ -418,7 +424,14 @@ QMimeData *PlaylistModel::mimeData(const QModelIndexList &indexes) const {
         }
     }
 
-    return api->mime_playItems(items);
+    QMimeData *md = api->mime_playItems(items);
+
+    QByteArray ba;
+    QDataStream ds(&ba,QIODevice::WriteOnly);
+    ds << rows;
+    md->setData("playlistmodel/rows",ba);
+    qDebug() << rows.length();
+    return md;
 }
 
 bool PlaylistModel::canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const {

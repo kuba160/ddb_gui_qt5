@@ -89,14 +89,14 @@
     <addaction name="shuffleMenu"/>
     <addaction name="loopingMenu"/>
    </widget>
-   <widget class="QMenu" name="Help">
+   <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
     <addaction name="actionAboutQt"/>
    </widget>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
@@ -131,11 +131,11 @@
     <addaction name="separator"/>
     <addaction name="actionBlockToolbarChanges"/>
    </widget>
-   <addaction name="menu"/>
+   <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuPlayback"/>
-   <addaction name="Help"/>
+   <addaction name="menuHelp"/>
   </widget>
   <action name="actionAddFolder">
    <property name="text">
@@ -401,7 +401,8 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit"/>
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Quit</string>

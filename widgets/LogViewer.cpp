@@ -9,7 +9,7 @@ LogViewer::LogViewer(QWidget *parent, DBApi *Api) : QWidget(parent),
     layout.addWidget(&buttons,0,Qt::AlignRight);
     DBAPI->log_viewer_register(callback,this);
 
-    clear_button = buttons.addButton(_("Clear"),QDialogButtonBox::YesRole);
+    clear_button = buttons.addButton(tr("Clear"),QDialogButtonBox::YesRole);
     connect(&buttons, SIGNAL(accepted()), this, SLOT(clear()));
 
     text_block.setReadOnly(true);

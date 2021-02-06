@@ -13,6 +13,19 @@ QueueManager::QueueManager(QWidget *parent, DBApi *Api) : PlaylistView(parent,Ap
     // Subscribe for queue add/remove
     connect(api,SIGNAL(queueChanged()),this, SLOT(onQueueChanged()));
     // Override default header? (in constructor)
+
+    // Override queue actions
+    add_to_playback_queue->disconnect();
+    remove_from_playback_queue->disconnect();
+    paste->disconnect();
+    cut->disconnect();
+    connect(add_to_playback_queue, SIGNAL(triggered()), this, SLOT(onAddToPlaybackQueue()));
+    connect(remove_from_playback_queue, SIGNAL(triggered()), this, SLOT(onRemoveFromPlaybackQueue()));
+    connect(paste, SIGNAL(triggered()), this, SLOT(onPaste()));
+    connect(cut, SIGNAL(triggered()), this, SLOT(onCut()));
+    setProperty("queue_remove_always_enabled",true);
+    setProperty("pluginActionsDisabled", true);
+    playlistModel.setProperty("queueManager", true);
 }
 
 QueueManager::~QueueManager() {
@@ -26,6 +39,9 @@ QWidget * QueueManager::constructor(QWidget *parent,DBApi *Api) {
 }
 
 void QueueManager::onQueueChanged() {
+    if (inDropEvent) {
+        return;
+    }
     // Reload data
     playlistModel.modelBeginReset();
     DBAPI->pl_lock();
@@ -68,39 +84,84 @@ void QueueManager::onQueueChanged() {
 
 void QueueManager::dropEvent(QDropEvent *event) {
     if (event->mimeData()->hasFormat("deadbeef/playitems")) {
-        QList<DB_playItem_t *> list = api->mime_playItems(event->mimeData());
         int row = indexAt(event->pos()).row();
-        if (event->source() == this) {
 
-            QList<int> rows;
+        if (event->source() == this) {
+            // Adjust position based on indicator
+            // TODO: fix when track is sometimes off by one or something, idk, too tired
+            if(row != -1 && dropIndicatorPosition() == QAbstractItemView::BelowItem) {
+                //qDebug() << "item below, down";
+                //++row == -1 ? row = 0 : 0;
+                ++row;
+
+                //() << "row" << row << "=>" << ++row;
+            }
+            else if (dropIndicatorPosition() == QAbstractItemView::AboveItem) {
+                //qDebug() << "row" << row << "=>" << --row;
+                //row == -1 ? row = 0 : 0;
+                --row == -1 ? row = 0 : 0;
+            }
+            QList<int> list_int;
+            QByteArray ba = event->mimeData()->data("playlistmodel/rows");
+            qDebug() << "lenght" << ba.length();
+            QDataStream ds(ba);
+            ds >> list_int;
+            /* (int i = 0; i < list_int.length(); i++) {
+                if (i == row)
+                    return;
+            }*/
+
+            QList<DB_playItem_t *> sel;
+            QList<DB_playItem_t *> rest;
             int i;
-            for (i = 0; i < list.length(); i++) {
-                rows.append(DBAPI->plt_get_item_idx(qplt,list[i],PL_MAIN));
-                DBAPI->pl_item_ref(list[i]);
-            }
-            playlistModel.moveItems(rows,row);
             // Remove selected
-            int shift = 0;
-            for (i = 0; i < rows.length(); i++) {
-                qDebug() << QString("Removing at %1") .arg(rows[i] + shift);
-                //DBAPI->playqueue_remove_nth(rows[i] + shift++);
+            for (i = 0; i < list_int.length(); i++) {
+                sel.append(DBAPI->playqueue_get_item(list_int[i]));
             }
+            for (i = 0; i < sel.length(); i++) {
+                DBAPI->playqueue_remove(sel[i]);
+            }
+            for (i = 0; i < DBAPI->playqueue_get_count(); i++) {
+                rest.append(DBAPI->playqueue_get_item(i));
+            }
+
+            DBAPI->playqueue_clear();
+
+            qDebug() << "Have " << sel.length() << "sel and " << rest.length() << "rest";
+            qDebug() << "row is" << row;
             // Insert selected at row
-            for (i = 0; i < list.length(); i++) {
-                qDebug() << QString("Inserting at %1") .arg(row);
-                if (row == -1) {
-                    DBAPI->playqueue_push(list[i]);
+            i = 0;
+            while (sel.length() || rest.length()) {
+                qDebug() << "loop i=" << i;
+                if ((!sel.length()) || (rest.length() && (row == -1 || row != i))) {
+                    if (rest.length()) {
+                        qDebug() << "inserting rest" << rest[0];
+                        DBAPI->playqueue_push(rest[0]);
+                        DBAPI->pl_item_unref(rest[0]);
+                        rest.removeFirst();
+                    }
                 }
                 else {
-                    DBAPI->playqueue_insert_at(row++,list[i]);
+                    if (sel.length()) {
+                        qDebug() << "inserting sel" << sel[0];
+                        while (sel.length()) {
+                            DBAPI->playqueue_push(sel[0]);
+                            DBAPI->pl_item_unref(sel[0]);
+                            sel.removeFirst();
+                        }
+                    }
                 }
+                i++;
             }
             //DBAPI->playqueue_clear();
+            inDropEvent = false;
             onQueueChanged();
             event->setDropAction(Qt::CopyAction);
             event->accept();
         }
         else {
+            QList<DB_playItem_t *> list = api->mime_playItems(event->mimeData());
+            inDropEvent = false;
             for (int i = 0; i <list.length(); i++) {
                 // insert at cursor
                 if (row != -1) {
@@ -112,9 +173,73 @@ void QueueManager::dropEvent(QDropEvent *event) {
             }
             event->setDropAction(Qt::CopyAction);
             event->accept();
+
         }
     }
     event->ignore();
+}
+
+void QueueManager::onAddToPlaybackQueue() {
+    QModelIndexList indexes = this->selectedIndexes();
+    QSet<int> rows;
+    for (int i = 0; i < indexes.length(); i++) {
+        int row = indexes.at(i).row();
+        if (!rows.contains(row)) {
+            DB_playItem_t *it = DBAPI->playqueue_get_item(row);
+            if (it) {
+                DBAPI->playqueue_push(it);
+                DBAPI->pl_item_unref(it);
+            }
+            rows.insert(row);
+        }
+    }
+}
+void QueueManager::onRemoveFromPlaybackQueue() {
+    QModelIndexList indexes = this->selectedIndexes();
+    QSet<int> rows;
+    int subt = 0;
+    for (int i = 0; i < indexes.length(); i++) {
+        int row = indexes.at(i).row();
+        if (!rows.contains(row)) {
+            // asssume row == position in queue
+            DBAPI->playqueue_remove_nth(row - subt);
+            subt++;
+            rows.insert(row);
+        }
+    }
+}
+
+void QueueManager::onCut() {
+    onCopy();
+    QModelIndexList qmil = selectionModel()->selectedRows();
+    QSet<int> l_i;
+    QList<DB_playItem_t *> l;
+    for (int i = 0; i < qmil.length(); i++) {
+        if (l_i.contains(qmil.at(i).row())) {
+            DB_playItem_t *it = DBAPI->plt_get_item_for_idx(playlistModel.getPlaylist(), qmil[i].row(), PL_MAIN);
+            l.append(it);
+        }
+    }
+    for (int i = 0; l.length(); i++) {
+        DBAPI->playqueue_remove(l.at(i));
+    }
+}
+
+void QueueManager::onPaste() {
+    if (api->clipboard->mimeData()->hasFormat("deadbeef/playitems")) {
+        QList<DB_playItem_t *> l = api->mime_playItems(api->clipboard->mimeData());
+        int row =  indexAt(menu_pos).row();
+        for (int i = 0; i < l.length(); i++) {
+            //menu_pos
+
+            if (row == -1) {
+                DBAPI->playqueue_push(l.at(i));
+            }
+            else {
+                DBAPI->playqueue_insert_at(row++,l.at(i));
+            }
+        }
+    }
 }
 
 PlayItemWrapper::PlayItemWrapper(DBApi *Api, DB_playItem_t *item) {
@@ -131,4 +256,3 @@ PlayItemWrapper::~PlayItemWrapper() {
     DBAPI->pl_item_unref(it);
     //delete it;
 }
-

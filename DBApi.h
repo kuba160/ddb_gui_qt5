@@ -19,6 +19,7 @@
 #include <QImage>
 #include <QMimeData>
 #include <QMenuBar>
+#include <QClipboard>
 
 // DBApi version
 #define DBAPI_VMAJOR 0
@@ -64,6 +65,7 @@ public:
 
     // Menus
     void playItemContextMenu(QWidget *w, QPoint p);
+    void playlistContextMenu(QWidget *w, QPoint p, int plt);
 
     // MenuBar
     // TODO make use actions;
@@ -74,6 +76,7 @@ public:
 
     QMimeData *mime_playItems(QList<DB_playItem_t *> playItems);
     QList<DB_playItem_t *> mime_playItems(const QMimeData *playItems);
+    QList<DB_playItem_t *> mime_playItemsCopy(const QMimeData *playItems);
     // Settings
     void confSetValue(const QString &plugname, const QString &key, const QVariant &value);
     QVariant confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue);
@@ -81,6 +84,9 @@ public:
     void autoSetValue(void *widget, const QString &key, const QVariant &value);
     QVariant autoGetValue(void *widget, const QString &key, const QVariant &defaultValue);
 
+
+    // Clipboard access
+    QClipboard *clipboard;
     
     // Translate
     const char *_(const char *);
@@ -100,6 +106,7 @@ signals:
     void playlistMoved(int plt, int before);
     void playlistCreated();
     void playlistRenamed(int plt);
+    void playlistRemoved(int plt);
     // DeaDBeeF Window
     void deadbeefActivated();
     // Shuffle/Repeat
@@ -126,8 +133,10 @@ public slots:
     // Playlist
     void changePlaylist(int);
     void movePlaylist(int plt, int before);
-    void newPlaylist(QString *);
+    void newPlaylist(QString);
     void renamePlaylist(int plt, const QString *name);
+    void renamePlaylist(int plt); // Dialog
+    void removePlaylist(int plt);
     // Shuffle/Repeat
     void setShuffle(ddb_shuffle_t);
     void setRepeat(ddb_repeat_t);
@@ -175,7 +184,13 @@ public:
     // - StylesheetOverride - disable widget stylesheet (bool)
     // - DBApi - DBApi pointer (qintptr), could remove DBApi argument requirement
     // - WidgetType - one of DBWidgetTypes
-
+    // Children Properties (the one you are creating):
+    // - Actions - QGroupActions pointer with actions for right click menu (TODO: maybe separate playlist with playitem actions?)
+    //   - Playqueue: add_to_playback_queue, remove_from_playback_queue
+    //   - Clipboard: cut, copy, paste
+    //   - Delete: delete
+    //   - Track properties: track_properties
+    // - playItemsSelected - used for Actions, int of how many tracks are selected
 };
 
 class DBWidget {
@@ -183,11 +198,6 @@ public:
     DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr);
     ~DBWidget();
     //
-    virtual QMimeData *cut();
-    virtual QMimeData *copy();
-    virtual void paste(const QMimeData *, QPoint);
-    virtual bool canCopy(void);
-    virtual bool canPaste(const QMimeData *);
     DBApi *api;
     QString _internalNameWidget;
 };

@@ -22,7 +22,8 @@ QStringList default_query = {"Album", "Artist", "Genre", "Folder"};
 static void listener_callback(ddb_mediasource_event_type_t event, void *user_data) {
     Q_UNUSED(event); Q_UNUSED(user_data)
     qDebug() <<"Callback";
-    //static_cast<Medialib *>(user_data)->updateTree();
+    if (user_data)
+        static_cast<Medialib *>(user_data)->updateTree();
 }
 
 MedialibTreeWidget::MedialibTreeWidget(QWidget *parent, DBApi *Api) : QTreeWidget(parent) {
@@ -106,7 +107,7 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     search_layout_widget->setLayout(search_layout);
     this->layout()->addWidget(search_layout_widget);
     this->layout()->addWidget(tree);
-    search_box->setPlaceholderText(QString(_("Search")) + "...");
+    search_box->setPlaceholderText(QString(tr("Search")) + "...");
     connect(search_query, SIGNAL(currentIndexChanged(int)), this, SLOT(searchQueryChanged(int)));
     connect(search_box, SIGNAL(textChanged(const QString &)), this, SLOT(searchBoxChanged(const QString &)));
 
@@ -127,7 +128,7 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     ml_selector = ml->get_selectors(pl_mediasource);
     const char* selector;
     while ((selector = ml->get_name_for_selector(pl_mediasource,ml_selector[search_query_count]))) {
-        search_query->addItem(_(selector));
+        search_query->addItem(tr(selector));
         search_query_count++;
     }
     search_query->setCurrentIndex(1);
@@ -256,9 +257,9 @@ void Medialib::folderSetupDialog() {
     ledit = new QLineEdit(&d);
     hbox->addWidget(ledit);
     // todo translate
-    browse = new QPushButton(QIcon::fromTheme(""), "Browse...");
-    plus = new QPushButton(QIcon::fromTheme("list-add"),QIcon::fromTheme("list-add").isNull() ? "Add" : "", &d);
-    minus = new QPushButton(QIcon::fromTheme("list-remove"),QIcon::fromTheme("list-remove").isNull() ? "Remove": "", &d);
+    browse = new QPushButton(QIcon::fromTheme(""), "...");
+    plus = new QPushButton(QIcon::fromTheme("list-add"),QIcon::fromTheme("list-add").isNull() ? tr("Add") : "", &d);
+    minus = new QPushButton(QIcon::fromTheme("list-remove"),QIcon::fromTheme("list-remove").isNull() ? tr("Remove"): "", &d);
     hbox->addWidget(browse);
     hbox->addWidget(plus);
     hbox->addWidget(minus);
@@ -295,7 +296,7 @@ void Medialib::folderSetupDialogHandler(bool checked) {
         setFolders(&folders);
     }
     else if (s == browse) {
-        QFileDialog dialog(lwidget,_("Select folder..."),ledit->text().length() ? ledit->text() : "");
+        QFileDialog dialog(lwidget,tr("Select folder..."),ledit->text().length() ? ledit->text() : "");
         dialog.setFileMode(QFileDialog::Directory);
         //dialog.setOption(QFileDialog::ShowDirsOnly, false);
 

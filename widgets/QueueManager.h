@@ -24,6 +24,11 @@ public:
 
 public slots:
     void onQueueChanged();
+    // Actions
+    void onAddToPlaybackQueue();
+    void onRemoveFromPlaybackQueue();
+    void onPaste();
+    void onCut();
 
 protected:
     void dropEvent(QDropEvent *event);
@@ -31,6 +36,7 @@ private:
 
     QCache<DB_playItem_t *, PlayItemWrapper> cache_table;
     ddb_playlist_t *qplt = nullptr;
+    bool inDropEvent = false;
 };
 
 #endif // QUEUEMANAGER_H

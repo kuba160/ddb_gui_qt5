@@ -33,14 +33,21 @@ public:
 
     void insertByURLAtPosition(const QUrl &url, int position = -1);
 
-    QMimeData *copy();
-    bool canCopy();
-    bool canPaste(const QMimeData *mime);
-    void paste(const QMimeData *, QPoint);
-
 protected:
     void startDrag(Qt::DropActions supportedActions);
     void dragMoveEvent(QDragMoveEvent* event);
+
+    // Actions
+    QAction *add_to_playback_queue;
+    QAction *remove_from_playback_queue;
+    QAction *cut;
+    QAction *copy;
+    QAction *paste;
+    QAction *delete_action;
+
+    // Menu position
+    QPoint menu_pos;
+
 signals:
     // Enter event
     void enterRelease(QModelIndex);
@@ -53,6 +60,8 @@ private:
     QMenu *headerGrouping;
     // header num for current header menu
     int headerMenu_pos;
+
+
 
     // Enter event
     bool eventFilter(QObject *obj, QEvent *event);
@@ -68,7 +77,7 @@ protected:
 public slots:;
     void delSelectedTracks();
 
-private slots:
+protected slots:
     void trackDoubleClicked(QModelIndex index);
     void headerContextMenuRequested(QPoint);
     void lockColumns(bool);
@@ -76,6 +85,14 @@ private slots:
     void onTrackChanged(DB_playItem_t *, DB_playItem_t *);
     void showContextMenu(QPoint);
     void saveHeaderState();
+
+    // Actions
+    void onAddToPlaybackQueue();
+    void onRemoveFromPlaybackQueue();
+    void onCut();
+    void onCopy();
+    void onPaste();
+    void onDelete();
 
     void headerDialogAdd(bool);
     void headerDialogEdit(bool);
