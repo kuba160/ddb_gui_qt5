@@ -40,6 +40,12 @@ QString ActionItem::iconOnAction(QString action) {
         icon_map.insert("copy","edit-copy");
         icon_map.insert("paste","edit-paste");
         icon_map.insert("delete","edit-delete");
+        icon_map.insert("playlist_rename","edit-rename");
+        icon_map.insert("playlist_delete","edit-delete-remove");
+        icon_map.insert("playlist_add","media-playlist-append");
+        icon_map.insert("playlist_duplicate","document-duplicate");
+
+
     }
     if (icon_map.contains(action)) {
         return icon_map.value(action);
