@@ -59,18 +59,6 @@ static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32
     return api->pluginMessage(id, ctx, p1, p2);
 }
 
-static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
-    Q_UNUSED(id);
-    Q_UNUSED(ctx);
-    Q_UNUSED(p1);
-    Q_UNUSED(p2);
-    if (api) {
-        // start using wrapper
-        plugin.plugin.message = pluginMessage_wrapper;
-    }
-    return 0;
-}
-
 static int initializeApi() {
     if (!api) {
         while (!deadbeef_internal) {
@@ -80,6 +68,7 @@ static int initializeApi() {
             pl = new PluginLoader();
         }
         api = new DBApi(nullptr, deadbeef_internal);
+        plugin.plugin.message = pluginMessage_wrapper;
     }
     return 0;
 }
@@ -193,7 +182,7 @@ extern "C" {
         plugin.plugin.start = pluginStart;
         plugin.plugin.stop = pluginStop;
         plugin.plugin.connect = pluginConnect;
-        plugin.plugin.message = pluginMessage;
+        plugin.plugin.message = nullptr;
         qt_plugin.register_widget = registerWidget;
         return DB_PLUGIN(&plugin);
     }
