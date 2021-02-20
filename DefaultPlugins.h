@@ -1,12 +1,14 @@
 #ifndef DEFAULTPLUGINS_H
 #define DEFAULTPLUGINS_H
 
+#include <QObject>
 #include <vector>
 #include "PluginLoader.h"
 
-class DefaultPlugins {
+class DefaultPlugins : public QObject {
+    Q_OBJECT
 public:
-    DefaultPlugins();
+    DefaultPlugins(QObject *parent = nullptr);
     ~DefaultPlugins();
     DBWidgetInfo *WidgetReturn(unsigned long);
 private:

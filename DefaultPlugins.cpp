@@ -44,10 +44,11 @@ QWidget *Dummy::constructor (QWidget *parent, DBApi *api) {
     QWidget *widget = new QWidget(parent);
     widget->resize(0,0);
     widget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    widget->setVisible(false);
     return widget;
 }
 
-DefaultPlugins::DefaultPlugins() {
+DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     widgetLibrary = new std::vector<DBWidgetInfo>();
 
     volumeSlider.internalName = QString("volumeSlider");
@@ -87,7 +88,7 @@ DefaultPlugins::DefaultPlugins() {
     widgetLibrary->push_back(tabBar);
 
     tabBarD.internalName = QString("tabBarDock");
-    tabBarD.friendlyName = QString("%1 (Dock)") .arg(_("Tab strip"));
+    tabBarD.friendlyName = QString("%1 (Dock)") .arg(tr("Tab strip"));
     tabBarD.type = DBWidgetInfo::TypeMainWidget;
     tabBarD.constructor = TabBar::constructor;
     widgetLibrary->push_back(tabBarD);
