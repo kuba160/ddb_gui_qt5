@@ -95,26 +95,38 @@ void ActionManager::fillMenuBar() {
                 // if not, create new one
                 QMenu *futuremenu;
                 if (!currmenu) {
-                    futuremenu = mainMenuBar->findChild<QMenu *>(QString("menu%1") .arg(strlist[i]));
+                    // find root menu
+                    // normally called menuNAME...
+                    futuremenu = mainMenuBar->findChild<QMenu *>(QString("menu%1") .arg(strlist[i]), Qt::FindDirectChildrenOnly);
+                    // ... but File menu gets translated to "menu"? ...
+                    if (!futuremenu && strlist[i] == "File") {
+                        futuremenu = mainMenuBar->findChild<QMenu *>(QString("menu"), Qt::FindDirectChildrenOnly);
+                    }
+                    // ... and Help menu gets translated to "Help"?
+                    if (!futuremenu) {
+                        futuremenu = mainMenuBar->findChild<QMenu *>(strlist[i], Qt::FindDirectChildrenOnly);
+                    }
+                    // very weird behaviour from qt...
                 }
                 else {
                     futuremenu = currmenu->findChild<QMenu *>(tr(strlist[i].toUtf8()));
                 }
-                mainMenuBar->children();
                 if (futuremenu) {
                     currmenu = futuremenu;
                     continue;
                 }
                 else {
                     // create
-                    futuremenu = new QMenu(tr(strlist[i].toUtf8()),currmenu);
-                    futuremenu->setObjectName(tr(strlist[i].toUtf8()));
                     if (!currmenu) {
-                        mainMenuBar->addMenu(futuremenu);
+                        // in menubar
+                        futuremenu = mainMenuBar->addMenu(tr(strlist[i].toUtf8()));
+                        futuremenu->setObjectName(QString("menu") + strlist[i]);
                     }
                     else {
-                        currmenu->addMenu(futuremenu);
+                        // in current menu
+                        futuremenu = currmenu->addMenu(tr(strlist[i].toUtf8()));
                     }
+                    futuremenu->setObjectName(strlist[i]);
                     currmenu = futuremenu;
                     continue;
                 }
@@ -154,8 +166,8 @@ int ActionManager::menuActionsAvailable(QObject *obj) {
     int ag = ActionsEmpty;
 
     QVariant wactions = obj->property("Actions");
-    if (wactions.isValid()) {
-        QActionGroup *actions_group = reinterpret_cast<QActionGroup *>(wactions.toUInt());
+    QActionGroup *actions_group = reinterpret_cast<QActionGroup *>(wactions.value<quintptr>());
+    if (wactions.isValid() && actions_group) {
         QList<QAction*> l = actions_group->actions();
 
         while (l.length()) {
@@ -229,9 +241,9 @@ void ActionManager::playItemContextMenu(QWidget *parent, QPoint p) {
 
     // Sort actions and format them as followed:
     QVariant wactions = parent->property("Actions");
-    if (wactions.isValid()) {
+    QActionGroup *actions_group = reinterpret_cast<QActionGroup *>(wactions.value<quintptr>());
+    if (wactions.isValid() && actions_group) {
         int acts = menuActionsAvailable(parent) + ActionsTrackProp;
-        QActionGroup *actions_group = reinterpret_cast<QActionGroup *>(wactions.toUInt());
         QList<QAction*> l = actions_group->actions();
 
         if (acts & ActionsPlayback) {
