@@ -164,7 +164,23 @@ QWidget *Medialib::constructor(QWidget *parent, DBApi *api) {
 }
 
 void Medialib::updateTree() {
-   int index = search_query->currentIndex();
+    QStringList curr_item;
+    bool curr_item_expanded = false;
+    QTreeWidgetItem *a = tree->currentItem();
+    if (a) {
+        curr_item_expanded = a->isExpanded();
+        while (a) {
+            qDebug() << a->text(0) << a;
+            curr_item.append(QString(a->text(0)));
+            a = a->parent();
+        }
+        curr_item.takeLast();
+
+    }
+
+
+    qDebug() << curr_item;
+    int index = search_query->currentIndex();
     QString text = search_box->text();
     if (curr_it) {
         ml->free_list(pl_mediasource, curr_it);
@@ -182,8 +198,31 @@ void Medialib::updateTree() {
 
     tree->insertTopLevelItems(0, items);
     if (tree->itemAt(0,0)) {
+        QTreeWidgetItem *top = tree->itemAt(0,0);
+        top->sortChildren(0,Qt::AscendingOrder);
         tree->expandItem(tree->itemAt(0,0));
-        tree->itemAt(0,0)->sortChildren(0,Qt::AscendingOrder);
+
+        // restore
+        if (curr_item.length()) {
+            QTreeWidgetItem *sel_new = top;
+            while(curr_item.length() && sel_new->text(0) != curr_item[0]) {
+                QTreeWidgetItem *search = nullptr;
+                for (int i = 0; i < sel_new->childCount(); i++) {
+                    search = sel_new->child(i);
+                    if (search->text(0) == curr_item.last()) {
+                        curr_item.takeLast();
+                        sel_new = search;
+                        break;
+                    }
+                }
+                if (sel_new == search) {
+                    continue;
+                }
+                break;
+            }
+            tree->setCurrentItem(sel_new);
+            sel_new->setExpanded(curr_item_expanded);
+        }
     }
 }
 
