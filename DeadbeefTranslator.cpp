@@ -9,5 +9,9 @@ QString DeadbeefTranslator::translate(const char *context, const char *sourceTex
     Q_UNUSED(context);
     Q_UNUSED(disambiguation);
     Q_UNUSED(n);
+#ifdef USE_GETTEXT
     return QString(gettext(sourceText));
+#else
+    return sourceText;
+#endif
 }

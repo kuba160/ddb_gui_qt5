@@ -3,13 +3,8 @@
 
 #include <QTranslator>
 
-//#define DISABLE_GETTEXT
-
 #ifdef USE_GETTEXT
-# include <libintl.h>
-#define _(s) gettext(s)
-#else
-#define _(s) (s)
+#include <libintl.h>
 #endif
 
 class DeadbeefTranslator : public QTranslator
