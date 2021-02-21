@@ -47,10 +47,10 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
         repeat[DBAPI->streamer_get_repeat()]->setChecked(true);
     }
 
-    main_widgets = ui->menuView->addMenu(_("Main Widget"));
+    main_widgets = ui->menuView->addMenu(tr("Main Widget"));
     main_widgets_list = new QActionGroup(nullptr);
-    new_plugins = ui->menuView->addMenu(QString("%1...") .arg(_("Add")));
-    remove_plugins = ui->menuView->addMenu(QString("%1...") .arg(_("Remove")));
+    new_plugins = ui->menuView->addMenu(QString("%1...") .arg(tr("Add")));
+    remove_plugins = ui->menuView->addMenu(QString("%1...") .arg(tr("Remove")));
     //remove_plugins->menuAction()->setVisible(false);
 
     // New widget creation

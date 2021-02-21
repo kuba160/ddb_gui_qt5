@@ -24,7 +24,7 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_c
     }
     else {
         // can be playing or stopped
-        internal_state = DDB_PLAYBACK_STATE_PLAYING;
+        internal_state = DBAPI->get_output() ? DBAPI->get_output()->state() : DDB_PLAYBACK_STATE_STOPPED;
     }
 
 
@@ -80,6 +80,12 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     switch (id) {
         case DB_EV_SONGCHANGED:
             ev = (ddb_event_trackchange_t *)ctx;
+            if (ev->to) {
+                internal_state = DDB_PLAYBACK_STATE_PLAYING;
+            }
+            else {
+                internal_state = DDB_PLAYBACK_STATE_STOPPED;
+            }
             emit trackChanged(ev->from, ev->to);
             emit queueChanged();
             break;
@@ -109,6 +115,7 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             emit playbackStarted();
             break;
         case DB_EV_STOP:
+            internal_state = DDB_PLAYBACK_STATE_STOPPED;
             emit playbackStopped();
             emit queueChanged();
             break;
@@ -119,7 +126,7 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
                 emit queueChanged();
             }
             // output state?
-            ddb_playback_state_t output_state = DBAPI->get_output()->state();
+            ddb_playback_state_t output_state = internal_state; //DBAPI->get_output()->state();
             if (internal_state != output_state) {
                 internal_state = output_state;
                 if (internal_state == DDB_PLAYBACK_STATE_PAUSED) {
@@ -135,6 +142,7 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
                 }
             }
             break;
+
     }
     return 0;
 }
@@ -160,6 +168,7 @@ float DBApi::getVolume() {
 }
 
 ddb_playback_state_t DBApi::getOutputState() {
+    return internal_state;
     if (DBAPI->get_output()) {
         return DBAPI->get_output()->state();
     }

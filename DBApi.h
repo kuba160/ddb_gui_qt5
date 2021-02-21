@@ -155,6 +155,7 @@ private:
     ddb_shuffle_t currShuffle;
 
     int queue_count = 0;
+
 private slots:
     void onCurrCoverChanged();
 };
@@ -224,6 +225,6 @@ QDataStream &operator>>(QDataStream &ds, playItemList &pil);
 // Macro to save entry X with value Y to config (instance specific, returns void)
 #define CONFSET(X, Y) (this->api->confSetValue(_internalNameWidget, X,Y))
 // Translate (char *) X using gettext
-#define _(X) (this->api->_(X))
+#define _(X) (dbtr->tr(X))
 
 #endif // DBAPI_H

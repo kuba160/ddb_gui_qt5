@@ -83,27 +83,27 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     header()->setSectionsMovable(!locked);
 
     // Header Menu
-    headerActions.append(new QAction(_("Add column"),&headerContextMenu));
-    headerActions.append(new QAction(_("Edit column"),&headerContextMenu));
-    headerActions.append(new QAction(_("Remove column"),&headerContextMenu));
+    headerActions.append(new QAction(tr("Add column"),&headerContextMenu));
+    headerActions.append(new QAction(tr("Edit column"),&headerContextMenu));
+    headerActions.append(new QAction(tr("Remove column"),&headerContextMenu));
     connect(headerActions[0], SIGNAL(triggered(bool)), this, SLOT(headerDialogAdd(bool)));
     connect(headerActions[1], SIGNAL(triggered(bool)), this, SLOT(headerDialogEdit(bool)));
     connect(headerActions[2], SIGNAL(triggered(bool)), this, SLOT(headerDialogRemove(bool)));
     headerContextMenu.addActions(headerActions);
     headerContextMenu.addSeparator();
-    headerActions.append(new QAction(_("Lock header bar"),&headerContextMenu));
+    headerActions.append(new QAction(tr("Lock header bar"),&headerContextMenu));
     headerActions[3]->setCheckable(true);
     headerActions[3]->setChecked(locked);
     connect(headerActions[3], SIGNAL(triggered(bool)), this, SLOT(lockColumns(bool)));
     headerContextMenu.addAction(headerActions[3]);
-    headerActions.append(new QAction(_("Lock playlist"),&headerContextMenu));
+    headerActions.append(new QAction(tr("Lock playlist"),&headerContextMenu));
     connect(headerActions[4], SIGNAL(triggered(bool)), this, SLOT(lockPlaylist(bool)));
     headerActions[4]->setCheckable(true);
     headerActions[4]->setChecked(false);
     // save lock playlist
     headerContextMenu.addAction(headerActions[4]);
 
-    headerGrouping = headerContextMenu.addMenu(_("Grouping"));
+    headerGrouping = headerContextMenu.addMenu(tr("Grouping"));
     headerGrouping->setEnabled(false);
     //TODO
 
@@ -231,6 +231,7 @@ void PlaylistView::onCopy() {
     for (i = 0; i < qmil.length(); i++) {
         DB_playItem_t *it = DBAPI->plt_get_item_for_idx(playlistModel.getPlaylist(), qmil[i].row(), PL_MAIN);
         list.append(it);
+        DBAPI->pl_item_unref(it); // :(
     }
     api->clipboard->setMimeData(api->mime_playItems(list));
 }
@@ -418,7 +419,7 @@ void PlaylistView::showContextMenu(QPoint point) {
         delete_action->setEnabled(true);
     }
 
-
+    menu_pos = point;
     api->playItemContextMenu(this, viewport()->mapTo(this,point));
 }
 
@@ -549,32 +550,32 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
         h = new PlaylistHeader_t;
         *h = *header;
         editting = 1;
-        setWindowTitle(_("Edit column"));
+        setWindowTitle(tr("Edit column"));
     }
     else {
         h = new PlaylistHeader_t;
         // check if correct
-        setWindowTitle(_("Add column"));
+        setWindowTitle(tr("Add column"));
     }
     n = headernum;
 
     // layout
     this->setLayout(&layout);
-    layout.addRow(_("Title:"), &title);
-    layout.addRow(_("Type:"), &type);
-    QStringList items = {_("Item Index"), _("Playing"), _("Album Art"), _("Artist - Album"),
-                         _("Artist"), _("Album"), _("Title"), _("Year"), _("Duration"), _("Track Number"),
-                         _("Band / Album Artist"), _("Codec"), _("Bitrate"), _("Custom")};
+    layout.addRow(tr("Title:"), &title);
+    layout.addRow(tr("Type:"), &type);
+    QStringList items = {tr("Item Index"), tr("Playing"), tr("Album Art"), tr("Artist - Album"),
+                         tr("Artist"), tr("Album"), tr("Title"), tr("Year"), tr("Duration"), tr("Track Number"),
+                         tr("Band / Album Artist"), tr("Codec"), tr("Bitrate"), tr("Custom")};
     type.addItems(items);
     //format.setEnabled(false);
     format_parent.setLayout(&format_layout);
     format_layout.addWidget(&format);
     format_layout.addWidget(&format_help);
-    format_help.setText(QString("<a href=\"http://example.com/\">%1</a>").arg(_("Help")));
+    format_help.setText(QString("<a href=\"http://example.com/\">%1</a>").arg(tr("Help")));
     format_help.setTextFormat(Qt::RichText);
     format_help.setTextInteractionFlags(Qt::TextBrowserInteraction);
     format_help.setOpenExternalLinks(false);
-    layout.addRow(_("Format:"), &format_parent);
+    layout.addRow(tr("Format:"), &format_parent);
 
     // Missing sort formatting, alignment, color
 

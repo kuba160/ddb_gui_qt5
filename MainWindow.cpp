@@ -173,19 +173,23 @@ void MainWindow::updateTitle(DB_playItem_t *it) {
     context.dimmed = 0;
 
     // TODO: Make this customizable
-    const char * script = nullptr;
+    QString script = nullptr;
     if (api->getOutputState() == DDB_PLAYBACK_STATE_STOPPED)
-        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData();
+        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString();
     else
-        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarPlaying, "%artist% - %title% -DeaDBeeF %_deadbeef_version%").toString().toUtf8().constData();
+        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarPlaying, "%artist% - %title% -DeaDBeeF %_deadbeef_version%").toString();
 
-    char * code_script = DBAPI->tf_compile (script);
-    char buffer[256];
+    char * code_script = DBAPI->tf_compile (script.toUtf8());
+    char buffer[512];
+    buffer[0] = 0;
 
-    DBAPI->tf_eval (&context, code_script, buffer, 256);
+    int ret = DBAPI->tf_eval (&context, code_script, buffer, 512);
     DBAPI->tf_free (code_script);
 
-    setWindowTitle(QString::fromUtf8(buffer));
+    qDebug() << buffer;
+    if (ret) {
+        setWindowTitle(QString::fromUtf8(buffer));
+    }
 
 
     if (trayIcon)

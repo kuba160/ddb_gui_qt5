@@ -1,6 +1,6 @@
 TEMPLATE = lib
 TARGET = ddb_gui_qt5
-CONFIG += no_plugin_name_prefix plugin
+CONFIG += no_plugin_name_prefix plugin qt
 INCLUDEPATH += "./include"
 
 SOURCES  =  include/callbacks.cpp \
