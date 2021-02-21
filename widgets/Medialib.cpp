@@ -123,7 +123,6 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     listener_id = ml->add_listener(pl_mediasource,listener_callback,this);
 
     QStringList folders = CONFGET("folders",QStringList()).toStringList();
-    setFolders(&folders);
     // selectors
     ml_selector = ml->get_selectors(pl_mediasource);
     const char* selector;
@@ -135,7 +134,7 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     search_query->insertSeparator(search_query->count());
     search_query->addItem(QString("Local"));
     // remove after sleep fix
-    updateTree();
+    setFolders(&folders);
 
     // Options
     parent->setContextMenuPolicy(Qt::ActionsContextMenu);
@@ -164,6 +163,9 @@ QWidget *Medialib::constructor(QWidget *parent, DBApi *api) {
 }
 
 void Medialib::updateTree() {
+    if(!ml) {
+        return;
+    }
     QStringList curr_item;
     bool curr_item_expanded = false;
     QTreeWidgetItem *a = tree->currentItem();
@@ -179,11 +181,28 @@ void Medialib::updateTree() {
     }
 
 
-    qDebug() << curr_item;
     int index = search_query->currentIndex();
     QString text = search_box->text();
     if (curr_it) {
         ml->free_list(pl_mediasource, curr_it);
+        curr_it = nullptr;
+    }
+
+    // Check state
+    ddb_mediasource_state_t state = ml->scanner_state(pl_mediasource);
+    if (state != DDB_MEDIASOURCE_STATE_IDLE) {
+        assert(state < 5);
+        const char *state_str[] = {nullptr, "loading", "scanning", "indexing", "saving"};
+        QString info = QString("Mediasource is %1...") .arg(state_str[state]);
+        tree->clear();
+        auto info_item = new QTreeWidgetItem();
+        info_item->setText(0,info);
+        tree->insertTopLevelItem(0,info_item);
+        tree->setEnabled(false);
+        return;
+    }
+    else {
+        tree->setEnabled(true);
     }
     curr_it = ml->create_list (pl_mediasource,
                                ml_selector[index],
@@ -221,7 +240,9 @@ void Medialib::updateTree() {
                 break;
             }
             tree->setCurrentItem(sel_new);
-            sel_new->setExpanded(curr_item_expanded);
+            if (sel_new != top) {
+                sel_new->setExpanded(curr_item_expanded);
+            }
         }
     }
 }
@@ -265,6 +286,7 @@ void Medialib::setFolders(QStringList *folders) {
         ml_source->set_folders(pl_mediasource,arr,1);
         CONFSET("folders",QStringList());
     }
+    updateTree();
 }
 
 void Medialib::folderSetupDialog() {
