@@ -40,7 +40,7 @@ private slots:
     void on_actionAboutQt_triggered();
     void on_actionAbout_triggered();
     void on_actionPreferences_triggered();
-    void on_actionQuit_triggered();
+    void on_actionExit_triggered();
 };
 
 #endif // DEFAULTACTIONS_H

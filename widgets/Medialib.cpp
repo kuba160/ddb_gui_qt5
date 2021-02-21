@@ -318,7 +318,7 @@ void Medialib::folderSetupDialog() {
     ledit = new QLineEdit(&d);
     hbox->addWidget(ledit);
     // todo translate
-    browse = new QPushButton(QIcon::fromTheme(""), "...");
+    browse = new QPushButton(QIcon::fromTheme("document-open"), tr("Select folder..."));
     plus = new QPushButton(QIcon::fromTheme("list-add"),QIcon::fromTheme("list-add").isNull() ? tr("Add") : "", &d);
     minus = new QPushButton(QIcon::fromTheme("list-remove"),QIcon::fromTheme("list-remove").isNull() ? tr("Remove"): "", &d);
     hbox->addWidget(browse);

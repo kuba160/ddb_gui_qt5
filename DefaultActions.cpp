@@ -156,6 +156,6 @@ void DefaultActions::on_actionPreferences_triggered() {
 
 }
 
-void DefaultActions::on_actionQuit_triggered() {
+void DefaultActions::on_actionExit_triggered() {
     qDebug() << "test";
 }

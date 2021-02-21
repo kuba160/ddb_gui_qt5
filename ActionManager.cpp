@@ -253,12 +253,16 @@ void ActionManager::playItemContextMenu(QWidget *parent, QPoint p) {
         if (acts & ActionsClipboard) {
             ctxMenu->addSeparator();
             insertActionWithName(ctxMenu, &l, "cut");
+            ctxMenu->actions().last()->setShortcut(QKeySequence::Cut);
             insertActionWithName(ctxMenu, &l, "copy");
+            ctxMenu->actions().last()->setShortcut(QKeySequence::Copy);
             insertActionWithName(ctxMenu, &l, "paste");
+            ctxMenu->actions().last()->setShortcut(QKeySequence::Paste);
         }
         if (acts & ActionsDelete) {
             ctxMenu->addSeparator();
             insertActionWithName(ctxMenu, &l, "delete");
+            ctxMenu->actions().last()->setShortcut(QKeySequence::Delete);
         }
         if (acts & ActionsPlugins) {
             ctxMenu->addSeparator();

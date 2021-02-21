@@ -110,7 +110,6 @@ static int pluginStart() {
     dbtr = new DeadbeefTranslator(&app);
     app.installTranslator(dbtr);
 
-    qDebug() << QLocale::system().name();
     //QApplication::setStyle(QStyleFactory::create("breeze"));
 
 #ifdef __MINGW32__
