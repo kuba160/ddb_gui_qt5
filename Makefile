@@ -1,5 +1,6 @@
+UNAME_S:=$(shell uname -s))
 all:
-ifeq ($(OS),Windowts_NT)
+ifeq ($(OS),Windows_NT)
 	# windows
 	$(eval QMAKE_PREFIX=/mingw64/qt5-static/bin/)
 	pacman --needed -S mingw-w64-x86_64-qt5-static
