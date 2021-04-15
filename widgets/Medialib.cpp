@@ -32,7 +32,7 @@ MedialibTreeWidget::MedialibTreeWidget(QWidget *parent, DBApi *Api) : QTreeWidge
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
 
     actions = new QActionGroup(this);
-    actions->setExclusionPolicy(QActionGroup::ExclusionPolicy::None);
+    actions->setExclusive(false);
     QAction *a = actions->addAction(new QAction(tr("Add To Playback Queue")));
     a->setObjectName("add_to_playback_queue");
     connect (a, SIGNAL(triggered()), this, SLOT(onAddToPlaybackQueue()));

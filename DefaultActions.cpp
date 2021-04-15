@@ -84,7 +84,7 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
              connect (a, SIGNAL(triggered()), this, SLOT(onWidgetMain()));
         }
     }
-    main_widgets_list->setExclusionPolicy(QActionGroup::ExclusionPolicy::Exclusive);
+    main_widgets_list->setExclusive(true);
 
 
     delete wilist;
