@@ -5,6 +5,7 @@
 #include <QActionGroup>
 #include <QToolBar>
 #include <QBoxLayout>
+#include <QTimer>
 
 #include "SystemTrayIcon.h"
 #include "DBApi.h"
@@ -26,10 +27,7 @@ public:
     DBApi *Api();
 
 protected:
-    void changeEvent(QEvent *);
     void closeEvent(QCloseEvent *);
-
-    void loadIcons();
 
 private:
     QMenuBar *mainMenu;
@@ -39,28 +37,18 @@ private:
     ActionOnClose actionOnClose;
     void configureActionOnClose(bool minimizeOnClose, bool hideTrayIcon);
 
-    SystemTrayIcon *trayIcon;
-    QMenu *trayMenu;
+    SystemTrayIcon *trayIcon = nullptr;
+    QMenu *trayMenu = nullptr;
 
-    void createConnections();
-
-    void createToolBars();
     void createTray();
-    QMenu *createPopupMenu();
 
-    void updateTitle(DB_playItem_t *it = nullptr);
-    
-    void loadActions();
+
+    QTimer title_updater;
+
+private slots:
+    void updateTitle();
 
 public slots:
-    void on_actionAddURL_triggered();
-    void on_actionAddAudioCD_triggered();
-    void on_actionAddFiles_triggered();
-    void on_actionAddFolder_triggered();
-
-    void on_actionSaveAsPlaylist_triggered();
-    void on_actionLoadPlaylist_triggered();
-
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
 
     void setCloseOnMinimized(bool);
@@ -72,8 +60,6 @@ public slots:
     void windowActivate();
     void windowShowHide();
 
-    void windowAddToolbar(QToolBar *);
-    void windowAddDockable(QDockWidget *);
 
 signals:
     void configLoaded();

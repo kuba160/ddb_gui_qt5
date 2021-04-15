@@ -40,8 +40,6 @@
 static int pluginStart();
 static int pluginStop();
 static int pluginConnect();
-static int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
-
 
 DB_functions_t *deadbeef_internal;
 DB_qtgui_t qt_plugin;
@@ -80,7 +78,6 @@ static int initializePluginLoader() {
     if (!api) {
         initializeApi();
     }
-    pl->api = api;
     return 0;
 }
 
@@ -95,7 +92,8 @@ static int pluginConnect() {
 
 static int registerWidget (DBWidgetInfo *info) {
     initializePluginLoader();
-    return pl->widgetLibraryAppend(info);
+    pl->widgetLibraryAppend(info);
+    return 0;
 }
 
 
@@ -117,17 +115,16 @@ static int pluginStart() {
     theme_search_paths.append("./share/icons");
     QIcon::setThemeSearchPaths(theme_search_paths);
     qDebug() << QIcon::themeSearchPaths();
-    QIcon::setThemeName("Windows-10-Icons");
+    //QIcon::setThemeName("Windows-10-Icons");
+    QIcon::setThemeName("Adwaita");
 #endif
 
-    initializeApi();
-    //initialize settings
+    // setup settings
     QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG)) .arg("qt5");
     QtGuiSettings::setDefaultFormat(QSettings::IniFormat);
     QtGuiSettings::setPath(QSettings::IniFormat, QSettings::UserScope, file);
-    settings = new QtGuiSettings(nullptr);
 
-    // initialize api
+    initializeApi();
 
     initializePluginLoader();
 
@@ -140,7 +137,6 @@ static int pluginStart() {
     delete w;
     delete api;
     delete pl;
-    delete settings;
 
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     return 0;
@@ -162,7 +158,7 @@ extern "C" {
             "Copyright (C) 2010 Anton Novikov <tonn.post@gmail.com>\n"
             "Copyright (C) 2011 Semen Minyushov <semikmsv@gmail.com>\n"
             "Copyright (C) 2013 Karjavin Roman <redpunk231@gmail.com>\n"
-            "Copyright (C) 2019 Jakub Wasylków <kuba_160@protonmail.com>\n"
+            "Copyright (C) 2019-2021 Jakub Wasylków <kuba_160@protonmail.com>\n"
             "\n"
             "This program is free software; you can redistribute it and/or\n"
             "modify it under the terms of the GNU General Public License\n"

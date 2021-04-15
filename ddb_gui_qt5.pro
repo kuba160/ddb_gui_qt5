@@ -3,7 +3,7 @@ TARGET = ddb_gui_qt5
 CONFIG += no_plugin_name_prefix plugin qt
 INCLUDEPATH += "./include"
 
-SOURCES  =  include/callbacks.cpp \
+SOURCES  =  \
             widgets/CoverArt.cpp \
             widgets/LogViewer.cpp \
             widgets/Medialib.cpp \
@@ -11,6 +11,7 @@ SOURCES  =  include/callbacks.cpp \
             widgets/Playlist.cpp \
             widgets/PlaylistBrowser.cpp \
             widgets/SeekSlider.cpp \
+            widgets/StatusBar.cpp \
             widgets/TabBar.cpp \
             widgets/VolumeSlider.cpp \
             widgets/QueueManager.cpp \
@@ -22,9 +23,7 @@ SOURCES  =  include/callbacks.cpp \
             DeadbeefTranslator.cpp \
             DefaultActions.cpp \
             DefaultPlugins.cpp \
-            GuiUpdater.cpp \
             MainWindow.cpp \
-            MainWindowActions.cpp \
             PlaylistModel.cpp \
             PlaylistView.cpp \
             PluginLoader.cpp \
@@ -39,6 +38,7 @@ HEADERS =   widgets/CoverArt.h \
             widgets/Playlist.h \
             widgets/PlaylistBrowser.h \
             widgets/SeekSlider.h \
+            widgets/StatusBar.h \
             widgets/TabBar.h \
             widgets/VolumeSlider.h \
             widgets/QueueManager.h \
@@ -50,7 +50,6 @@ HEADERS =   widgets/CoverArt.h \
             DeadbeefTranslator.h \
             DefaultActions.h \
             DefaultPlugins.h \
-            GuiUpdater.h \
             MainWindow.h \
             PluginLoader.h \
             PlaylistModel.h \

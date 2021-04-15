@@ -23,7 +23,7 @@
 
 // DBApi version
 #define DBAPI_VMAJOR 0
-#define DBAPI_VMINOR 1
+#define DBAPI_VMINOR 2
 
 class DBApi : public QObject {
     Q_OBJECT
@@ -80,10 +80,6 @@ public:
     // Settings
     void confSetValue(const QString &plugname, const QString &key, const QVariant &value);
     QVariant confGetValue(const QString &plugname, const QString &key, const QVariant &defaultValue);
-    // Settings (deprecated, use macros at the end)
-    void autoSetValue(void *widget, const QString &key, const QVariant &value);
-    QVariant autoGetValue(void *widget, const QString &key, const QVariant &defaultValue);
-
 
     // Clipboard access
     QClipboard *clipboard;
@@ -107,6 +103,7 @@ signals:
     void playlistCreated();
     void playlistRenamed(int plt);
     void playlistRemoved(int plt);
+    void playlistContentChanged(ddb_playlist_t *plt);
     // DeaDBeeF Window
     void deadbeefActivated();
     // Shuffle/Repeat
@@ -116,6 +113,8 @@ signals:
     void currCoverChanged(QImage *);
     // Queue
     void queueChanged();
+    // Specific actions triggered by user
+    void jumpToCurrentTrack();
 
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
@@ -137,6 +136,7 @@ public slots:
     void renamePlaylist(int plt, const QString *name);
     void renamePlaylist(int plt); // Dialog
     void removePlaylist(int plt);
+    void loadPlaylist(const QString &fname);
     // Shuffle/Repeat
     void setShuffle(ddb_shuffle_t);
     void setRepeat(ddb_repeat_t);
@@ -170,7 +170,7 @@ public:
         TypeDummy           = 0,
         TypeToolbar         = 1<<0,
         TypeMainWidget      = 1<<1,
-        TypeWindowUNUSED    = 1<<2
+        TypeStatusBar       = 1<<2
     };
     // Type
     DBWidgetType type;
@@ -224,7 +224,5 @@ QDataStream &operator>>(QDataStream &ds, playItemList &pil);
 #define CONFGET(X, Y) (this->api->confGetValue(_internalNameWidget, X,Y))
 // Macro to save entry X with value Y to config (instance specific, returns void)
 #define CONFSET(X, Y) (this->api->confSetValue(_internalNameWidget, X,Y))
-// Translate (char *) X using gettext
-#define _(X) (dbtr->tr(X))
 
 #endif // DBAPI_H

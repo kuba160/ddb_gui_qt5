@@ -30,6 +30,7 @@
 #include "widgets/Medialib.h"
 #include "widgets/LogViewer.h"
 #include "widgets/QueueManager.h"
+#include "widgets/StatusBar.h"
 
 #undef _
 #include "DeadbeefTranslator.h"
@@ -122,6 +123,12 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     queueManager.type = DBWidgetInfo::TypeMainWidget;
     queueManager.constructor = QueueManager::constructor;
     widgetLibrary->push_back(queueManager);
+
+    statusBar.internalName = QString("statusbar");
+    statusBar.friendlyName = QString("Status Bar");
+    statusBar.type = DBWidgetInfo::TypeStatusBar;
+    statusBar.constructor = StatusBar::constructor;
+    widgetLibrary->push_back(statusBar);
 }
 
 DefaultPlugins::~DefaultPlugins() {

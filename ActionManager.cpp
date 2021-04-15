@@ -193,6 +193,7 @@ int ActionManager::menuActionsAvailable(QObject *obj) {
                 ag = ag | ActionsTrackProp;
             }
             else {
+                l.removeFirst();
                 ag = ag | ActionsCustom;
             }
         }

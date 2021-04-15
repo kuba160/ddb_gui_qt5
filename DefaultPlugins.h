@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <vector>
-#include "PluginLoader.h"
+#include "DBApi.h"
 
 class DefaultPlugins : public QObject {
     Q_OBJECT
@@ -13,7 +13,9 @@ public:
     DBWidgetInfo *WidgetReturn(unsigned long);
 private:
     std::vector<DBWidgetInfo> *widgetLibrary;
-    DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget, playlistWidget, tabBar, tabBarD, dummy, medialib, logviewer, queueManager;
+    DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget,
+                 playlistWidget, tabBar, tabBarD, dummy, medialib, logviewer,
+                 queueManager, statusBar;
     DBWidgetInfo playlistBrowser;
 };
 

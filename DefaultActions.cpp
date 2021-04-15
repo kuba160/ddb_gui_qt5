@@ -5,23 +5,15 @@
 #include "include/callbacks.h"
 
 #include "AboutDialog.h"
-
+#include "PluginLoader.h"
 #include "QtGui.h"
+#include "QtGuiSettings.h"
+#include "DBFileDialog.h"
 
 
 DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), DBWidget(parent,Api), ui(new Ui::DefaultActions) {
     ui->setupUi(this);
 
-    // Icons
-    ui->actionExit->setIcon(getStockIcon(this, "application-exit", QStyle::SP_DialogCloseButton));
-    ui->actionClearAll->setIcon(getStockIcon(this, "edit-clear", QStyle::SP_TrashIcon));
-    ui->actionAddFiles->setIcon(getStockIcon(this, "document-open", QStyle::SP_FileIcon));
-    ui->actionAddFolder->setIcon(getStockIcon(this, "folder-m", QStyle::SP_DirIcon));
-    ui->actionAddURL->setIcon(getStockIcon(this, "folder-remote", QStyle::SP_DriveNetIcon));
-    ui->actionAddAudioCD->setIcon(getStockIcon(this, "media-optical-audio", QStyle::SP_DriveCDIcon));
-    ui->actionNewPlaylist->setIcon(getStockIcon(this, "document-new", QStyle::SP_FileDialogNewFolder));
-    ui->actionPreferences->setIcon(getStockIcon(this, "preferences-system", QStyle::SP_CustomBase));
-    ui->actionAbout->setIcon(getStockIcon(this, "help-about", QStyle::SP_DialogHelpButton));
     // Shuffle/Repeat connections
     {
         shuffleGroup = new QActionGroup(this);
@@ -48,46 +40,70 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
     }
 
     main_widgets = ui->menuView->addMenu(tr("Main Widget"));
-    main_widgets_list = new QActionGroup(nullptr);
+    main_widgets->setIcon(QIcon::fromTheme("bookmark-new"));
+    main_widgets_list = new QActionGroup(this);
     new_plugins = ui->menuView->addMenu(QString("%1...") .arg(tr("Add")));
     remove_plugins = ui->menuView->addMenu(QString("%1...") .arg(tr("Remove")));
+    ui->menuView->addSeparator();
     //remove_plugins->menuAction()->setVisible(false);
 
-    // New widget creation
+    // New widget creation menu
     {
-        // add alreavy loaded widgets
-        unsigned int i = 0;
-        QAction *a;
-
-        for (i = 0; (a = pl->actionNewGet(i)); i++) {
-            new_plugins->addAction(a);
+        QList<DBWidgetInfo*> wilist = pl->getWidgetLibrary();
+        foreach (DBWidgetInfo *wi, wilist) {
+            QAction *a = new_plugins->addAction(wi->friendlyName);
+            a->setProperty("internalName", wi->internalName);
+            connect (a, SIGNAL(triggered()), this, SLOT(onWidgetAdd()));
         }
         // subscribe for future actions
-        connect (pl, SIGNAL(actionPluginAddCreated(QAction *)), this, SLOT(onWidgetAddAction(QAction *)));
+        connect (pl, SIGNAL(widgetAdded(int)), this, SLOT(onWidgetAdded(int)));
     }
 
+    QList<DBWidgetInfo>* wilist = pl->getWidgets();
     // Deletion of existent plugins
     {
+
+        foreach (DBWidgetInfo wi, *wilist) {
+            qDebug() << wi.internalName;
+            QAction *a = remove_plugins->addAction(wi.friendlyName);
+            a->setProperty("internalName", wi.internalName);
+            connect (a, SIGNAL(triggered()), this, SLOT(onWidgetRemove()));
+        }
+
         // subscribe for future actions
-        connect (pl, SIGNAL(actionPluginRemoveCreated(QAction *)), this, SLOT(onWidgetRemoveAction(QAction *)));
+        connect (pl, SIGNAL(widgetRemoved(QString)), this, SLOT(onWidgetRemoved(QString)));
     }
 
-    if (pl->getTotalMainWidgets() <= 1) {
-        main_widgets->menuAction()->setVisible(false);
+    main_widgets->menuAction()->setVisible(false);
+    foreach (DBWidgetInfo wi, *wilist) {
+        if (wi.type == DBWidgetInfo::TypeMainWidget) {
+             main_widgets->menuAction()->setVisible(true);
+             QAction *a = main_widgets_list->addAction(wi.friendlyName);
+             a->setProperty("internalName", wi.internalName);
+             main_widgets->addAction(a);
+             connect (a, SIGNAL(triggered()), this, SLOT(onWidgetMain()));
+        }
     }
+    main_widgets_list->setExclusionPolicy(QActionGroup::ExclusionPolicy::Exclusive);
+
+
+    delete wilist;
 
     // MainWidget selection
-    connect (pl, SIGNAL(actionPluginMainWidgetCreated(QAction *)), this, SLOT(onMainWidgetAdded(QAction *)));
+    //connect (pl, SIGNAL(actionPluginMainWidgetCreated(QAction *)), this, SLOT(onMainWidgetAdded(QAction *)));
 
     //connect (this, SIGNAL(configLoaded()), pl, SLOT(updateActionChecks()));
-
-    connect (this->ui->actionBlockToolbarChanges, SIGNAL(toggled(bool)), pl, SLOT(lockWidgets(bool)));
+    ui->actionBlockToolbarChanges->setChecked(settings->getValue("PluginLoader", "designMode", false).toBool());
+    connect (this->ui->actionBlockToolbarChanges, SIGNAL(toggled(bool)), pl, SLOT(setDesignMode(bool)));
 
     //connect (this->ui->actionExit, SIGNAL(triggered()), pl, SLOT(actionChecksSave()));
 
-    connect (pl, SIGNAL(actionToggleVisibleCreated(QAction *)), this, SLOT(onActionToggleCreated(QAction *)));
+    //connect (pl, SIGNAL(actionToggleVisibleCreated(QAction *)), this, SLOT(onActionToggleCreated(QAction *)));
 
-
+    ui->actionScrollPlayback->setChecked(DBAPI->conf_get_int("playlist.scroll.followplayback", true));
+    ui->actionCursorPlayback->setChecked(DBAPI->conf_get_int("playlist.scroll.cursorfollowplayback", true));
+    ui->actionStopTrack->setChecked(DBAPI->conf_get_int("playlist.stop_after_current", false));
+    ui->actionStopAlbum->setChecked(DBAPI->conf_get_int("playlist.stop_after_album", false));
 }
 
 QMenuBar *DefaultActions::getDefaultMenuBar() {
@@ -112,36 +128,93 @@ void DefaultActions::shuffleRepeatHandler() {
     qDebug() << "MainWindow: shuffleRepeatHandler failed!";
 }
 
-void DefaultActions::onWidgetAddAction(QAction *action) {
-    new_plugins->addAction(action);
+void DefaultActions::onWidgetAdd() {
+    QObject* emitter = sender();
+    pl->addWidget(emitter->property("internalName").toString());
 }
 
-void DefaultActions::onWidgetRemoveAction(QAction *action) {
-    remove_plugins->setVisible(true);
-    remove_plugins->addAction(action);
+void DefaultActions::onWidgetRemove() {
+    QObject* emitter = sender();
+    pl->removeWidget(emitter->property("internalName").toString());
 }
 
-void DefaultActions::onActionToggleCreated(QAction *action) {
-    ui->menuView->addAction(action);
+void DefaultActions::onWidgetMain() {
+    QObject* emitter = sender();
+    pl->setMainWidget(emitter->property("internalName").toString());
+    qobject_cast<QAction *>(emitter)->setChecked(true);
 }
 
+void DefaultActions::onWidgetToggle(bool toggle) {
+    QObject* emitter = sender();
+    pl->setVisible(emitter->property("internalName").toString(), toggle);
+}
 
-void DefaultActions::onMainWidgetAdded(QAction *action) {
-    if (action == nullptr) {
-        if (pl->getTotalMainWidgets() > 1) {
-            main_widgets->menuAction()->setVisible(true);
-        }
-        else {
-            main_widgets->menuAction()->setVisible(false);
-        }
-        return;
-    }
-    main_widgets_list->addAction(action);
-    main_widgets->addAction(action);
-    if (pl->getTotalMainWidgets() > 1) {
+void DefaultActions::onWidgetAdded(int num) {
+    DBWidgetInfo info = pl->getWidgetAt(num);
+    // add view/hide
+    QAction *a = ui->menuView->addAction(info.friendlyName);
+    a->setCheckable(true);
+    a->setChecked(api->confGetValue("PluginLoader",QString("%1/visible") .arg(info.internalName),true).toBool());
+    a->setProperty("internalName", info.internalName);
+    connect (a, SIGNAL(triggered(bool)), this, SLOT(onWidgetToggle(bool)));
+
+    // add in remove
+    a = remove_plugins->addAction(info.friendlyName);
+    a->setProperty("internalName", info.internalName);
+    connect (a, SIGNAL(triggered()), this, SLOT(onWidgetRemove()));
+
+    // add in main widget selection (if mainwidget)
+    if (info.type == DBWidgetInfo::TypeMainWidget) {
         main_widgets->menuAction()->setVisible(true);
+        a = main_widgets_list->addAction(info.friendlyName);
+        a->setProperty("internalName", info.internalName);
+        a->setCheckable(true);
+        if(info.internalName == api->confGetValue("PluginLoader","MainWidget","playlist").toString()) {
+            a->setChecked(true);
+        }
+        main_widgets->addAction(a);
+        connect (a, SIGNAL(triggered()), this, SLOT(onWidgetMain()));
     }
 }
+
+void DefaultActions::onWidgetRemoved(QString name) {
+    // TODO regenerate remove list and hide list
+    QList<QAction *>list_rp = remove_plugins->actions();
+    QList<QAction *>list_mw = main_widgets_list->actions();
+    QList<QAction *>list_mm = ui->menuView->actions();
+    int i;
+    // Remove widget menu
+    for (i = 0; i < list_rp.length(); i++) {
+        QAction *a = list_rp.at(i);
+        if (a->property("internalName").toString() == name) {
+            list_rp.takeAt(i);
+            delete a;
+            break;
+        }
+    }
+    // Main widget menu
+    for (i = 0; i < list_mw.length(); i++) {
+        QAction *a = list_mw.at(i);
+        if (a->property("internalName").toString() == name) {
+            list_mw.takeAt(i);
+            delete a;
+            if (list_mw.length() == 0) {
+                main_widgets->menuAction()->setVisible(false);
+            }
+            break;
+        }
+    }
+    // Show hide menu (main)
+    for (i = 0; i < list_mm.length(); i++) {
+        QAction *a = list_mm.at(i);
+        if (a->property("internalName").toString() == name) {
+            list_mm.takeAt(i);
+            delete a;
+            break;
+        }
+    }
+}
+
 
 void DefaultActions::on_actionAboutQt_triggered() {
     QMessageBox::aboutQt(this);
@@ -157,5 +230,136 @@ void DefaultActions::on_actionPreferences_triggered() {
 }
 
 void DefaultActions::on_actionExit_triggered() {
-    qDebug() << "test";
+    w->close();
+}
+
+void DefaultActions::on_actionScrollPlayback_triggered(bool checked) {
+    DBAPI->conf_set_int ("playlist.scroll.followplayback", checked);
+    DBAPI->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
+}
+
+void DefaultActions::on_actionCursorPlayback_triggered(bool checked) {
+    DBAPI->conf_set_int ("playlist.scroll.cursorfollowplayback", checked);
+    DBAPI->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
+}
+
+void DefaultActions::on_actionStopTrack_triggered(bool checked) {
+    DBAPI->conf_set_int ("playlist.stop_after_current", checked);
+    DBAPI->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
+}
+
+void DefaultActions::on_actionStopAlbum_triggered(bool checked) {
+    DBAPI->conf_set_int ("playlist.stop_after_album", checked);
+    DBAPI->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
+}
+
+void DefaultActions::on_actionJump_to_current_track_triggered() {
+    // TODO
+    emit api->jumpToCurrentTrack();
+}
+
+void DefaultActions::on_actionOpenFiles_triggered() {
+    DBFileDialog fileDialog(this,
+                            tr("Open file(s)..."),
+                            QStringList(),
+                            QFileDialog::ExistingFiles,
+                            QFileDialog::ReadOnly);
+    QStringList fileNames = fileDialog.exec2();
+    if (fileNames.isEmpty()) {
+        return;
+    }
+    foreach (QString localFile, fileNames) {
+        api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);
+    }
+}
+
+
+
+void DefaultActions::on_actionNewPlaylist_triggered() {
+    api->newPlaylist(tr("New Playlist"));
+}
+
+void DefaultActions::on_actionLoadPlaylist_triggered() {
+    QStringList filters;
+    filters << tr("Supported playlist formats (*.dbpl)");
+    filters << tr("Other files (*)");
+    DBFileDialog fileDialog(this,
+                            tr("Load playlist"),
+                            filters,
+                            QFileDialog::ExistingFile,
+                            QFileDialog::ReadOnly);
+    QStringList fileNames = fileDialog.exec2();
+    if (fileNames.isEmpty()) {
+        return;
+    }
+    foreach (QString localFile, fileNames) {
+        api->loadPlaylist(localFile);
+    }
+}
+
+void DefaultActions::on_actionSaveAsPlaylist_triggered() {
+    QStringList filters;
+    filters << tr("DeaDBeeF playlist files (*.dbpl)");
+    DB_playlist_t **plug = DBAPI->plug_get_playlist_list();
+    for (int i = 0; plug[i]; i++) {
+        if (plug[i]->extensions && plug[i]->load) {
+            const char **exts = plug[i]->extensions;
+            if (exts && plug[i]->save)
+                for (int e = 0; exts[e]; e++)
+                    filters << QString("*.%1").arg(exts[e]);
+        }
+    }
+    DBFileDialog fileDialog(this,
+                            tr("Save playlist as..."),
+                            filters,
+                            QFileDialog::AnyFile);
+    fileDialog.setAcceptMode(QFileDialog::AcceptSave);
+
+    QStringList fileNames = fileDialog.exec2();
+    if (fileNames.isEmpty())
+        return;
+
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    if (plt) {
+        int res = DBAPI->plt_save(plt, NULL, NULL, fileNames.last().toUtf8().constData(), NULL, NULL, NULL);
+        if (res) {
+            QMessageBox msg(QMessageBox::Critical,"Save playlist as...", "Saving playlist failed.");
+            msg.exec();
+        }
+        DBAPI->plt_unref(plt);
+    }
+}
+
+void DefaultActions::on_actionAddFolder_triggered() {
+    DBFileDialog fileDialog(this,
+                            tr("Add folder(s) to playlist..."),
+                            QStringList(),
+                            QFileDialog::Directory,
+                            QFileDialog::ShowDirsOnly | QFileDialog::ReadOnly);
+    QStringList fileNames = fileDialog.exec2();
+    if (fileNames.isEmpty())
+        return;
+    foreach (QString localFile, fileNames)
+        api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);
+}
+
+void DefaultActions::on_actionAddFiles_triggered(){
+    DBFileDialog fileDialog(this,
+                            tr("Add file(s) to playlist..."),
+                            QStringList(),
+                            QFileDialog::ExistingFiles,
+                            QFileDialog::ReadOnly);
+    QStringList fileNames = fileDialog.exec2();
+    if (fileNames.isEmpty())
+        return;
+    foreach (QString localFile, fileNames)
+        api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);
+}
+
+void DefaultActions::on_actionAddAudioCD_triggered() {
+    api->addTracksByUrl(QUrl("all.cda"));
+}
+
+void DefaultActions::on_actionAddURL_triggered() {
+    api->addTracksByUrl(QUrl::fromUserInput(QInputDialog::getText(this, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)), DBAPI->pl_getcount(PL_MAIN) - 1);
 }

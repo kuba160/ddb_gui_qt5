@@ -12,43 +12,35 @@
 #include "QtGui.h"
 #include "DBApi.h"
 #include "AboutDialog.h"
-#include "PreferencesDialog.h"
 
 #include <include/callbacks.h>
 #include <QtConcurrent>
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
 #include "DeadbeefTranslator.h"
-//#include "PluginLoader.h"
 
 MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
         QMainWindow(parent),
         DBWidget (parent, Api) {
 
-    loadActions();
-    loadIcons();
-
+    // MenuBar
     mainMenu = Api->getMainMenuBar();
     setMenuBar(mainMenu);
     mainMenu->setNativeMenuBar(true);
 
-    //// PluginLoader
-    // Create links for widget creation
-    connect (pl,SIGNAL(toolBarCreated(QToolBar *)),this,SLOT(windowAddToolbar(QToolBar *)));
-    connect (pl, SIGNAL(dockableWidgetCreated(QDockWidget *)), this, SLOT(windowAddDockable(QDockWidget *)));
+    setContextMenuPolicy(Qt::NoContextMenu);
 
-    trayIcon = nullptr;
-    trayMenu = nullptr;
-    
-    createConnections();
+    // Connections
+    connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
+    connect(api, SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
 
 
     pl->RestoreWidgets(this);
 
-    setCentralWidget(pl->getMainWidget());
-
     setWindowIcon(QIcon(":/root/images/deadbeef.png"));
 
+    connect(&title_updater, SIGNAL(timeout()), this, SLOT(updateTitle()));
+    title_updater.start(1000);
 
     loadConfig();
     updateTitle();
@@ -62,65 +54,6 @@ DBApi* MainWindow::Api() {
     return api;
 }
 
-void MainWindow::windowAddToolbar(QToolBar *toolbar) {
-    toolbar->setParent(this);
-    this->addToolBar(toolbar);
-    // reload config
-    //loadConfig();
-}
-
-void MainWindow::windowAddDockable(QDockWidget *dock) {
-    addDockWidget(Qt::RightDockWidgetArea, dock);
-}
-
-
-/*
-void MainWindow::windowViewActionRemoveToggleHide(bool visible) {
-    remove_plugins->menuAction()->setVisible(visible);
-}*/
-
-
-void MainWindow::createConnections() {
-    connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
-    //connect(ui->actionNewPlaylist, SIGNAL(triggered()), ui->playList, SIGNAL(newPlaylist()));
-    connect(api, SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
-}
-
-void MainWindow::loadIcons() {
-    /*
-    ui->actionPlay->setIcon(getStockIcon(this, "media-playback-start", QStyle::SP_MediaPlay));
-    ui->actionPause->setIcon(getStockIcon(this, "media-playback-pause", QStyle::SP_MediaPause));
-    ui->actionStop->setIcon(getStockIcon(this, "media-playback-stop", QStyle::SP_MediaStop));
-    ui->actionPrev->setIcon(getStockIcon(this, "media-skip-backward", QStyle::SP_MediaSkipBackward));
-    ui->actionNext->setIcon(getStockIcon(this, "media-skip-forward", QStyle::SP_MediaSkipForward));
-    ui->actionExit->setIcon(getStockIcon(this, "application-exit", QStyle::SP_DialogCloseButton));
-    ui->actionClearAll->setIcon(getStockIcon(this, "edit-clear", QStyle::SP_TrashIcon));
-    ui->actionAddFiles->setIcon(getStockIcon(this, "document-open", QStyle::SP_FileIcon));
-    ui->actionAddFolder->setIcon(getStockIcon(this, "folder-m", QStyle::SP_DirIcon));
-    ui->actionAddURL->setIcon(getStockIcon(this, "folder-remote", QStyle::SP_DriveNetIcon));
-    ui->actionAddAudioCD->setIcon(getStockIcon(this, "media-optical-audio", QStyle::SP_DriveCDIcon));
-    ui->actionNewPlaylist->setIcon(getStockIcon(this, "document-new", QStyle::SP_FileDialogNewFolder));
-    ui->actionPreferences->setIcon(getStockIcon(this, "preferences-system", QStyle::SP_CustomBase));
-    ui->actionAbout->setIcon(getStockIcon(this, "help-about", QStyle::SP_DialogHelpButton));
-q   */
-    //pauseIcon = getStockIcon(this, "media-playback-pause", QStyle::SP_MediaPause);
-    //playIcon = getStockIcon(this, "media-playback-start", QStyle::SP_MediaPlay);
-}
-
-void MainWindow::loadActions() {
-    /*
-    addAction(ui->actionAddFolder);
-    addAction(ui->actionExit);
-    addAction(ui->actionPreferences);
-    addAction(ui->actionAddFiles);
-    addAction(ui->actionAddURL);
-    addAction(ui->actionSaveAsPlaylist);
-    addAction(ui->actionLoadPlaylist);
-    addAction(ui->actionNewPlaylist);
-    addAction(ui->actionHideMenuBar);
-    addAction(ui->actionFind);
-    */
-}
 
 void MainWindow::createTray() {
     trayIcon = new SystemTrayIcon(this);
@@ -153,8 +86,7 @@ void MainWindow::titleSettingChanged() {
     updateTitle();
 }
 
-void MainWindow::updateTitle(DB_playItem_t *it) {
-
+void MainWindow::updateTitle() {
     DB_playItem_t* curr_track = DBAPI->streamer_get_playing_track ();
     ddb_playlist_t *plt;
     if (curr_track)
@@ -174,10 +106,10 @@ void MainWindow::updateTitle(DB_playItem_t *it) {
 
     // TODO: Make this customizable
     QString script = nullptr;
-    if (api->getOutputState() == DDB_PLAYBACK_STATE_STOPPED)
-        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarStopped, "DeaDBeeF %_deadbeef_version%").toString();
+    if (!curr_track)
+        script = SETTINGS->getValue("MainWindow", "TitlebarStopped", "DeaDBeeF %_deadbeef_version%").toString();
     else
-        script = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::TitlebarPlaying, "%artist% - %title% -DeaDBeeF %_deadbeef_version%").toString();
+        script = SETTINGS->getValue("MainWindow", "TitlebarPlaying", "%artist% - %title% - DeaDBeeF %_deadbeef_version%").toString();
 
     char * code_script = DBAPI->tf_compile (script.toUtf8());
     char buffer[512];
@@ -186,7 +118,6 @@ void MainWindow::updateTitle(DB_playItem_t *it) {
     int ret = DBAPI->tf_eval (&context, code_script, buffer, 512);
     DBAPI->tf_free (code_script);
 
-    qDebug() << buffer;
     if (ret) {
         setWindowTitle(QString::fromUtf8(buffer));
     }
@@ -201,24 +132,15 @@ void MainWindow::updateTitle(DB_playItem_t *it) {
         DBAPI->pl_item_unref (curr_track);
 }
 
-void MainWindow::changeEvent(QEvent *e) {
-    QMainWindow::changeEvent(e);
-    switch (e->type()) {
-    case QEvent::LanguageChange:
-        //ui->retranslateUi(this);
-        break;
-    default:
-        break;
-    }
-}
-
 void MainWindow::closeEvent(QCloseEvent *e) {
+    saveConfig();
     switch (actionOnClose) {
     case Exit:
+        saveConfig();
         e->accept();
-        //on_actionExit_triggered();
         break;
     case Hide:
+        saveConfig();
         e->ignore();
         if (isHidden())
             show();
@@ -234,41 +156,31 @@ void MainWindow::closeEvent(QCloseEvent *e) {
 
 
 void MainWindow::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
+    Q_UNUSED(from);
     if (to != nullptr) {
         char str[1024];
-        const char *fmt = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::MessageFormat, "%a - %t").toString().toUtf8().constData();
+        const char *fmt;
+        if (api->getOutputState() == DDB_PLAYBACK_STATE_STOPPED)
+            fmt = SETTINGS->getValue("MainWindow", "TitlebarStopped", "DeaDBeeF %_deadbeef_version%").toString().toUtf8();
+        else
+            fmt = SETTINGS->getValue("MainWindow", "TitlebarPlaying", "%artist% - %title% - DeaDBeeF %_deadbeef_version%").toString().toUtf8();
+
         DBAPI->pl_item_ref(to);
         DBAPI->pl_format_title(to, 0, str, sizeof(str), -1, fmt);
-        bool showTrayTips = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::ShowTrayTips, false).toBool();
-        if (trayIcon && showTrayTips) {
-            trayIcon->showMessage("DeaDBeeF", QString::fromUtf8(str), QSystemTrayIcon::Information, 2000);
+        if (trayIcon) {
+            // todo
+            //trayIcon->showMessage("DeaDBeeF", QString::fromUtf8(str), QSystemTrayIcon::Information, 2000);
         }
         DBAPI->pl_item_unref(to);
     } else {
         //progressBar.setValue(0);
     }
-    updateTitle(to);
-}
-
-
-
-void MainWindow::createToolBars() {
-
-}
-
-QMenu *MainWindow::createPopupMenu() {
-    QMenu *popupMenu = new QMenu();
-    //popupMenu->addAction(ui->actionHideMenuBar);
-    //popupMenu->addSeparator();
-    //popupMenu->addSeparator();
-    //popupMenu->addSeparator();
-    //popupMenu->addAction(ui->actionBlockToolbarChanges);
-    return popupMenu;
+    updateTitle();
 }
 
 void MainWindow::setCloseOnMinimized(bool minimizeOnClose) {
-    bool trayIconIsHidden = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::TrayIconIsHidden, false).toBool();
-    configureActionOnClose(minimizeOnClose, trayIconIsHidden);
+    //bool trayIconIsHidden = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::TrayIconIsHidden, false).toBool();
+    //configureActionOnClose(minimizeOnClose, trayIconIsHidden);
 }
 
 void MainWindow::setTrayIconHidden(bool hideTrayIcon) {
@@ -281,8 +193,8 @@ void MainWindow::setTrayIconHidden(bool hideTrayIcon) {
         createTray();
     }
     
-    bool minimizeOnClose = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MinimizeOnClose, false).toBool();
-    configureActionOnClose(minimizeOnClose, hideTrayIcon);
+    //bool minimizeOnClose = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MinimizeOnClose, false).toBool();
+    //configureActionOnClose(minimizeOnClose, hideTrayIcon);
 }
 
 void MainWindow::configureActionOnClose(bool minimizeOnClose, bool hideTrayIcon) {
@@ -298,80 +210,60 @@ void MainWindow::configureActionOnClose(bool minimizeOnClose, bool hideTrayIcon)
 // config
 
 void MainWindow::loadConfig() {
-    QSize size       = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowSize, QSize(640, 480)).toSize();
-    QPoint point     = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowPosition, QPoint(0, 0)).toPoint();
-    QByteArray state = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, QByteArray()).toByteArray();
-    bool tbIsLocked  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, false).toBool();
-    bool mmIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, false).toBool();
-    bool trayIconIsHidden = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::TrayIconIsHidden, false).toBool();
-    bool minimizeOnClose = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MinimizeOnClose, false).toBool();
-    bool headerIsVisible = SETTINGS->getValue(QtGuiSettings::PlayList, QtGuiSettings::HeaderIsVisible,true).toBool();
-    bool tbIsVisible = SETTINGS->getValue(QtGuiSettings::MainWindow,QtGuiSettings::TabBarIsVisible,true).toBool();
+    QSize size       = SETTINGS->getValue("MainWindow", "WindowSize", QSize(640, 480)).toSize();
+    QPoint point     = SETTINGS->getValue("MainWindow", "WindowPosition", QPoint(0, 0)).toPoint();
+    QByteArray state = SETTINGS->getValue("MainWindow", "WindowState", QByteArray()).toByteArray();
+    // TODO
+    //QByteArray state = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, QByteArray()).toByteArray();
+    //bool mmIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, false).toBool();
+    //bool trayIconIsHidden = SETTINGS->getValue(QtGuiSettings::TrayIcon, QtGuiSettings::TrayIconIsHidden, false).toBool();
+    //bool minimizeOnClose = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::MinimizeOnClose, false).toBool();
+
+    // tabs
+    QStringList list = SETTINGS->getValue("MainWindow", "TabifiedDockWidgets",QStringList()).toStringList();
+    if (list.length()) {
+        for (int i = 0; i < list.length(); i+=2) {
+            QDockWidget *dw1 = findChild<QDockWidget*>(list[i]);
+            QDockWidget *dw2 = findChild<QDockWidget*>(list[i+1]);
+            tabifyDockWidget(dw1,dw2);
+            restoreState(state);
+        }
+    }
 
     resize(size);
     move(point);
-    //ui->actionBlockToolbarChanges->setChecked(tbIsLocked);
-    menuBar()->setHidden(mmIsHidden);
-    //ui->actionHideMenuBar->setChecked(!menuBar()->isHidden());
-
-
-    if (!trayIconIsHidden) {
-        createTray();
-    }
-    
-    bool caIsHidden  = SETTINGS->getValue(QtGuiSettings::MainWindow, QtGuiSettings::CoverartIsHidden, false).toBool();
-   // if (ui->actionHideCoverArt->isChecked()) {
-    //    addDockWidget(Qt::LeftDockWidgetArea, &coverArtWidget);
-        //connect(&coverArtWidget, SIGNAL(onCloseEvent()), this, SLOT(onCoverartClose()));
-   // }
-    // when no coverart make it not visible
-    //ui->actionHideCoverArt->setVisible(false);
-
     restoreState(state);
-    configureActionOnClose(minimizeOnClose, trayIconIsHidden);
-
-    //int i;
-    //for (i = 0; i < ToolbarStackCount; i++) {
-    //    ToolbarStack[i]->setMovable(!ui->actionBlockToolbarChanges->isChecked());
+    //if (!trayIconIsHidden) {
+        createTray();
     //}
+    //configureActionOnClose(minimizeOnClose, trayIconIsHidden);
 
-    switch (DBAPI->conf_get_int("playback.order", PLAYBACK_ORDER_LINEAR)) {
-    case PLAYBACK_ORDER_LINEAR:
-        //ui->actionLinearOrder->setChecked(true);
-        break;
-    case PLAYBACK_ORDER_RANDOM:
-        //ui->actionRandomOrder->setChecked(true);
-        break;
-    case PLAYBACK_ORDER_SHUFFLE_TRACKS:
-        //ui->actionShuffleOrder->setChecked(true);
-        break;
-    }
-
-    switch (DBAPI->conf_get_int("playback.loop", PLAYBACK_MODE_NOLOOP)) {
-    case PLAYBACK_MODE_LOOP_ALL:
-        //ui->actionLoopAll->setChecked(true);
-        break;
-    case PLAYBACK_MODE_LOOP_SINGLE:
-        //ui->actionLoopTrack->setChecked(true);
-        break;
-    case PLAYBACK_MODE_NOLOOP:
-        //ui->actionLoopNothing->setChecked(true);
-        break;
-    }
     emit configLoaded();
-
 }
 
-
 void MainWindow::saveConfig() {
-    SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowSize, size());
-    SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowPosition, pos());
-    SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::WindowState, saveState());
-   //SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::ToolbarsIsLocked, ui->actionBlockToolbarChanges->isChecked());
-    SETTINGS->setValue(QtGuiSettings::MainWindow, QtGuiSettings::MainMenuIsHidden, menuBar()->isHidden());
+    SETTINGS->setValue("MainWindow", "WindowSize", size());
+    SETTINGS->setValue("MainWindow", "WindowPosition", pos());
+    SETTINGS->setValue("MainWindow", "WindowState", saveState());
 
-    //playList.saveConfig();
-    pl->actionChecksSave();
+    // tabs
+    QList<QDockWidget*> tabs = findChildren<QDockWidget *>();
+    QList<QDockWidget*> used;
+    QStringList list;
+    foreach(QDockWidget *dock,tabs) {
+        if (!used.contains(dock)) {
+            QList<QDockWidget *> l = tabifiedDockWidgets(dock);
+            if (l.length()) {
+                used.append(dock);
+                used.append(l);
+                foreach(QDockWidget *dw, l) {
+                    list.append(dock->objectName());
+                    list.append(dw->objectName());
+                }
+            }
+        }
+    }
+    SETTINGS->setValue("MainWindow", "TabifiedDockWidgets", list);
 }
 
 void MainWindow::windowActivate() {
@@ -388,4 +280,8 @@ void MainWindow::windowShowHide() {
         this->show();
     else
         this->hide();
+}
+
+void MainWindow::on_deadbeefActivated() {
+    if (isHidden()) show();
 }

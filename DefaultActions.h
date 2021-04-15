@@ -31,16 +31,35 @@ private:
 
 public slots:
     void shuffleRepeatHandler();
-    void onWidgetAddAction(QAction *);
-    void onWidgetRemoveAction(QAction *);
-    void onMainWidgetAdded(QAction *);
-    void onActionToggleCreated(QAction *);
+    // on triggered menu actions
+    void onWidgetAdd();
+    void onWidgetRemove();
+    // on triggered main widget
+    void onWidgetMain();
+    //
+    void onWidgetToggle(bool toggle);
+    // on new/removed widget
+    void onWidgetAdded(int num);
+    void onWidgetRemoved(QString internalName);
 
 private slots:
     void on_actionAboutQt_triggered();
     void on_actionAbout_triggered();
     void on_actionPreferences_triggered();
     void on_actionExit_triggered();
+    void on_actionScrollPlayback_triggered(bool checked);
+    void on_actionCursorPlayback_triggered(bool checked);
+    void on_actionStopTrack_triggered(bool checked);
+    void on_actionStopAlbum_triggered(bool checked);
+    void on_actionJump_to_current_track_triggered();
+    void on_actionOpenFiles_triggered();
+    void on_actionNewPlaylist_triggered();
+    void on_actionLoadPlaylist_triggered();
+    void on_actionSaveAsPlaylist_triggered();
+    void on_actionAddFolder_triggered();
+    void on_actionAddFiles_triggered();
+    void on_actionAddAudioCD_triggered();
+    void on_actionAddURL_triggered();
 };
 
 #endif // DEFAULTACTIONS_H

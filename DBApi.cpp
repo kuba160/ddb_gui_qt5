@@ -54,6 +54,7 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_c
 
     // Settings
     qt_settings = new QtGuiSettings(this);
+    settings = static_cast<QtGuiSettings *>(qt_settings);
 
     // Action Manager
     action_manager = new ActionManager(this,this);
@@ -248,22 +249,21 @@ QVariant DBApi::confGetValue(const QString &plugname, const QString &key, const 
     return settings->getValue(plugname,key,defaultValue);
 }
 
-void DBApi::autoSetValue(void *widget, const QString &key, const QVariant &value) {
-    settings->autoSetValue(widget,key,value);
-}
-
-QVariant DBApi::autoGetValue(void *widget, const QString &key, const QVariant &defaultValue) {
-    return settings->autoGetValue(widget, key, defaultValue);
-}
-
 void DBApi::addTracksByUrl(const QUrl &url, int position) {
     int pabort = 0;
     DB_playItem_t *track = (position > -1) ? DBAPI->pl_get_for_idx(position) : nullptr;
-    if (DBAPI->plt_insert_dir(DBAPI->plt_get_curr(), track, url.toString().toUtf8().data(), &pabort, nullptr, nullptr) == nullptr) {
-        DBAPI->plt_insert_file(DBAPI->plt_get_curr(), track, url.toString().toUtf8().data(), &pabort, nullptr, nullptr);
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    DB_playItem_t *it = DBAPI->plt_insert_dir(plt, track, url.toString().toUtf8().data(), &pabort, nullptr, nullptr);
+    if (!it) {
+        it = DBAPI->plt_insert_file(plt, track, url.toString().toUtf8().data(), &pabort, nullptr, nullptr);
     }
-    if (track)
+    if (it) {
+        emit playlistContentChanged(plt);
+    }
+    if (track) {
         DBAPI->pl_item_unref(track);
+    }
+    DBAPI->plt_unref(plt);
 }
 
 
@@ -369,6 +369,20 @@ void DBApi::removePlaylist(int plt) {
     }
 }
 
+void DBApi::loadPlaylist(const QString &fname) {
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    if (plt) {
+        DBAPI->plt_clear(plt);
+        int abort = 0;
+        DB_playItem_t *it = DBAPI->plt_load2(-1, plt, NULL, fname.toUtf8().constData(), &abort, NULL, NULL);
+        if (it) {
+            // success
+            emit playlistContentChanged(plt);
+        }
+        DBAPI->plt_unref(plt);
+    }
+}
+
 void DBApi::setShuffle(ddb_shuffle_t i) {
     DBAPI->streamer_set_shuffle(i);
     currShuffle = i;
@@ -412,7 +426,7 @@ DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
     }
     api = api_a;
     if (parent) {
-        _internalNameWidget = parent->objectName();
+        _internalNameWidget = parent->property("internalName").toString();
         //qDebug() << _internalNameWidget << ENDL;
     }
 }

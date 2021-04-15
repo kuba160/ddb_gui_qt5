@@ -13,6 +13,7 @@ PlaylistModel::PlaylistModel(QObject *parent, DBApi *Api) : QAbstractItemModel(p
     connect(api, SIGNAL(playbackPaused()), this, SLOT(onPlaybackChanged()));
     connect(api, SIGNAL(playbackUnPaused()), this, SLOT(onPlaybackChanged()));
     connect(api, SIGNAL(queueChanged()), this, SLOT(onPlaybackChanged()));
+    connect(api, SIGNAL(playlistContentChanged(ddb_playlist_t *)), this, SLOT(onPlaylistContentChanged(ddb_playlist_t *)));
 }
 
 PlaylistModel::~PlaylistModel() {
@@ -36,6 +37,13 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
 ddb_playlist_t *PlaylistModel::getPlaylist() {
     DBAPI->plt_ref(plt);
     return plt;
+}
+
+void PlaylistModel::onPlaylistContentChanged(ddb_playlist_t *plt_changed) {
+    if (plt == plt_changed) {
+        // refresh
+        setPlaylist(plt);
+    }
 }
 
 void PlaylistModel::setPlaylistLock(bool lock) {
@@ -100,6 +108,8 @@ QString PlaylistModel::formatFromHeaderType(headerType t) {
     }
     return "";
 }
+
+#define _(X) dbtr->tr(X)
 
 QStringList items = {_("Item Index"), _("Playing"), _("Album Art"), _("Artist - Album"),
                      _("Artist"), _("Album"), _("Title"), _("Year"), _("Duration"), _("Track Number"),

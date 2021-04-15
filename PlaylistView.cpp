@@ -131,7 +131,7 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     else {
         headers = *playlistModel.setDefaultHeaders();
     }
-    QByteArray data = Api->confGetValue(parent->objectName(),"HeaderState",QByteArray()).toByteArray();
+    QByteArray data = Api->confGetValue(_internalNameWidget,"HeaderState",QByteArray()).toByteArray();
     if (data != QByteArray()) {
         header()->restoreState(data);
     }
@@ -571,10 +571,10 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
     format_parent.setLayout(&format_layout);
     format_layout.addWidget(&format);
     format_layout.addWidget(&format_help);
-    format_help.setText(QString("<a href=\"http://example.com/\">%1</a>").arg(tr("Help")));
+    format_help.setText(QString("<a href=\"https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0\">%1</a>").arg(tr("Help")));
     format_help.setTextFormat(Qt::RichText);
     format_help.setTextInteractionFlags(Qt::TextBrowserInteraction);
-    format_help.setOpenExternalLinks(false);
+    format_help.setOpenExternalLinks(true);
     layout.addRow(tr("Format:"), &format_parent);
 
     // Missing sort formatting, alignment, color
@@ -594,13 +594,20 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
         h->title = items[0];
         h->type = HT_itemIndex;
     }
-   //QDialogButtonBox *buttons = new QDialogButtonBox();
+
+    if (type.currentIndex() <= 2) {
+        format.setEnabled(false);
+    }
+    else {
+        format.setEnabled(true);
+    }
+    //QDialogButtonBox *buttons = new QDialogButtonBox();
     buttons.addButton(QDialogButtonBox::Ok);
     buttons.addButton(QDialogButtonBox::Cancel);
     layout.addRow("",&buttons);
 
-    connect (&title, SIGNAL(textEdited(const QString &)), this, SLOT(titleEdited(const QString &)));
-    connect (&format, SIGNAL(textEdited(const QString &)), this, SLOT(formatEdited(const QString &)));
+    connect (&title, SIGNAL(textEdited(QString)), this, SLOT(titleEdited(QString)));
+    connect (&format, SIGNAL(textEdited(QString)), this, SLOT(formatEdited(QString)));
     connect (&type, SIGNAL(currentIndexChanged(int)), this, SLOT(typeChanged(int)));
     connect(&buttons, SIGNAL(accepted()), this, SLOT(accepted()));
     connect(&buttons, SIGNAL(rejected()), this, SLOT(rejected()));
@@ -621,6 +628,12 @@ void HeaderDialog::typeChanged(int index) {
         if (type.itemText(h->type - 1) == title.text()) {
             title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(index + 1)));
             h->title = title.text();
+        }
+        if (index <= 2) {
+            format.setEnabled(false);
+        }
+        else {
+            format.setEnabled(true);
         }
     }
     h->type = static_cast<headerType>(index + 1);

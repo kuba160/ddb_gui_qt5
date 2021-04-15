@@ -73,6 +73,9 @@
      <property name="title">
       <string>Repeat</string>
      </property>
+     <property name="icon">
+      <iconset theme="media-playlist-repeat"/>
+     </property>
      <addaction name="actionLoopAll"/>
      <addaction name="actionLoopTrack"/>
      <addaction name="actionLoopNothing"/>
@@ -81,6 +84,9 @@
      <property name="title">
       <string>Shuffle</string>
      </property>
+     <property name="icon">
+      <iconset theme="media-playlist-shuffle"/>
+     </property>
      <addaction name="actionNoShuffle"/>
      <addaction name="actionTrackShuffle"/>
      <addaction name="actionAlbumShuffle"/>
@@ -88,6 +94,12 @@
     </widget>
     <addaction name="shuffleMenu"/>
     <addaction name="loopingMenu"/>
+    <addaction name="actionScrollPlayback"/>
+    <addaction name="actionCursorPlayback"/>
+    <addaction name="actionStopTrack"/>
+    <addaction name="actionStopAlbum"/>
+    <addaction name="separator"/>
+    <addaction name="actionJump_to_current_track"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -114,13 +126,47 @@
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="title">
      <string>Edit</string>
     </property>
+    <widget class="QMenu" name="menuSelection">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Selection</string>
+     </property>
+     <addaction name="actionSelectionRemove"/>
+     <addaction name="actionSelectionCrop"/>
+    </widget>
+    <widget class="QMenu" name="menuSort_By">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Sort By</string>
+     </property>
+     <property name="icon">
+      <iconset theme="view-sort-descending"/>
+     </property>
+     <addaction name="actionSortTitle"/>
+     <addaction name="actionSortTrackNumber"/>
+     <addaction name="actionSortAlbum"/>
+     <addaction name="actionSortArtist"/>
+     <addaction name="actionSortDate"/>
+     <addaction name="actionSortRandom"/>
+     <addaction name="actionSortCustom"/>
+    </widget>
     <addaction name="actionClearAll"/>
     <addaction name="actionSelectAll"/>
     <addaction name="actionDeselectAll"/>
+    <addaction name="actionInvert_selection"/>
+    <addaction name="menuSelection"/>
     <addaction name="actionFind"/>
+    <addaction name="menuSort_By"/>
     <addaction name="separator"/>
     <addaction name="actionPreferences"/>
    </widget>
@@ -138,6 +184,9 @@
    <addaction name="menuHelp"/>
   </widget>
   <action name="actionAddFolder">
+   <property name="icon">
+    <iconset theme="folder-m"/>
+   </property>
    <property name="text">
     <string>Add folder(s)</string>
    </property>
@@ -146,6 +195,9 @@
    </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset theme="help-about"/>
+   </property>
    <property name="text">
     <string>About</string>
    </property>
@@ -204,6 +256,12 @@
    </property>
   </action>
   <action name="actionPreferences">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="preferences-system"/>
+   </property>
    <property name="text">
     <string>Preferences</string>
    </property>
@@ -212,6 +270,9 @@
    </property>
   </action>
   <action name="actionAddFiles">
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
    <property name="text">
     <string>Add file(s)</string>
    </property>
@@ -220,6 +281,9 @@
    </property>
   </action>
   <action name="actionAddAudioCD">
+   <property name="icon">
+    <iconset theme="media-optical-audio"/>
+   </property>
    <property name="text">
     <string>Add Audio CD</string>
    </property>
@@ -228,6 +292,9 @@
    </property>
   </action>
   <action name="actionAddURL">
+   <property name="icon">
+    <iconset theme="folder-remote"/>
+   </property>
    <property name="text">
     <string>Add location</string>
    </property>
@@ -238,6 +305,9 @@
   <action name="actionSaveAsPlaylist">
    <property name="enabled">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="document-save"/>
    </property>
    <property name="text">
     <string>Save playlist</string>
@@ -250,6 +320,9 @@
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
    <property name="text">
     <string>Load playlist</string>
    </property>
@@ -258,28 +331,14 @@
    </property>
   </action>
   <action name="actionNewPlaylist">
+   <property name="icon">
+    <iconset theme="document-new"/>
+   </property>
    <property name="text">
     <string>New playlist</string>
    </property>
    <property name="shortcut">
     <string notr="true">Ctrl+N</string>
-   </property>
-  </action>
-  <action name="actionHideMenuBar">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Main menu</string>
-   </property>
-   <property name="toolTip">
-    <string>Show/hide main menu</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+M</string>
    </property>
   </action>
   <action name="actionBlockToolbarChanges">
@@ -290,18 +349,13 @@
     <string>Design mode</string>
    </property>
   </action>
-  <action name="actionHideStatusbar">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Statusbar</string>
-   </property>
-   <property name="toolTip">
-    <string>Show/hide statusbar</string>
-   </property>
-  </action>
   <action name="actionClearAll">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="edit-clear"/>
+   </property>
    <property name="text">
     <string>Clear</string>
    </property>
@@ -311,7 +365,10 @@
   </action>
   <action name="actionSelectAll">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="stock_select-all"/>
    </property>
    <property name="text">
     <string>Select all</string>
@@ -322,7 +379,7 @@
   </action>
   <action name="actionDeselectAll">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Deselect all</string>
@@ -333,60 +390,16 @@
   </action>
   <action name="actionFind">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="edit-find"/>
    </property>
    <property name="text">
     <string>Find</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+F</string>
-   </property>
-  </action>
-  <action name="actionSelectCurrentTrack">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cursor follows playback</string>
-   </property>
-  </action>
-  <action name="actionGoToCurrentTrack">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Jump to current track</string>
-   </property>
-  </action>
-  <action name="actionScrollFollowsPlayback">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Scroll follows playback</string>
-   </property>
-  </action>
-  <action name="actionRemove">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Remove</string>
-   </property>
-   <property name="shortcut">
-    <string notr="true"/>
    </property>
   </action>
   <action name="actionOpenFiles">
@@ -401,11 +414,106 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="application-exit"/>
    </property>
    <property name="text">
     <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionScrollPlayback">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Scroll follows playback</string>
+   </property>
+  </action>
+  <action name="actionCursorPlayback">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Cursor follows playback</string>
+   </property>
+  </action>
+  <action name="actionStopAlbum">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Stop after current album</string>
+   </property>
+  </action>
+  <action name="actionJump_to_current_track">
+   <property name="text">
+    <string>Jump to current track</string>
+   </property>
+  </action>
+  <action name="actionInvert_selection">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Invert selection</string>
+   </property>
+  </action>
+  <action name="actionSelectionCrop">
+   <property name="text">
+    <string>Crop</string>
+   </property>
+  </action>
+  <action name="actionSelectionRemove">
+   <property name="text">
+    <string>Remove</string>
+   </property>
+  </action>
+  <action name="actionSortTitle">
+   <property name="text">
+    <string>Title</string>
+   </property>
+  </action>
+  <action name="actionSortTrackNumber">
+   <property name="text">
+    <string>Track number</string>
+   </property>
+  </action>
+  <action name="actionSortArtist">
+   <property name="text">
+    <string>Artist</string>
+   </property>
+  </action>
+  <action name="actionSortAlbum">
+   <property name="text">
+    <string>Album</string>
+   </property>
+  </action>
+  <action name="actionSortDate">
+   <property name="text">
+    <string>Date</string>
+   </property>
+  </action>
+  <action name="actionSortRandom">
+   <property name="text">
+    <string>Random</string>
+   </property>
+  </action>
+  <action name="actionSortCustom">
+   <property name="text">
+    <string>Custom</string>
+   </property>
+  </action>
+  <action name="actionStopTrack">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Stop after current track</string>
    </property>
   </action>
  </widget>

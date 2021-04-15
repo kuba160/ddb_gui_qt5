@@ -101,6 +101,9 @@ public slots:
     void onPlaybackChanged();
     void onTrackChanged(DB_playItem_t *from, DB_playItem_t *to);
 
+private slots:
+    void onPlaylistContentChanged(ddb_playlist_t *plt);
+
 signals:
     void columnsChanged();
     void rowsChanged();
