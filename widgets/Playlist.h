@@ -17,6 +17,8 @@ protected:
 private slots:
     void onPlaylistChanged();
     void onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+public slots:
+    void jumpToCurrentTrack();
 };
 
 #endif // PLAYLIST_H

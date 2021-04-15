@@ -25,6 +25,8 @@ Playlist::Playlist(QWidget *parent, DBApi *Api) : PlaylistView(parent,Api) {
     // enter / doubleclick
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
     connect(this, SIGNAL(enterRelease(QModelIndex)), SLOT(trackDoubleClicked(QModelIndex)));
+    // jump to current playlist
+    connect(api, SIGNAL(jumpToCurrentTrack()), this, SLOT(jumpToCurrentTrack()));
 
 }
 
@@ -75,6 +77,9 @@ void Playlist::onPlaylistChanged() {
     DBAPI->pl_lock();
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     playlistModel.setPlaylist(plt);
+    // scroll?
+    // autoscroll for current track
+    jumpToCurrentTrack();
     DBAPI->plt_unref(plt);
     DBAPI->pl_unlock();
 }
@@ -84,4 +89,15 @@ void Playlist::mouseDoubleClickEvent(QMouseEvent* event ) {
         QTreeView::mouseDoubleClickEvent(event);
     }
 
+}
+
+void Playlist::jumpToCurrentTrack() {
+    // todo fix this
+    if (DBAPI->streamer_get_current_playlist() == DBAPI->plt_get_idx(playlistModel.getPlaylist())) {
+        DB_playItem_t *it = DBAPI->streamer_get_playing_track();
+        if (it) {
+            scrollTo(model()->index(DBAPI->pl_get_idx_of(it),0),QAbstractItemView::PositionAtTop);
+            DBAPI->pl_item_unref(it);
+        }
+    }
 }
