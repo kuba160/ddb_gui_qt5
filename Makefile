@@ -4,7 +4,7 @@ ifeq ($(OS),Windows_NT)
 	QMAKE_PREFIX=/mingw64/qt5-static/bin/
 	pacman --needed -S mingw-w64-x86_64-qt5-static
 else
-	UNAME_S := $(shell uname -s)
+	UNAME_S:=$(shell uname -s)
 	ifeq ($(UNAME_S),Darwin)
 		# macos
 		QMAKE_PREFIX=""
