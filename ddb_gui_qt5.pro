@@ -1,6 +1,6 @@
 TEMPLATE = lib
 TARGET = ddb_gui_qt5
-CONFIG += no_plugin_name_prefix plugin qt
+CONFIG += no_plugin_name_prefix plugin qt shared c++17
 INCLUDEPATH += "./include"
 
 SOURCES  =  \
