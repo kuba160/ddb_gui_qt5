@@ -9,6 +9,7 @@
 
 #include <QListWidget>
 #include <QPushButton>
+#include <QActionGroup>
 
 #include <deadbeef/deadbeef.h>
 #include "DBApi.h"
@@ -36,13 +37,19 @@ public:
 
 // MedialibTreeWidget
 class MedialibTreeWidget : public QTreeWidget {
+    Q_OBJECT
 public:
     MedialibTreeWidget(QWidget *parent = nullptr, DBApi *Api = nullptr);
 protected:
     DBApi *api = nullptr;
+    QActionGroup *actions;
     QPoint dragStartPosition;
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+public slots:
+    void showContextMenu(QPoint p);
+    void onAddToPlaybackQueue();
+    void onRemoveFromPlaybackQueue();
 };
 
 // Medialib

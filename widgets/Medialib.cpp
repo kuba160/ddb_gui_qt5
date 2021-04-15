@@ -28,6 +28,52 @@ static void listener_callback(ddb_mediasource_event_type_t event, void *user_dat
 
 MedialibTreeWidget::MedialibTreeWidget(QWidget *parent, DBApi *Api) : QTreeWidget(parent) {
     api = Api;
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
+
+    actions = new QActionGroup(this);
+    actions->setExclusionPolicy(QActionGroup::ExclusionPolicy::None);
+    QAction *a = actions->addAction(new QAction(tr("Add To Playback Queue")));
+    a->setObjectName("add_to_playback_queue");
+    connect (a, SIGNAL(triggered()), this, SLOT(onAddToPlaybackQueue()));
+    a = actions->addAction(new QAction(tr("Remove From Playback Queue")));
+    a->setObjectName("remove_from_playback_queue");
+    connect (a, SIGNAL(triggered()), this, SLOT(onRemoveFromPlaybackQueue()));
+    setProperty("Actions",(quintptr) actions);
+}
+
+void MedialibTreeWidget::showContextMenu(QPoint p) {
+    QList<QTreeWidgetItem *> sel = selectedItems();
+    foreach(QAction *ac, actions->actions()) {
+        ac->setEnabled(sel.length());
+    }
+
+
+    api->playItemContextMenu(this,p);
+}
+
+void MedialibTreeWidget::onAddToPlaybackQueue() {
+    QList<QTreeWidgetItem *> sel = selectedItems();
+    foreach(QTreeWidgetItem *it_o, sel) {
+        QList<DB_playItem_t *> tracks = ((MedialibTreeWidgetItem *) it_o)->getTracks();
+        foreach(DB_playItem_t *it, tracks) {
+            if (it) {
+                DBAPI->playqueue_push(it);
+            }
+        }
+    }
+}
+
+void MedialibTreeWidget::onRemoveFromPlaybackQueue() {
+    QList<QTreeWidgetItem *> sel = selectedItems();
+    foreach(QTreeWidgetItem *it_o, sel) {
+        QList<DB_playItem_t *> tracks = ((MedialibTreeWidgetItem *) it_o)->getTracks();
+        foreach(DB_playItem_t *it, tracks) {
+            if (it) {
+                DBAPI->playqueue_remove(it);
+            }
+        }
+    }
 }
 
 void MedialibTreeWidget::mousePressEvent(QMouseEvent *event) {
@@ -193,7 +239,7 @@ void Medialib::updateTree() {
     if (state != DDB_MEDIASOURCE_STATE_IDLE) {
         assert(state < 5);
         const char *state_str[] = {nullptr, "loading", "scanning", "indexing", "saving"};
-        QString info = QString("Mediasource is %1...") .arg(state_str[state]);
+        QString info = QString("Medialib is %1...") .arg(state_str[state]);
         tree->clear();
         auto info_item = new QTreeWidgetItem();
         info_item->setText(0,info);
@@ -218,8 +264,11 @@ void Medialib::updateTree() {
     tree->insertTopLevelItems(0, items);
     if (tree->itemAt(0,0)) {
         QTreeWidgetItem *top = tree->itemAt(0,0);
-        top->sortChildren(0,Qt::AscendingOrder);
-        tree->expandItem(tree->itemAt(0,0));
+        if (top->childCount() > 1) {
+            top->sortChildren(0,Qt::AscendingOrder);
+        }
+        // todo segfault possible here
+        tree->expandItem(top);
 
         // restore
         if (curr_item.length()) {
