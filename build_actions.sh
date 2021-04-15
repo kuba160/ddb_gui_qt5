@@ -1,5 +1,5 @@
 set -x
-
+echo $OSTYPE
 case "$OSTYPE" in
   darwin*)
 	brew install qt@5
