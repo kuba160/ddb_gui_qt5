@@ -3,6 +3,10 @@ set -x
 case "$OSTYPE" in
   darwin*)
 	brew install qt@5
+	export PATH="/usr/local/opt/qt@5/bin:$PATH"
+	export LDFLAGS="-L/usr/local/opt/qt@5/lib"
+	export CPPFLAGS="-I/usr/local/opt/qt@5/include"
+	export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
 	;; 
   linux*)
 	apt-get install -y qt5-default
