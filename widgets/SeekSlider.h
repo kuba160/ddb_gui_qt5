@@ -5,7 +5,7 @@
 //#include "QtGui.h"
 #include "DBApi.h"
 #include <QMouseEvent>
-
+#include <QTimer>
 
 #define SEEK_SCALE 10
 
@@ -35,6 +35,7 @@ private slots:
 private:
     int pos(QMouseEvent *ev) const;
     bool activateNow;
+    QTimer timer;
 };
 
 #endif // SEEKSLIDER_H

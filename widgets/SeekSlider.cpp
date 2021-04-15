@@ -1,7 +1,6 @@
 #include "SeekSlider.h"
 
 #include "QtGuiSettings.h"
-#include "GuiUpdater.h"
 
 #include <QSizePolicy>
 #include <QStyleOptionSlider>
@@ -17,12 +16,14 @@ SeekSlider::SeekSlider(QWidget *parent, DBApi *Api) : QSlider(parent), DBWidget(
     activateNow = false;
     setRange(0, 100 * SEEK_SCALE);
     setOrientation(Qt::Horizontal);
-    connect(GuiUpdater::Instance(), SIGNAL(frameUpdate()), this, SLOT(onFrameUpdate()));
 
     connect(api, SIGNAL(playbackStarted()),this,SLOT(onPlaybackStart()));
     connect(api, SIGNAL(playbackStopped()),this,SLOT(onPlaybackStop()));
     if (api->getInternalState() == DDB_PLAYBACK_STATE_STOPPED)
         this->setEnabled(false);
+
+    connect(&timer, SIGNAL(timeout()), this, SLOT(repaint()));
+    timer.start(100);
 }
 
 SeekSlider::~SeekSlider() {
