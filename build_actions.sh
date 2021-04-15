@@ -13,7 +13,7 @@ case "$OSTYPE" in
 	;;
   msys*)
 	export QMAKE_PREFIX=/mingw64/qt5-static/bin/
-	pacman --needed -S mingw-w64-x86_64-qt5-static
+	pacman --needed --noconfirm -S mingw-w64-x86_64-qt5-static
 	;;
 esac
 
