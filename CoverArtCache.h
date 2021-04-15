@@ -53,6 +53,8 @@ private:
 public slots:
     // cache cover on song change
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
+    // refresh
+    void refreshCoverArt();
 };
 
 #endif // COVERARTCACHE_H

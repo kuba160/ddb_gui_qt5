@@ -18,6 +18,9 @@ CoverArtCache::CoverArtCache(QObject *parent) : QObject(parent) {
         // force artwork to load default cover art
         getDefaultCoverArt();
     }
+    // fix cover loading on startup
+    QTimer::singleShot(1000,this, SLOT(refreshCoverArt()));
+
 }
 
 CoverArtCache::~CoverArtCache() {
@@ -33,6 +36,17 @@ CoverArtCache::~CoverArtCache() {
 
 DB_artwork_plugin_t * CoverArtCache::getCoverArtPlugin () {
     return artwork;
+}
+
+void CoverArtCache::refreshCoverArt() {
+    DB_playItem_t *it = DBAPI->streamer_get_playing_track();
+    if (it) {
+        currCover.setFuture(loadCoverArt(it));
+        DBAPI->pl_item_unref(it);
+    }
+    else {
+        currCover.setFuture(loadCoverArt(nullptr,nullptr,nullptr));
+    }
 }
 
 QImage *CoverArtCache::getDefaultCoverArt() {
