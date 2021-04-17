@@ -119,7 +119,7 @@ QString PlaylistModel::titleFromHeaderType(headerType t) {
     const QStringList items = {_("Item Index"), _("Playing"), _("Album Art"), _("Artist - Album"),
                          _("Artist"), _("Album"), _("Title"), _("Year"), _("Duration"), _("Track Number"),
                          _("Band / Album Artist"), _("Codec"), _("Bitrate"), _("Custom")};
-    if (t < HT_custom+1 && t > HT_empty+1) {
+    if (t < HT_custom+1 && t >= HT_empty+1) {
         return items.at(t-1);
     }
     return "";

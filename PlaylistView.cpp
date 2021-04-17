@@ -621,7 +621,7 @@ void HeaderDialog::typeChanged(int index) {
         format_saved = format.text();
         format.setReadOnly(true);
         format.setText(PlaylistModel::formatFromHeaderType(static_cast<headerType>(index + 1)));
-        if (type.itemText(h->type - 1) == title.text()) {
+        if (type.itemText(h->type - 1) == title.text() || !title.text().length()) {
             title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(index + 1)));
             h->title = title.text();
         }
