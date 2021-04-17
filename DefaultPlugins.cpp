@@ -53,37 +53,37 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     widgetLibrary = new std::vector<DBWidgetInfo>();
 
     volumeSlider.internalName = QString("volumeSlider");
-    volumeSlider.friendlyName = QString("Volume bar");
+    volumeSlider.friendlyName = QString(tr("Volume bar"));
     volumeSlider.type = DBWidgetInfo::TypeToolbar;
     volumeSlider.constructor = VolumeSlider::constructor;
     widgetLibrary->push_back(volumeSlider);
 
     seekSlider.internalName = QString("seekSlider");
-    seekSlider.friendlyName = QString("Seekbar");
+    seekSlider.friendlyName = QString(tr("Seekbar"));
     seekSlider.type = DBWidgetInfo::TypeToolbar;
     seekSlider.constructor = SeekSlider::constructor;
     widgetLibrary->push_back(seekSlider);
 
     playbackButtons.internalName = QString("playbackButtons");
-    playbackButtons.friendlyName = QString("Playback controls");
+    playbackButtons.friendlyName = QString(tr("Playback controls"));
     playbackButtons.type = DBWidgetInfo::TypeToolbar;
     playbackButtons.constructor = PlaybackButtons::constructor;
     widgetLibrary->push_back(playbackButtons);
 
     artworkWidget.internalName = QString("artwork");
-    artworkWidget.friendlyName = QString("Album Art");
+    artworkWidget.friendlyName = QString(tr("Album Art"));
     artworkWidget.type = DBWidgetInfo::TypeMainWidget;
     artworkWidget.constructor = CoverArt::constructor;
     widgetLibrary->push_back(artworkWidget);
 
     playlistWidget.internalName = QString("playlist");
-    playlistWidget.friendlyName = QString("Playlist");
+    playlistWidget.friendlyName = QString(tr("Playlist"));
     playlistWidget.type = DBWidgetInfo::TypeMainWidget;
     playlistWidget.constructor = Playlist::constructor;
     widgetLibrary->push_back(playlistWidget);
 
     tabBar.internalName = QString("tabBar");
-    tabBar.friendlyName = QString("Tab strip");
+    tabBar.friendlyName = QString(tr("Tab strip"));
     tabBar.type = DBWidgetInfo::TypeToolbar;
     tabBar.constructor = TabBar::constructor;
     widgetLibrary->push_back(tabBar);
@@ -95,7 +95,7 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     widgetLibrary->push_back(tabBarD);
 
     playlistBrowser.internalName = QString("playlistBrowser");
-    playlistBrowser.friendlyName = QString("Playlist browser");
+    playlistBrowser.friendlyName = QString(tr("Playlist browser"));
     playlistBrowser.type = DBWidgetInfo::TypeMainWidget;
     playlistBrowser.constructor = PlaylistBrowser::constructor;
     widgetLibrary->push_back(playlistBrowser);
@@ -113,7 +113,7 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     widgetLibrary->push_back(medialib);
 
     logviewer.internalName = QString("logviewer");
-    logviewer.friendlyName = QString("Log");
+    logviewer.friendlyName = QString(tr("Log"));
     logviewer.type = DBWidgetInfo::TypeMainWidget;
     logviewer.constructor = LogViewer::constructor;
     widgetLibrary->push_back(logviewer);
@@ -125,7 +125,7 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     widgetLibrary->push_back(queueManager);
 
     statusBar.internalName = QString("statusbar");
-    statusBar.friendlyName = QString("Status Bar");
+    statusBar.friendlyName = QString(tr("Status Bar"));
     statusBar.type = DBWidgetInfo::TypeStatusBar;
     statusBar.constructor = StatusBar::constructor;
     widgetLibrary->push_back(statusBar);
