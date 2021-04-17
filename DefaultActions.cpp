@@ -52,10 +52,19 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
     // New widget creation menu
     {
         QList<DBWidgetInfo*> wilist = pl->getWidgetLibrary();
+
+        QHash<QString, QAction*> acts_map;
+        QStringList acts;
         foreach (DBWidgetInfo *wi, wilist) {
-            QAction *a = new_plugins->addAction(wi->friendlyName);
+            QAction *a = new QAction(wi->friendlyName, new_plugins);
             a->setProperty("internalName", wi->internalName);
             connect (a, SIGNAL(triggered()), this, SLOT(onWidgetAdd()));
+            acts_map.insert(wi->friendlyName, a);
+            acts.append(wi->friendlyName);
+        }
+        acts.sort();
+        foreach (QString act, acts) {
+            new_plugins->addAction(acts_map.value(act));
         }
         // subscribe for future actions
         connect (pl, SIGNAL(widgetAdded(int)), this, SLOT(onWidgetAdded(int)));
