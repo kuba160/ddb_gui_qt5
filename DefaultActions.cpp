@@ -43,7 +43,9 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
     main_widgets->setIcon(QIcon::fromTheme("bookmark-new"));
     main_widgets_list = new QActionGroup(this);
     new_plugins = ui->menuView->addMenu(QString("%1...") .arg(tr("Add")));
+    new_plugins->setIcon(QIcon::fromTheme("list-add"));
     remove_plugins = ui->menuView->addMenu(QString("%1...") .arg(tr("Remove")));
+    remove_plugins->setIcon(QIcon::fromTheme("list-remove"));
     ui->menuView->addSeparator();
     //remove_plugins->menuAction()->setVisible(false);
 

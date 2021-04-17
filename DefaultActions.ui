@@ -141,6 +141,9 @@
      <property name="title">
       <string>Selection</string>
      </property>
+     <property name="icon">
+      <iconset theme="edit-select"/>
+     </property>
      <addaction name="actionSelectionRemove"/>
      <addaction name="actionSelectionCrop"/>
     </widget>
@@ -149,7 +152,7 @@
       <bool>false</bool>
      </property>
      <property name="title">
-      <string>Sort By</string>
+      <string>Sort by</string>
      </property>
      <property name="icon">
       <iconset theme="view-sort-descending">
@@ -188,8 +191,7 @@
   </widget>
   <action name="actionAddFolder">
    <property name="icon">
-    <iconset theme="folder-m">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="folder-new"/>
    </property>
    <property name="text">
     <string>Add folder(s)</string>
@@ -265,8 +267,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="preferences-system">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="gtk-preferences"/>
    </property>
    <property name="text">
     <string>Preferences</string>
@@ -381,8 +382,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="stock_select-all">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-select-all"/>
    </property>
    <property name="text">
     <string>Select all</string>
@@ -394,6 +394,9 @@
   <action name="actionDeselectAll">
    <property name="enabled">
     <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="edit-select-none"/>
    </property>
    <property name="text">
     <string>Deselect all</string>
@@ -418,8 +421,11 @@
    </property>
   </action>
   <action name="actionOpenFiles">
+   <property name="icon">
+    <iconset theme="list-add"/>
+   </property>
    <property name="text">
-    <string>Open file(s)</string>
+    <string>Open file(s)...</string>
    </property>
   </action>
   <action name="actionRandomTrackShuffle">
@@ -470,6 +476,9 @@
    </property>
   </action>
   <action name="actionJump_to_current_track">
+   <property name="icon">
+    <iconset theme="go-jump"/>
+   </property>
    <property name="text">
     <string>Jump to current track</string>
    </property>
@@ -478,51 +487,81 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset theme="edit-select-invert"/>
+   </property>
    <property name="text">
     <string>Invert selection</string>
    </property>
   </action>
   <action name="actionSelectionCrop">
+   <property name="icon">
+    <iconset theme="transform-crop"/>
+   </property>
    <property name="text">
     <string>Crop</string>
    </property>
   </action>
   <action name="actionSelectionRemove">
+   <property name="icon">
+    <iconset theme="edit-delete-remove"/>
+   </property>
    <property name="text">
     <string>Remove</string>
    </property>
   </action>
   <action name="actionSortTitle">
+   <property name="icon">
+    <iconset theme="view-media-title"/>
+   </property>
    <property name="text">
     <string>Title</string>
    </property>
   </action>
   <action name="actionSortTrackNumber">
+   <property name="icon">
+    <iconset theme="view-media-track"/>
+   </property>
    <property name="text">
     <string>Track number</string>
    </property>
   </action>
   <action name="actionSortArtist">
+   <property name="icon">
+    <iconset theme="view-media-artist"/>
+   </property>
    <property name="text">
     <string>Artist</string>
    </property>
   </action>
   <action name="actionSortAlbum">
+   <property name="icon">
+    <iconset theme="view-media-album-cover"/>
+   </property>
    <property name="text">
     <string>Album</string>
    </property>
   </action>
   <action name="actionSortDate">
+   <property name="icon">
+    <iconset theme="view-calendar"/>
+   </property>
    <property name="text">
     <string>Date</string>
    </property>
   </action>
   <action name="actionSortRandom">
+   <property name="icon">
+    <iconset theme="randomize"/>
+   </property>
    <property name="text">
     <string>Random</string>
    </property>
   </action>
   <action name="actionSortCustom">
+   <property name="icon">
+    <iconset theme="edit-entry"/>
+   </property>
    <property name="text">
     <string>Custom</string>
    </property>
