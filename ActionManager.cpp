@@ -109,7 +109,7 @@ void ActionManager::fillMenuBar() {
                     // very weird behaviour from qt...
                 }
                 else {
-                    futuremenu = currmenu->findChild<QMenu *>(tr(strlist[i].toUtf8()));
+                    futuremenu = currmenu->findChild<QMenu *>(strlist[i].toUtf8());
                 }
                 if (futuremenu) {
                     currmenu = futuremenu;
@@ -125,6 +125,7 @@ void ActionManager::fillMenuBar() {
                     else {
                         // in current menu
                         futuremenu = currmenu->addMenu(tr(strlist[i].toUtf8()));
+                        futuremenu->setObjectName(QString("menu") + strlist[i]);
                     }
                     futuremenu->setObjectName(strlist[i]);
                     currmenu = futuremenu;

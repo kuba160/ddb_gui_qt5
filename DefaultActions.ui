@@ -74,7 +74,8 @@
       <string>Repeat</string>
      </property>
      <property name="icon">
-      <iconset theme="media-playlist-repeat"/>
+      <iconset theme="media-playlist-repeat">
+       <normaloff>.</normaloff>.</iconset>
      </property>
      <addaction name="actionLoopAll"/>
      <addaction name="actionLoopTrack"/>
@@ -85,7 +86,8 @@
       <string>Shuffle</string>
      </property>
      <property name="icon">
-      <iconset theme="media-playlist-shuffle"/>
+      <iconset theme="media-playlist-shuffle">
+       <normaloff>.</normaloff>.</iconset>
      </property>
      <addaction name="actionNoShuffle"/>
      <addaction name="actionTrackShuffle"/>
@@ -150,7 +152,8 @@
       <string>Sort By</string>
      </property>
      <property name="icon">
-      <iconset theme="view-sort-descending"/>
+      <iconset theme="view-sort-descending">
+       <normaloff>.</normaloff>.</iconset>
      </property>
      <addaction name="actionSortTitle"/>
      <addaction name="actionSortTrackNumber"/>
@@ -185,7 +188,8 @@
   </widget>
   <action name="actionAddFolder">
    <property name="icon">
-    <iconset theme="folder-m"/>
+    <iconset theme="folder-m">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Add folder(s)</string>
@@ -196,7 +200,8 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset theme="help-about"/>
+    <iconset theme="help-about">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>About</string>
@@ -260,7 +265,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="preferences-system"/>
+    <iconset theme="preferences-system">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Preferences</string>
@@ -271,7 +277,8 @@
   </action>
   <action name="actionAddFiles">
    <property name="icon">
-    <iconset theme="document-open"/>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Add file(s)</string>
@@ -282,7 +289,8 @@
   </action>
   <action name="actionAddAudioCD">
    <property name="icon">
-    <iconset theme="media-optical-audio"/>
+    <iconset theme="media-optical-audio">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Add Audio CD</string>
@@ -293,7 +301,8 @@
   </action>
   <action name="actionAddURL">
    <property name="icon">
-    <iconset theme="folder-remote"/>
+    <iconset theme="folder-remote">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Add location</string>
@@ -307,7 +316,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="document-save"/>
+    <iconset theme="document-save">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Save playlist</string>
@@ -321,7 +331,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="document-open"/>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Load playlist</string>
@@ -332,7 +343,8 @@
   </action>
   <action name="actionNewPlaylist">
    <property name="icon">
-    <iconset theme="document-new"/>
+    <iconset theme="document-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>New playlist</string>
@@ -354,7 +366,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-clear"/>
+    <iconset theme="edit-clear">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Clear</string>
@@ -368,7 +381,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="stock_select-all"/>
+    <iconset theme="stock_select-all">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Select all</string>
@@ -393,7 +407,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-find"/>
+    <iconset theme="edit-find">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Find</string>
@@ -408,13 +423,17 @@
    </property>
   </action>
   <action name="actionRandomTrackShuffle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Random Tracks</string>
    </property>
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit"/>
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Quit</string>
