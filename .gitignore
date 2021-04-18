@@ -9,6 +9,7 @@
 *.so
 *.dll
 *.dylib
+*.exe
 
 # Qt-es
 
@@ -17,5 +18,13 @@
 moc_*.cpp
 qrc_*.cpp
 Makefile
+*.Debug
+*.Release
+ddb_gui_qt5_plugin_import.cpp
+ddb_gui_qt5_plugin_resources.cpp
+.qmake.*
 *-build-*
 ui_*
+config.log
+release/
+debug/
