@@ -2,7 +2,6 @@
 #include "ui_DefaultActions.h"
 #include <QObject>
 #include <QStyle>
-#include "include/callbacks.h"
 
 #include "AboutDialog.h"
 #include "PluginLoader.h"
