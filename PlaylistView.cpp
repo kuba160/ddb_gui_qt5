@@ -37,6 +37,33 @@ void myViewStyle::drawPrimitive ( PrimitiveElement element, const QStyleOption *
     QProxyStyle::drawPrimitive(element, option, painter, widget);
 }
 
+
+AutoToolTipDelegate::AutoToolTipDelegate(QObject* parent) : QStyledItemDelegate(parent) {
+}
+
+bool AutoToolTipDelegate::helpEvent(QHelpEvent* e, QAbstractItemView* view, const QStyleOptionViewItem& option,
+                                    const QModelIndex& index) {
+    if (!e || !view) {
+        return false;
+    }
+    if (e->type() == QEvent::ToolTip) {
+        QRect rect = view->visualRect(index);
+        int px = QFontMetrics(view->font()).horizontalAdvance(index.data(Qt::DisplayRole).toString().append(".."));
+        if (rect.width() < px) {
+            QVariant tooltip = index.data(Qt::DisplayRole);
+            if (tooltip.canConvert<QString>()) {
+                QToolTip::showText(e->globalPos(),tooltip.toString().toHtmlEscaped(),view);
+                return true;
+            }
+        }
+        if (!QStyledItemDelegate::helpEvent(e, view, option, index)) {
+            QToolTip::hideText();
+        }
+        return true;
+    }
+    return QStyledItemDelegate::helpEvent(e, view, option, index);
+}
+
 PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(parent, Api), playlistModel(this, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -60,6 +87,7 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     setDragDropMode(QAbstractItemView::DragDrop);
     setModel(&playlistModel);
     setStyle(new myViewStyle);
+    setItemDelegate(new AutoToolTipDelegate(this));
 
     header()->setStretchLastSection(false);
     header()->setContextMenuPolicy(Qt::CustomContextMenu);

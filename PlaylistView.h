@@ -16,6 +16,16 @@
 #include "PlaylistModel.h"
 
 #include <QTreeView>
+#include <QStyledItemDelegate>
+
+class AutoToolTipDelegate : public QStyledItemDelegate {
+    Q_OBJECT
+public:
+    AutoToolTipDelegate(QObject* parent);
+public slots:
+    bool helpEvent(QHelpEvent* e, QAbstractItemView* view, const QStyleOptionViewItem& option,
+                   const QModelIndex& index);
+};
 
 class PlaylistView : public QTreeView, public DBWidget {
     Q_OBJECT
