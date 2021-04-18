@@ -13,7 +13,6 @@
 #include "DBApi.h"
 #include "AboutDialog.h"
 
-#include <include/callbacks.h>
 #include <QtConcurrent>
 #include <QFutureWatcher>
 #include "DBFileDialog.h"
