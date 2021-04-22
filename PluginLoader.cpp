@@ -332,6 +332,7 @@ int PluginLoader::removeWidget(int num) {
         }
     }
     settings->setValue(QString("PluginLoader"), QString("PluginsLoaded"),slist);
+    settings->remove(lw->property("internalName").toString());
 
     if (lw->header.type == DBWidgetInfo::TypeStatusBar) {
         w->setStatusBar(nullptr);

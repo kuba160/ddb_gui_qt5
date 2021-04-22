@@ -120,7 +120,7 @@ static int pluginStart() {
 #endif
 
     // setup settings
-    QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG)) .arg("qt5");
+    QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG), "qt5");
     QtGuiSettings::setDefaultFormat(QSettings::IniFormat);
     QtGuiSettings::setPath(QSettings::IniFormat, QSettings::UserScope, file);
 
