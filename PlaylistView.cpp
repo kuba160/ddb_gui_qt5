@@ -48,7 +48,11 @@ bool AutoToolTipDelegate::helpEvent(QHelpEvent* e, QAbstractItemView* view, cons
     }
     if (e->type() == QEvent::ToolTip) {
         QRect rect = view->visualRect(index);
+#if QT_VERSION > QT_VERSION_CHECK(5,11,0)
         int px = QFontMetrics(view->font()).horizontalAdvance(index.data(Qt::DisplayRole).toString().append(".."));
+#else
+    int px = QFontMetrics(view->font()).width(index.data(Qt::DisplayRole).toString().append(".."));
+#endif
         if (rect.width() < px) {
             QVariant tooltip = index.data(Qt::DisplayRole);
             if (tooltip.canConvert<QString>()) {

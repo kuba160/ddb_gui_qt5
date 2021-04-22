@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QFileDialog>
 #include <cstdint>
+#include <cassert>
 
 // used for sleep()
 #include <unistd.h>
