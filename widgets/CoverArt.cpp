@@ -31,7 +31,7 @@ void CoverArt::setCover(QImage *image) {
 #if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
             cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(this->size().shrunkBy(m),Qt::KeepAspectRatio,Qt::SmoothTransformation)));
 #else
-            QSize size = this->size() - QSize(m.left() + m.right(), m.top() + m.bottom());
+            QSize size = QSize(this->size().width() - (m.left()+m.right()), this->size().height() -(m.top()+m.bottom()));
             cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(size, Qt::KeepAspectRatio,Qt::SmoothTransformation)));
 #endif
         }
@@ -43,7 +43,8 @@ void CoverArt::resizeEvent(QResizeEvent *event) {
 #if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
         cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(event->size().shrunkBy(m),Qt::KeepAspectRatio,Qt::SmoothTransformation)));
 #else
-            cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(event->size(), Qt::KeepAspectRatio,Qt::SmoothTransformation)));
+        QSize size = QSize(event->size().width() -(m.left()+m.right()), event->size().height() -(m.top()+m.bottom()));
+        cover_display.setPixmap(QPixmap::fromImage(cover_image->scaled(size, Qt::KeepAspectRatio,Qt::SmoothTransformation)));
 #endif
     }
 }
