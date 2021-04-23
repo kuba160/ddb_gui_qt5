@@ -128,26 +128,16 @@ QString PlaylistModel::titleFromHeaderType(headerType t) {
 QList<PlaylistHeader_t *> *PlaylistModel::setDefaultHeaders() {
     QList<PlaylistHeader_t *> default_headers;
         //  Title, type, formatting
-    PlaylistHeader_t a[] = {
-        {"♫", HT_playing,""},
-        {_("Artist - Album"), HT_artistAlbum,""},
-        {_("Track No"), HT_trackNum,""},
-        {_("Title"), HT_title,""},
-        {_("Duration"), HT_length, ""},
-        {"", HT_empty}
-    };
+    const char *l_title[] = {"♫", "Artist - Album", "Track No", "Title", "Duration"};
+    const headerType l_type[] = {HT_playing, HT_artistAlbum, HT_trackNum, HT_title, HT_length, HT_empty};
     int i;
-    for (i = 0; a[i].type != HT_empty; i++) {
+    for (i = 0; l_type[i] != HT_empty; i++) {
         PlaylistHeader_t *temp = new PlaylistHeader_t;
-        *temp = a[i];
-        if (temp->type == HT_custom) {
-            temp->_format_compiled = DBAPI->tf_compile(a[i].format.toUtf8());
-        }
-        else {
-            temp->format = formatFromHeaderType((headerType) temp->type);
-            if (!temp->format.isEmpty()) {
-                temp->_format_compiled = DBAPI->tf_compile(temp->format.toUtf8());
-            }
+        temp->title = _(l_title[i]);
+        temp->type = l_type[i];
+        temp->format = formatFromHeaderType((headerType) temp->type);
+        if (!temp->format.isEmpty()) {
+            temp->_format_compiled = DBAPI->tf_compile(temp->format.toUtf8());
         }
         default_headers.append(temp);
     }

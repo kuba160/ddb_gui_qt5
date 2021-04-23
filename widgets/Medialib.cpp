@@ -340,8 +340,7 @@ void Medialib::setFolders(QStringList *folders) {
 }
 
 void Medialib::folderSetupDialog() {
-    QDialog d(this);
-    d.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
+    QDialog d(this, Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
     d.setMinimumWidth(405);
     d.setWindowTitle("Set up medialib folders...");
     d.setLayout(new QVBoxLayout());
