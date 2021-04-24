@@ -63,7 +63,7 @@ FORMS =     AboutDialog.ui \
 
 RESOURCES = Resources.qrc
 
-QT += gui widgets concurrent
+QT += gui widgets concurrent svg
 DEFINES += ARTWORK_ENABLED HOTKEYS_ENABLED "DEADBEEF_PREFIX=\\\"donotuse\\\""
 
 # link with gettext?
