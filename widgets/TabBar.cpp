@@ -14,12 +14,11 @@
 TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBWidget(parent, Api), tabContextMenu(this)  {
     configure();
     fillTabs();
-    buildTabContextMenu();
     selectLastTab();
     createConnections();
 
-    connect(api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
-    connect(this, SIGNAL(tabRenamed(int,const QString *)), api, SLOT(renamePlaylist(int,const QString *)));
+    connect(api, SIGNAL(playlistMoved(int,int)), this, SLOT(playlistOrderChanged(int,int)));
+    connect(this, SIGNAL(tabRenamed(int,const QString*)), api, SLOT(renamePlaylist(int,const QString*)));
     connect(api, SIGNAL(playlistRenamed(int)), this, SLOT(onPlaylistRenamed(int)));
 }
 
@@ -36,7 +35,7 @@ QWidget *TabBar::constructor(QWidget *parent, DBApi *Api) {
 
 void TabBar::createConnections() {
     connect(this, SIGNAL(tabCloseRequested(int)), SLOT(closeTab(int)));
-    connect(this, SIGNAL(tabContextMenuRequested(int, QPoint)), SLOT(showTabContextMenu(int, QPoint)));
+    connect(this, SIGNAL(tabContextMenuRequested(int,QPoint)), SLOT(showTabContextMenu(int,QPoint)));
     connect(this, SIGNAL(tabMoved(int,int)), SLOT(moveTab(int,int)));
     connect(this, SIGNAL(tabSelected(int)), api, SLOT(changePlaylist(int)));
     connect(api, SIGNAL(playlistChanged(int)), this, SLOT(setCurrentIndex(int)));
@@ -115,46 +114,10 @@ int TabBar::selectTab(const QPoint &pos) const {
     return -1;
 }
 
-void TabBar::buildTabContextMenu() {
-    renPlaylist = new QAction(tr("Rename playlist"), &tabContextMenu);
-    connect(renPlaylist, SIGNAL(triggered()), this, SLOT(renamePlaylist()));
-    addPlaylist = new QAction(tr("Add new playlist"), &tabContextMenu);
-    connect(addPlaylist, SIGNAL(triggered()), this, SLOT(newPlaylist()));
-    delPlaylist = new QAction(tr("Remove playlist"), &tabContextMenu);
-    connect(delPlaylist, SIGNAL(triggered()), this, SLOT(closeTab()));
-    
-    tabContextMenu.addAction(renPlaylist);
-    tabContextMenu.addAction(addPlaylist);
-    tabContextMenu.addAction(delPlaylist);
 
-    tabContextMenu.addSeparator();
-
-    QMenu *positionMenu = tabContextMenu.addMenu(tr("Tabbar position"));
-    top = positionMenu->addAction(tr("Top"));
-    top->setCheckable(true);
-    connect(top, SIGNAL(toggled(bool)), SLOT(setTopPosition()));
-    bottom = positionMenu->addAction(tr("Bottom"));
-    bottom->setCheckable(true);
-    connect(bottom, SIGNAL(toggled(bool)), SLOT(setBottomPosition()));
-    left = positionMenu->addAction(tr("Left"));
-    left->setCheckable(true);
-    connect(left, SIGNAL(toggled(bool)), SLOT(setLeftPosition()));
-    right = positionMenu->addAction(tr("Right"));
-    right->setCheckable(true);
-    connect(right, SIGNAL(toggled(bool)), SLOT(setRightPosition()));
-    QActionGroup *positionGroup = new QActionGroup(positionMenu);
-    positionGroup->addAction(top);
-    positionGroup->addAction(bottom);
-    positionGroup->addAction(left);
-    positionGroup->addAction(right);
-    positionGroup->setExclusive(true);
-    top->setChecked(true);
-}
-
-void TabBar::showTabContextMenu(int index, QPoint globalPos) {
+void TabBar::showTabContextMenu(int index, QPoint pos) {
     indexForAction = index;
-    tabContextMenu.move(globalPos);
-    tabContextMenu.show();
+    api->playlistContextMenu(this,mapFromGlobal(pos),index);
 }
 
 void TabBar::moveTab(int to, int from) {

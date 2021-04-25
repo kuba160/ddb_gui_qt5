@@ -42,6 +42,8 @@ public slots:
     void onWidgetAdded(int num);
     void onWidgetRemoved(QString internalName);
 
+    void onTrackChanged();
+
 private slots:
     void on_actionAboutQt_triggered();
     void on_actionAbout_triggered();
@@ -60,6 +62,8 @@ private slots:
     void on_actionAddFiles_triggered();
     void on_actionAddAudioCD_triggered();
     void on_actionAddURL_triggered();
+    void on_actionClearAll_triggered();
+    void on_actionSelectAll_triggered();
 };
 
 #endif // DEFAULTACTIONS_H

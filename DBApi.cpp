@@ -48,7 +48,8 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_c
     // CoverArt Cache
     coverart_cache = new CoverArtCache();
     if(COVERARTCACHE_P(coverart_cache)->getCoverArtPlugin()) {
-        connect(this, SIGNAL(trackChanged(DB_playItem_t *, DB_playItem_t *)),COVERARTCACHE_P(coverart_cache), SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
+        connect(this, SIGNAL(trackChanged(DB_playItem_t*, DB_playItem_t*)),COVERARTCACHE_P(coverart_cache),
+                      SLOT(trackChanged(DB_playItem_t*, DB_playItem_t*)));
     }
     connect(&COVERARTCACHE_P(coverart_cache)->currCover,SIGNAL(finished()),this,SLOT(onCurrCoverChanged()));
 
@@ -64,13 +65,14 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_c
 }
 
 DBApi::~DBApi() {
+    clearClipboard();
     plugin.plugin.message = nullptr;
     delete CAC;
     delete CSET;
 }
 
 const char * DBApi::_(const char *str) {
-    return dbtr->translate(nullptr, str).toUtf8();
+    return dbtr->translate(nullptr, str).toUtf8().constData();
 }
 
 int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
@@ -88,6 +90,7 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
                 internal_state = DDB_PLAYBACK_STATE_STOPPED;
             }
             emit trackChanged(ev->from, ev->to);
+            emit trackChanged();
             emit queueChanged();
             break;
         case DB_EV_PAUSED:
@@ -197,6 +200,15 @@ QMenu * DBApi::getMenu(const char *menu) {
     return mb->findChild<QMenu *>(_(menu));
 }
 
+void DBApi::clearClipboard() {
+    if (clipboard->mimeData()->hasFormat("deadbeef/playitems")) {
+        playItemList l = mime_playItems(clipboard->mimeData());
+        foreach(DB_playItem_t *it, l) {
+            DBAPI->pl_item_unref(it);
+        }
+    }
+}
+
 QMimeData *DBApi::mime_playItems(QList<DB_playItem_t *> playItems) {
     QMimeData *md = new QMimeData();
     QByteArray ba;
@@ -239,6 +251,21 @@ QList<DB_playItem_t *> DBApi::mime_playItemsCopy(const QMimeData *playItems) {
         }
     }
     return list;
+}
+
+QMimeData *DBApi::mime_playItemsCopy(QList<DB_playItem_t *> playItems) {
+    QMimeData *md = new QMimeData();
+    QByteArray ba;
+    QDataStream ds(&ba,QIODevice::WriteOnly);
+    for(int i = 0; i < playItems.length() ; i++) {
+        // original
+        DB_playItem_t *it = DBAPI->pl_item_alloc();
+        DBAPI->pl_item_copy(it,playItems[i]);
+        auto ptr = reinterpret_cast<quintptr>(it);
+        ds << ptr;
+    }
+    md->setData("deadbeef/playitems", ba);
+    return md;
 }
 
 void DBApi::confSetValue(const QString &plugname, const QString &key, const QVariant &value) {
@@ -369,6 +396,15 @@ void DBApi::removePlaylist(int plt) {
     }
 }
 
+void DBApi::clearPlaylist(int plt) {
+    if (plt < playlistNames.size()) {
+        ddb_playlist_t *plt_p = DBAPI->plt_get_for_idx(plt);
+        DBAPI->plt_clear(plt_p);
+        emit playlistContentChanged(plt_p);
+        DBAPI->plt_unref(plt_p);
+    }
+}
+
 void DBApi::loadPlaylist(const QString &fname) {
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     if (plt) {
@@ -381,6 +417,16 @@ void DBApi::loadPlaylist(const QString &fname) {
         }
         DBAPI->plt_unref(plt);
     }
+}
+
+void DBApi::removeTracks(playItemList list) {
+    ddb_playlist_t *plt = DBAPI->pl_get_playlist(list[0]);
+    foreach(DB_playItem_t *it, list) {
+        DBAPI->plt_remove_item(plt,it);
+        DBAPI->pl_item_unref(it);
+    }
+    emit playlistContentChanged(plt);
+    DBAPI->plt_unref(plt);
 }
 
 void DBApi::setShuffle(ddb_shuffle_t i) {
@@ -420,40 +466,21 @@ void DBApi::onCurrCoverChanged() {
     emit currCoverChanged(CAC->currCover.result());
 }
 
-DBWidget::DBWidget(QWidget *parent, DBApi *api_a) {
-    if (api_a == nullptr) {
-        qDebug() << "Widget (" << parent <<") initialized without api pointer!";
-    }
-    api = api_a;
-    if (parent) {
-        _internalNameWidget = parent->property("internalName").toString();
-        //qDebug() << _internalNameWidget << ENDL;
-    }
-}
-
-DBWidget::~DBWidget() {
-    // exit
-    //delete _internalNameWidget;
-}
-
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {
-    ds << pil.count;
     qint32 i;
-    for (i = 0; i < pil.count; i++) {
-        auto ptr= reinterpret_cast<quintptr>(pil.list.at(i));
+    for (i = 0; i < pil.length(); i++) {
+        auto ptr= reinterpret_cast<quintptr>(pil[i]);
         ds << ptr;
     }
     return ds;
 }
 QDataStream& operator >> (QDataStream &ds, playItemList &pil) {
-    pil.list.clear();
-    ds >> pil.count;
-    qint32 i;
-    for (i = 0; i < pil.count; i++) {
+    pil.clear();
+    while (!ds.atEnd()) {
         quintptr ptrval;
         ds >> ptrval;
         auto temp = reinterpret_cast<DB_playItem_t *>(ptrval);
-        pil.list.append(temp);
+        pil.append(temp);
     }
     return ds;
 }

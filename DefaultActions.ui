@@ -142,7 +142,8 @@
       <string>Selection</string>
      </property>
      <property name="icon">
-      <iconset theme="edit-select"/>
+      <iconset theme="edit-select">
+       <normaloff>.</normaloff>.</iconset>
      </property>
      <addaction name="actionSelectionRemove"/>
      <addaction name="actionSelectionCrop"/>
@@ -191,7 +192,8 @@
   </widget>
   <action name="actionAddFolder">
    <property name="icon">
-    <iconset theme="folder-new"/>
+    <iconset theme="folder-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Add folder(s)</string>
@@ -267,7 +269,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="gtk-preferences"/>
+    <iconset theme="gtk-preferences">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Preferences</string>
@@ -364,7 +367,7 @@
   </action>
   <action name="actionClearAll">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="icon">
     <iconset theme="edit-clear">
@@ -379,10 +382,11 @@
   </action>
   <action name="actionSelectAll">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-select-all"/>
+    <iconset theme="edit-select-all">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Select all</string>
@@ -396,7 +400,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-select-none"/>
+    <iconset theme="edit-select-none">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Deselect all</string>
@@ -422,7 +427,8 @@
   </action>
   <action name="actionOpenFiles">
    <property name="icon">
-    <iconset theme="list-add"/>
+    <iconset theme="list-add">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Open file(s)...</string>
@@ -477,7 +483,8 @@
   </action>
   <action name="actionJump_to_current_track">
    <property name="icon">
-    <iconset theme="go-jump"/>
+    <iconset theme="go-jump">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Jump to current track</string>
@@ -488,7 +495,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-select-invert"/>
+    <iconset theme="edit-select-invert">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Invert selection</string>
@@ -496,7 +504,8 @@
   </action>
   <action name="actionSelectionCrop">
    <property name="icon">
-    <iconset theme="transform-crop"/>
+    <iconset theme="transform-crop">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Crop</string>
@@ -504,7 +513,8 @@
   </action>
   <action name="actionSelectionRemove">
    <property name="icon">
-    <iconset theme="edit-delete-remove"/>
+    <iconset theme="edit-delete-remove">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Remove</string>
@@ -512,7 +522,8 @@
   </action>
   <action name="actionSortTitle">
    <property name="icon">
-    <iconset theme="view-media-title"/>
+    <iconset theme="view-media-title">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Title</string>
@@ -520,7 +531,8 @@
   </action>
   <action name="actionSortTrackNumber">
    <property name="icon">
-    <iconset theme="view-media-track"/>
+    <iconset theme="view-media-track">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Track number</string>
@@ -528,7 +540,8 @@
   </action>
   <action name="actionSortArtist">
    <property name="icon">
-    <iconset theme="view-media-artist"/>
+    <iconset theme="view-media-artist">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Artist</string>
@@ -536,7 +549,8 @@
   </action>
   <action name="actionSortAlbum">
    <property name="icon">
-    <iconset theme="view-media-album-cover"/>
+    <iconset theme="view-media-album-cover">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Album</string>
@@ -544,7 +558,8 @@
   </action>
   <action name="actionSortDate">
    <property name="icon">
-    <iconset theme="view-calendar"/>
+    <iconset theme="view-calendar">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Date</string>
@@ -552,7 +567,8 @@
   </action>
   <action name="actionSortRandom">
    <property name="icon">
-    <iconset theme="randomize"/>
+    <iconset theme="randomize">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Random</string>
@@ -560,7 +576,8 @@
   </action>
   <action name="actionSortCustom">
    <property name="icon">
-    <iconset theme="edit-entry"/>
+    <iconset theme="edit-entry">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Custom</string>

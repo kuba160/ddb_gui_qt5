@@ -31,17 +31,16 @@ class PlaylistView : public QTreeView, public DBWidget {
     Q_OBJECT
 
 public:
-    PlaylistView(QWidget *parent = nullptr, DBApi *Api = nullptr);
+    PlaylistView(QWidget *parent = nullptr, DBApi *Api = nullptr, PlayItemModel *pim = nullptr);
     ~PlaylistView();
 
     // cursor
     void restoreCursor();
     void storeCursor();
 
-    void clearPlayList();
     void goToLastSelection();
 
-    void insertByURLAtPosition(const QUrl &url, int position = -1);
+    PlayItemModel *pi_model;
 
 protected:
     void startDrag(Qt::DropActions supportedActions);
@@ -58,13 +57,9 @@ protected:
     // Menu position
     QPoint menu_pos;
 
-signals:
-    // Enter event
-    void enterRelease(QModelIndex);
-
-private:
-    // Header
+    // Header to follow
     QList<PlaylistHeader_t *> headers;
+    //
     QMenu headerContextMenu;
     QList<QAction*> headerActions;
     QMenu *headerGrouping;
@@ -76,19 +71,17 @@ private:
     // Enter event
     bool eventFilter(QObject *obj, QEvent *event);
 
+signals:
+    // Enter event
+    void enterRelease(QModelIndex);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event);
     void dropEvent(QDropEvent *event);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
 
-    PlaylistModel playlistModel;
-
-public slots:;
-    void delSelectedTracks();
 
 protected slots:
-    void trackDoubleClicked(QModelIndex index);
     void headerContextMenuRequested(QPoint);
     void lockColumns(bool);
     void lockPlaylist(bool);

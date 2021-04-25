@@ -224,8 +224,10 @@ void MainWindow::loadConfig() {
         for (int i = 0; i < list.length(); i+=2) {
             QDockWidget *dw1 = findChild<QDockWidget*>(list[i]);
             QDockWidget *dw2 = findChild<QDockWidget*>(list[i+1]);
-            tabifyDockWidget(dw1,dw2);
-            restoreState(state);
+            if (dw1 && dw2) {
+                tabifyDockWidget(dw1,dw2);
+                restoreState(state);
+            }
         }
     }
 

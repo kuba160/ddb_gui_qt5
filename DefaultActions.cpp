@@ -33,6 +33,8 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
             connect(repeat[i],SIGNAL(triggered()),this, SLOT(shuffleRepeatHandler()));
             repeatGroup->addAction(repeat[i]);
         }
+        // swap repeat order
+        {QAction *c = repeat[1]; repeat[1] = repeat[2]; repeat[2] = c;}
         // Restore
         shuffle[DBAPI->streamer_get_shuffle()]->setChecked(true);
         repeat[DBAPI->streamer_get_repeat()]->setChecked(true);
@@ -114,6 +116,8 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
     ui->actionCursorPlayback->setChecked(DBAPI->conf_get_int("playlist.scroll.cursorfollowplayback", true));
     ui->actionStopTrack->setChecked(DBAPI->conf_get_int("playlist.stop_after_current", false));
     ui->actionStopAlbum->setChecked(DBAPI->conf_get_int("playlist.stop_after_album", false));
+    // watch stop track/album
+    connect (api, SIGNAL(trackChanged()), this, SLOT(onTrackChanged()));
 }
 
 QMenuBar *DefaultActions::getDefaultMenuBar() {
@@ -223,6 +227,11 @@ void DefaultActions::onWidgetRemoved(QString name) {
             break;
         }
     }
+}
+
+void DefaultActions::onTrackChanged() {
+    ui->actionStopTrack->setChecked(DBAPI->conf_get_int("playlist.stop_after_current", false));
+    ui->actionStopAlbum->setChecked(DBAPI->conf_get_int("playlist.stop_after_album", false));
 }
 
 
@@ -371,5 +380,20 @@ void DefaultActions::on_actionAddAudioCD_triggered() {
 }
 
 void DefaultActions::on_actionAddURL_triggered() {
-    api->addTracksByUrl(QUrl::fromUserInput(QInputDialog::getText(this, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)), DBAPI->pl_getcount(PL_MAIN) - 1);
+    api->addTracksByUrl(QUrl::fromUserInput(QInputDialog::getText(w, tr("Enter URL..."), tr("URL: "), QLineEdit::Normal)), DBAPI->pl_getcount(PL_MAIN) - 1);
+}
+
+void DefaultActions::on_actionClearAll_triggered(){
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    if(DBAPI->plt_get_item_count(plt,PL_MAIN)) {
+        if(QMessageBox::question(w,tr("Clear Playlist").append('?'),tr("Clear Playlist").append('?')) == QMessageBox::Yes) {
+            api->clearPlaylist(DBAPI->plt_get_curr_idx());
+        }
+    }
+    DBAPI->plt_unref(plt);
+}
+
+void DefaultActions::on_actionSelectAll_triggered() {
+    DBAPI->pl_select_all();
+    emit api->selectionChanged();
 }

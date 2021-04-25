@@ -97,17 +97,8 @@ void MedialibTreeWidget::mouseMoveEvent(QMouseEvent *event) {
     for (int i = 0; i < selectedItems().length(); i++) {
         list.append(static_cast<MedialibTreeWidgetItem *>(selectedItems().at(i))->getTracks());
     }
-    // clone
 
-    QList<DB_playItem_t *> list_copy;
-    DB_playItem_t *it;
-    foreach(it,list) {
-        DB_playItem_t *it_new = DBAPI->pl_item_alloc();
-        DBAPI->pl_item_copy(it_new,it);
-        //DBAPI->pl_item_unref(it_new);
-        list_copy.append(it_new);
-    }
-    QMimeData *mimeData = api->mime_playItems(list_copy);
+    QMimeData *mimeData = api->mime_playItems(list);
     drag->setMimeData(mimeData);
     drag->exec(Qt::MoveAction);
 }
@@ -408,7 +399,6 @@ void Medialib::folderSetupDialogHandler(bool checked) {
     else if (s == browse) {
         QFileDialog dialog(lwidget,tr("Select folder..."),ledit->text().length() ? ledit->text() : "");
         dialog.setFileMode(QFileDialog::Directory);
-        //dialog.setOption(QFileDialog::ShowDirsOnly, false);
 
         if(dialog.exec()) {
             QStringList list = dialog.selectedFiles();

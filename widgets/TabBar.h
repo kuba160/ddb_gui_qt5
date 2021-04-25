@@ -36,7 +36,6 @@ private:
     QAction *left;
     QAction *right;
 
-    void buildTabContextMenu();
     void configure();
     void fillTabs();
     void selectLastTab();

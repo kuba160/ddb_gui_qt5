@@ -23,7 +23,13 @@
 
 // DBApi version
 #define DBAPI_VMAJOR 0
-#define DBAPI_VMINOR 2
+#define DBAPI_VMINOR 3
+
+typedef QList<DB_playItem_t *> playItemList;
+
+QDataStream &operator<<(QDataStream &ds, const playItemList &pil);
+QDataStream &operator>>(QDataStream &ds, playItemList &pil);
+
 
 class DBApi : public QObject {
     Q_OBJECT
@@ -75,6 +81,7 @@ public:
     // Mimedata
 
     QMimeData *mime_playItems(QList<DB_playItem_t *> playItems);
+    QMimeData *mime_playItemsCopy(QList<DB_playItem_t *> playItems);
     QList<DB_playItem_t *> mime_playItems(const QMimeData *playItems);
     QList<DB_playItem_t *> mime_playItemsCopy(const QMimeData *playItems);
     // Settings
@@ -83,6 +90,7 @@ public:
 
     // Clipboard access
     QClipboard *clipboard;
+    void clearClipboard();
     
     // Translate
     const char *_(const char *);
@@ -92,6 +100,7 @@ signals:
     void volumeChanged(float);
     // Playback
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
+    void trackChanged();
     void playbackPaused();
     void playbackUnPaused();
     void playbackStarted();
@@ -115,6 +124,7 @@ signals:
     void queueChanged();
     // Specific actions triggered by user
     void jumpToCurrentTrack();
+    void selectionChanged();
 
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
@@ -136,7 +146,11 @@ public slots:
     void renamePlaylist(int plt, const QString *name);
     void renamePlaylist(int plt); // Dialog
     void removePlaylist(int plt);
+    void clearPlaylist(int plt);
     void loadPlaylist(const QString &fname);
+    // use if playItems are on same playlist
+    void removeTracks(playItemList list);
+
     // Shuffle/Repeat
     void setShuffle(ddb_shuffle_t);
     void setRepeat(ddb_repeat_t);
@@ -196,9 +210,21 @@ public:
 
 class DBWidget {
 public:
-    DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr);
-    ~DBWidget();
-    //
+    DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr) {
+        if (api_a == nullptr) {
+            qDebug() << "Widget (" << parent <<") initialized without api pointer!";
+        }
+        api = api_a;
+        if (parent) {
+            _internalNameWidget = parent->property("internalName").toString();
+        }
+        if (api_a->DBApi_vmajor > DBAPI_VMAJOR || api_a->DBApi_vminor > DBAPI_VMINOR) {
+            qDebug() << "WARNING:" << _internalNameWidget <<
+                        QString("plugin version older than api! (%1.%2 < %3.%4)")
+                        .arg(DBAPI_VMAJOR) .arg(DBAPI_VMINOR)
+                        .arg(api_a->DBApi_vmajor) .arg(api_a->DBApi_vminor) << ENDL;
+        }
+    }
     DBApi *api;
     QString _internalNameWidget;
 };
@@ -207,15 +233,6 @@ typedef struct DB_qtgui_s {
     DB_gui_t gui;
     int (*register_widget) (DBWidgetInfo *);
 } DB_qtgui_t;
-
-class playItemList {
-public:
-    qint32 count;
-    QList<DB_playItem_t *> list;
-};
-
-QDataStream &operator<<(QDataStream &ds, const playItemList &pil);
-QDataStream &operator>>(QDataStream &ds, playItemList &pil);
 
 /// Macros to be used in DBWidget
 // Pointer to deadbeef functions

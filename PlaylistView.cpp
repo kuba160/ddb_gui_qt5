@@ -68,7 +68,8 @@ bool AutoToolTipDelegate::helpEvent(QHelpEvent* e, QAbstractItemView* view, cons
     return QStyledItemDelegate::helpEvent(e, view, option, index);
 }
 
-PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBWidget(parent, Api), playlistModel(this, Api) {
+PlaylistView::PlaylistView(QWidget *parent, DBApi *Api, PlayItemModel *pim) : QTreeView(parent),
+                                                                              DBWidget(parent, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setDragEnabled(true);
@@ -89,7 +90,6 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     setAcceptDrops(true);
     setDropIndicatorShown(true);
     setDragDropMode(QAbstractItemView::DragDrop);
-    setModel(&playlistModel);
     setStyle(new myViewStyle);
     setItemDelegate(new AutoToolTipDelegate(this));
 
@@ -105,7 +105,7 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     setContextMenuPolicy(Qt::CustomContextMenu);
     QAction *delTrack = new QAction(tr("Remove Track(s) From Playlist"), this);
     delTrack->setShortcut(Qt::Key_Delete);
-    connect(delTrack, SIGNAL(triggered()), this, SLOT(delSelectedTracks()));
+    //connect(delTrack, SIGNAL(triggered()), this, SLOT(delSelectedTracks()));
     addAction(delTrack);
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
 
@@ -113,6 +113,28 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
     bool locked = api->confGetValue(_internalNameWidget,"HeadersLocked", false).toBool();
     header()->setSectionResizeMode(locked ? QHeaderView::Fixed : QHeaderView::Interactive);
     header()->setSectionsMovable(!locked);
+
+    // Restore Header
+    QByteArray ar = api->confGetValue(_internalNameWidget,"HeaderData",QVariant()).toByteArray();
+    QDataStream ds(ar);
+
+    setModel(pim);
+    pi_model = pim;
+    // restore header
+    while (!ds.atEnd()) {
+        PlaylistHeader_t *ptr = new PlaylistHeader_t;
+        headers.append(ptr);
+        ds >> *ptr;
+    }
+    pi_model->setColumns(&headers);
+    if (!headers.length()) {
+        headers = *PlayItemModel::defaultHeaders();
+    }
+
+    QByteArray data = Api->confGetValue(_internalNameWidget,"HeaderState",QByteArray()).toByteArray();
+    if (data != QByteArray()) {
+        header()->restoreState(data);
+    }
 
     // Header Menu
     headerActions.append(new QAction(tr("Add column"),&headerContextMenu));
@@ -149,24 +171,6 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api) : QTreeView(parent), DBW
 
     // Event filter for enter
     installEventFilter(this);
-
-    // Restore Header
-    QByteArray ar = api->confGetValue(_internalNameWidget,"HeaderData",QVariant()).toByteArray();
-    QDataStream ds(ar);
-    while (!ds.atEnd()) {
-        PlaylistHeader_t *ptr = new PlaylistHeader_t;
-        headers.append(ptr);
-        ds >> *ptr;
-    }
-    if (headers.length())
-        playlistModel.setColumns(headers);
-    else {
-        headers = *playlistModel.setDefaultHeaders();
-    }
-    QByteArray data = Api->confGetValue(_internalNameWidget,"HeaderState",QByteArray()).toByteArray();
-    if (data != QByteArray()) {
-        header()->restoreState(data);
-    }
 
     // Actions provider
     QActionGroup *ag = new QActionGroup(this);
@@ -213,20 +217,11 @@ PlaylistView::~PlaylistView() {
     // maybe free headers?
 }
 
-void PlaylistView::goToLastSelection() {
-    ddb_playlist_t *plt = playlistModel.getPlaylist();
-    int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
-    if (cursor < 0)
-        restoreCursor();
-    else
-        setCurrentIndex(playlistModel.index(cursor, 0, QModelIndex()));
-    DBAPI->plt_unref(plt);
-}
-
 void PlaylistView::restoreCursor() {
     // TODO
     //int currentPlaylist = DBAPI->plt_get_curr_idx();
     //int cursor = DBAPI->conf_get_int(QString("playlist.cursor.%1").arg(currentPlaylist).toUtf8().constData(), -1);
+    //setCurrentIndex()
     //setCurrentIndex(playlistModel.index(cursor, 0, QModelIndex()));
 }
 
@@ -243,25 +238,22 @@ void PlaylistView::onCut() {
     onCopy();
     QModelIndexList qmil = selectionModel()->selectedRows();
     if (qmil.length()) {
-        playlistModel.deleteTracks(qmil);
+        api->clearClipboard();
+        playItemList l = pi_model->tracks(qmil);
+        api->clipboard->setMimeData(api->mime_playItemsCopy(l));
+        api->removeTracks(l);
     }
 }
 
 
 void PlaylistView::onCopy() {
-    //
-    QList<DB_playItem_t *> list;
     QModelIndexList qmil = selectionModel()->selectedRows();
     if (qmil.length() == 0) {
         return;
     }
-    int i;
-    for (i = 0; i < qmil.length(); i++) {
-        DB_playItem_t *it = DBAPI->plt_get_item_for_idx(playlistModel.getPlaylist(), qmil[i].row(), PL_MAIN);
-        list.append(it);
-        DBAPI->pl_item_unref(it); // :(
-    }
-    api->clipboard->setMimeData(api->mime_playItems(list));
+    api->clearClipboard();
+    playItemList l = pi_model->tracks(qmil);
+    api->clipboard->setMimeData(api->mime_playItems(l));
 }
 
 
@@ -277,19 +269,24 @@ void PlaylistView::onPaste() {
 
 void PlaylistView::onDelete() {
     // TODO confirmation?
-    playlistModel.deleteTracks(selectionModel()->selectedRows());
+    QList<int> l;
+    foreach(QModelIndex i, selectedIndexes()) {
+        if (!l.contains(i.row())) {
+            l.append(i.row());
+        }
+    }
+    pi_model->removeIndexes(l);
 }
 
 void PlaylistView::startDrag(Qt::DropActions supportedActions) {
     QDrag* drag = new QDrag(this);
     QMimeData* mimeData = model()->mimeData(selectedIndexes());
     drag->setMimeData(mimeData);
-    drag->exec(Qt::MoveAction);
+    drag->exec(supportedActions);
     return;
 }
 
 void PlaylistView::dragMoveEvent(QDragMoveEvent* event) {
-
     QAbstractItemView::dragMoveEvent(event);
     QAbstractItemView::setDropIndicatorShown(true);
 }
@@ -306,72 +303,43 @@ void PlaylistView::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void PlaylistView::dropEvent(QDropEvent *event) {
-    if (event->mimeData()->hasUrls()) {
-        // TODO Deprecate this
-        ddb_playlist_t *plt = playlistModel.getPlaylist();
-        int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
-        DBAPI->plt_unref(plt);
-        int row = indexAt(event->pos()).row();
-        int before = (row >= 0) ? row - 1 : count - 1;
-        foreach (QUrl url, event->mimeData()->urls()) {
-            playlistModel.insertByURLAtPosition(url, before);
-            before++;
-        }
-        event->setDropAction(Qt::CopyAction);
-        event->accept();
-    } else if (event->mimeData()->hasFormat("playlist/track")) {
-        // TODO Deprecate this
-        int row = indexAt(event->pos()).row();
-        ddb_playlist_t *plt = playlistModel.getPlaylist();
-        int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
-        DBAPI->plt_unref(plt);
-        row = (row >= 0) ? row : count;
-        QByteArray encodedData = event->mimeData()->data("playlist/track");
-        QDataStream stream(&encodedData, QIODevice::ReadOnly);
-        QHash<int,QString> newItems;
-        while (!stream.atEnd()) {
-            int row;
-            QString text;
-            stream >> row >> text;
-            newItems[row] = text;
-        }
-        QList<int> rows = newItems.keys();
-        std::sort(rows.begin(),rows.end());
-        playlistModel.moveItems(rows, row);
-        event->setDropAction(Qt::CopyAction);
-        event->accept();
-    } else if (event->mimeData()->hasFormat("deadbeef/playitems")) {
-        QList<DB_playItem_t *>list = api->mime_playItemsCopy(event->mimeData());
+    if (event->mimeData()->hasFormat("deadbeef/playitems")) {
         int row = indexAt(event->pos()).row();
         // Adjust position based on indicator
-        if(row != -1 && dropIndicatorPosition() == QAbstractItemView::BelowItem) {
-            row++;
+        if (row == -1) {
+            row = -2;
+        }
+        if(row != -1 && dropIndicatorPosition() == QAbstractItemView::AboveItem) {
+            row--;
         }
         if (event->source() == this) {
             // Move items inside
+            QList<DB_playItem_t *>list = api->mime_playItems(event->mimeData());
             QList<int> rows;
-            int i;
-            for (i = 0; i < list.length(); i++) {
+            for (int i = 0; i < list.length(); i++) {
                 rows.append(DBAPI->pl_get_idx_of(list[i]));
             }
-            playlistModel.moveItems(rows,row);
-
+            pi_model->moveIndexes(rows,row);
         }
         else {
             // Insert foreign items
-            if (row == -1) {
-                row = model()->rowCount() - 1;
+            QList<DB_playItem_t *>list;
+            if (_internalNameWidget == "queuemanager") {
+                // hack
+                list = api->mime_playItems(event->mimeData());
             }
-            int i;
-            for (i = 0; i < list.length(); i++) {
-                qDebug() << "Inserting item" << list.at(i) << "at" << row;
-                playlistModel.insertByPlayItemAtPosition(list.at(i),row++);
-                //DBAPI->pl_item_ref(list.at(i));
+            else {
+                list = api->mime_playItemsCopy(event->mimeData());
             }
-            event->setDropAction(Qt::CopyAction);
-            event->accept();
+            pi_model->insertTracks(&list,row);
+            foreach(DB_playItem_t *it,list) {
+                DBAPI->pl_item_unref(it);
+            }
         }
-    } else {
+        event->setDropAction(Qt::CopyAction);
+        event->accept();
+    }
+    else {
         event->ignore();
     }
 }
@@ -379,74 +347,45 @@ void PlaylistView::dropEvent(QDropEvent *event) {
 void PlaylistView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
     if (selected == deselected)
         return;
-    ddb_playlist_t *plt = playlistModel.getPlaylist();
-    DBAPI->plt_set_cursor(plt, PL_MAIN, selected.indexes().count() == 0 ? -1 : selected.indexes().last().row());
-    DBAPI->plt_unref(plt);
+    //TODO
+    //ddb_playlist_t *plt = playlistModel.getPlaylist();
+    //DBAPI->plt_set_cursor(plt, PL_MAIN, selected.indexes().count() == 0 ? -1 : selected.indexes().last().row());
+    //DBAPI->plt_unref(plt);
     storeCursor();
 
     QTreeView::selectionChanged(selected, deselected);
 }
 
-void PlaylistView::trackDoubleClicked(QModelIndex index) {
-    if (index.isValid()) {
-        api->playTrackByIndex(index.row());
-    }
-}
+
 
 void PlaylistView::showContextMenu(QPoint point) {
-    if (indexAt(point).row() < 0) {
-        setProperty("playItemsSelected", 0);
-    }
-    else {
-        // TODO adjust?
-        setProperty("playItemsSelected", 2);
-    }
+    QModelIndexList selection = selectedIndexes();
+    playItemList l = pi_model->tracks(selection);
+    setProperty("playItemsSelected", l.length());
 
     // update actions
-    if(api->clipboard->mimeData()->hasFormat("deadbeef/playitems")) {
-        // enable paste
-        paste->setEnabled(true);
-    }
-    else {
-        paste->setEnabled(false);
-    }
+    bool hasTracks = l.length();
 
-    if (selectedIndexes().length() == 0) {
-        add_to_playback_queue->setEnabled(false);
-        remove_from_playback_queue->setEnabled(false);
-        cut->setEnabled(false);
-        copy->setEnabled(false);
-        delete_action->setEnabled(false);
-    }
-    else {
-        add_to_playback_queue->setEnabled(true);
-        remove_from_playback_queue->setEnabled(false);
-        // check if selection is in queue
-        if (!this->property("queue_remove_always_enabled").toBool()) {
-            QSet<int> rows;
-            for (int i = 0; i < selectedIndexes().length(); i++) {
-                int row = selectedIndexes().at(i).row();
-                if (!rows.contains(row)) {
-                    DB_playItem_t *it = DBAPI->plt_get_item_for_idx(playlistModel.getPlaylist(), selectedIndexes().at(i).row(), PL_MAIN);
-                    if (it) {
-                        if (DBAPI->playqueue_test(it) != -1) {
-                            remove_from_playback_queue->setEnabled(true);
-                            break;
-                        }
-                        DBAPI->pl_item_unref(it);
-                    }
-                    rows.insert(row);
-                }
+    add_to_playback_queue->setEnabled(hasTracks);
+    remove_from_playback_queue->setEnabled(false);
+    cut->setEnabled(hasTracks);
+    copy->setEnabled(hasTracks);
+    paste->setEnabled(api->clipboard->mimeData()->hasFormat("deadbeef/playitems"));
+    delete_action->setEnabled(hasTracks);
+
+    // remove from playback check
+    if (!this->property("queue_remove_always_enabled").toBool()) {
+        foreach (DB_playItem_t *it, l) {
+            if(DBAPI->playqueue_test(it) != -1) {
+                remove_from_playback_queue->setEnabled(true);
+                break;
             }
         }
-        else {
-            remove_from_playback_queue->setEnabled(true);
-        }
-        cut->setEnabled(true);
-        copy->setEnabled(true);
-        delete_action->setEnabled(true);
     }
 
+    foreach(DB_playItem_t *it, l) {
+        DBAPI->pl_item_unref(it);
+    }
     menu_pos = point;
     api->playItemContextMenu(this, viewport()->mapTo(this,point));
 }
@@ -464,7 +403,7 @@ void PlaylistView::lockColumns(bool locked) {
 }
 
 void PlaylistView::lockPlaylist(bool locked) {
-    playlistModel.setPlaylistLock(locked);
+    pi_model->setPlaylistLock(locked);
 }
 
 void PlaylistView::onTrackChanged(DB_playItem_t *from, DB_playItem_t *to) {
@@ -472,18 +411,6 @@ void PlaylistView::onTrackChanged(DB_playItem_t *from, DB_playItem_t *to) {
     Q_UNUSED(from)
     Q_UNUSED(to)
 
-}
-
-void PlaylistView::delSelectedTracks() {
-    playlistModel.deleteTracks(selectionModel()->selectedRows());
-}
-
-void PlaylistView::clearPlayList() {
-    playlistModel.clearPlayList();
-}
-
-void PlaylistView::insertByURLAtPosition(const QUrl& url, int position) {
-    playlistModel.insertByURLAtPosition(url, position);
 }
 
 void PlaylistView::saveHeaderState() {
@@ -513,58 +440,42 @@ void PlaylistView::headerDialogEdit(bool) {
 }
 void PlaylistView::headerDialogRemove(bool) {
     headers.removeAt(headerMenu_pos);
-    playlistModel.setColumns(headers);
+    pi_model->removeColumn(headerMenu_pos);
 }
 
-void PlaylistView::headerAdd(int n,PlaylistHeader_t *ph) {
-    headers.insert(n+1,ph);
-    playlistModel.setColumns(headers);
+void PlaylistView::headerAdd(int before,PlaylistHeader_t *ph) {
+    if (before == -1) {
+        headers.append(ph);
+    }
+    else {
+        headers.insert(before+1,ph);
+    }
+    pi_model->addColumn(ph, before);
     saveHeaderState();
 }
 void PlaylistView::headerEdit(int n,PlaylistHeader_t *ph) {
     PlaylistHeader_t *old_ph = headers.at(n);
-    if (old_ph->format != ph->format) {
+    if (old_ph->format != ph->format || old_ph->title != ph->title) {
         // update format if changed
-        char *tf_comp = ph->_format_compiled;
-        old_ph->format = ph->format;
-        ph->_format_compiled = nullptr;
-        DBAPI->tf_free(tf_comp);
-        ph->_format_compiled = nullptr;
+        headers.replace(n,ph);
+        pi_model->replaceColumn(n,ph);
     }
-    headers.replace(n,ph);
-    delete old_ph;
-    playlistModel.setColumns(headers);
     saveHeaderState();
 }
 
 void PlaylistView::onAddToPlaybackQueue() {
-    QModelIndexList indexes = this->selectedIndexes();
-    QSet<int> rows;
-    for (int i = 0; i < indexes.length(); i++) {
-        int row = indexes.at(i).row();
-        if (!rows.contains(row)) {
-            DB_playItem_t *it = DBAPI->plt_get_item_for_idx(playlistModel.getPlaylist(), row, PL_MAIN);
-            if (it) {
-                DBAPI->playqueue_push(it);
-                DBAPI->pl_item_unref(it);
-            }
-            rows.insert(row);
-        }
+    playItemList l = pi_model->tracks(selectedIndexes());
+    foreach(DB_playItem_t *it, l) {
+        DBAPI->playqueue_push(it);
+        DBAPI->pl_item_unref(it);
+
     }
 }
 void PlaylistView::onRemoveFromPlaybackQueue() {
-    QModelIndexList indexes = this->selectedIndexes();
-    QSet<int> rows;
-    for (int i = 0; i < indexes.length(); i++) {
-        int row = indexes.at(i).row();
-        if (!rows.contains(row)) {
-            DB_playItem_t *it = DBAPI->plt_get_item_for_idx(playlistModel.getPlaylist(), row, PL_MAIN);
-            if (it) {
-                DBAPI->playqueue_remove(it);
-                DBAPI->pl_item_unref(it);
-            }
-            rows.insert(row);
-        }
+    playItemList l = pi_model->tracks(selectedIndexes());
+    foreach(DB_playItem_t *it, l) {
+        DBAPI->playqueue_remove(it);
+        DBAPI->pl_item_unref(it);
     }
 }
 
@@ -576,7 +487,9 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
 
     if (header) {
         h = new PlaylistHeader_t;
-        *h = *header;
+        h->title = header->title.isEmpty() ? PlayItemModel::titleFromHeaderType((headerType) header->type)
+                                           : QString(header->title);
+        h->type = header->type;
         editting = 1;
         setWindowTitle(tr("Edit column"));
     }
@@ -591,9 +504,12 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
     this->setLayout(&layout);
     layout.addRow(tr("Title:"), &title);
     layout.addRow(tr("Type:"), &type);
-    QStringList items = {tr("Item Index"), tr("Playing"), tr("Album Art"), tr("Artist - Album"),
-                         tr("Artist"), tr("Album"), tr("Title"), tr("Year"), tr("Duration"), tr("Track Number"),
-                         tr("Band / Album Artist"), tr("Codec"), tr("Bitrate"), tr("Custom")};
+    QStringList items;
+    {
+        headerType t = headerType::HT_empty;
+        while (t < HT_END)
+            items.append(PlayItemModel::titleFromHeaderType(t));
+    }
     type.addItems(items);
     //format.setEnabled(false);
     format_parent.setLayout(&format_layout);

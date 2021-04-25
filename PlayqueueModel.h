@@ -1,23 +1,20 @@
-#ifndef PLAYLISTMODEL_H
-#define PLAYLISTMODEL_H
+#ifndef PLAYQUEUEMODEL_H
+#define PLAYQUEUEMODEL_H
 
 #include <QAbstractItemModel>
-#include <QIcon>
 #include <QMimeData>
 
 #include "DBApi.h"
 #include "PlayItemModel.h"
 
-class PlaylistModel : public PlayItemModel {
+class PlayqueueModel : public PlayItemModel {
     Q_OBJECT
-    
+
 public:
-    PlaylistModel(QObject *parent = nullptr, DBApi *Api = nullptr);
-    PlaylistModel(ddb_playlist_t *plt, QObject *parent = nullptr, DBApi *Api = nullptr);
-    ~PlaylistModel();
+    PlayqueueModel(QObject *parent = nullptr, DBApi *Api = nullptr);
+    ~PlayqueueModel();
 
     // playlist manipulation
-    void setPlaylist(ddb_playlist_t *plt);
     void insertTracks(playItemList *l, int after);
     void moveIndexes(QList<int> indices, int after);
     void removeIndexes(QList<int> indices);
@@ -27,15 +24,11 @@ public:
     DB_playItem_t *track(const QModelIndex &track) const;
 protected:
     int rowCount(const QModelIndex &parent) const;
-    int trackCount() const;
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
 
-private:
-    ddb_playlist_t *plt = nullptr;
-
-private slots:
-    void onPlaylistContentChanged(ddb_playlist_t *plt);
+    ddb_playlist_t *plt;
+protected slots:
+    void onQueueChanged();
 };
 
-
-#endif // PLAYLISTMODEL_H
+#endif // PLAYQUEUEMODEL_H

@@ -24,6 +24,8 @@ SOURCES  =  \
             DefaultActions.cpp \
             DefaultPlugins.cpp \
             MainWindow.cpp \
+            PlayItemModel.cpp \
+            PlayqueueModel.cpp \
             PlaylistModel.cpp \
             PlaylistView.cpp \
             PluginLoader.cpp \
@@ -51,9 +53,11 @@ HEADERS =   widgets/CoverArt.h \
             DefaultActions.h \
             DefaultPlugins.h \
             MainWindow.h \
-            PluginLoader.h \
+            PlayItemModel.h \
+            PlayqueueModel.h \
             PlaylistModel.h \
             PlaylistView.h \
+            PluginLoader.h \
             QtGui.h \
             QtGuiSettings.h \
             SystemTrayIcon.h

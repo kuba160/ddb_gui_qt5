@@ -52,6 +52,7 @@ DBApi *api = nullptr;
 PluginLoader *pl = nullptr;
 MainWindow *w = nullptr;
 DeadbeefTranslator *tr = nullptr;
+QApplication *app = nullptr;
 
 static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     return api->pluginMessage(id, ctx, p1, p2);
@@ -65,7 +66,7 @@ static int initializeApi() {
         if (!pl) {
             pl = new PluginLoader();
         }
-        api = new DBApi(nullptr, deadbeef_internal);
+        api = new DBApi(app, deadbeef_internal);
         plugin.plugin.message = pluginMessage_wrapper;
     }
     return 0;
@@ -102,11 +103,11 @@ static int pluginStart() {
     char argv0[] = "a.out";
     char *argv[] = {argv0, nullptr};
     int argc = sizeof(argv) / sizeof(char*) - 1;
-    QApplication app(argc, argv);
+    app = new QApplication(argc, argv);
     QApplication::setOrganizationName("deadbeef");
     QApplication::setApplicationName("DeaDBeeF");
-    dbtr = new DeadbeefTranslator(&app);
-    app.installTranslator(dbtr);
+    dbtr = new DeadbeefTranslator(app);
+    app->installTranslator(dbtr);
 
     //QApplication::setStyle(QStyleFactory::create("breeze"));
 
@@ -131,12 +132,13 @@ static int pluginStart() {
     // initialize window
     w = new MainWindow(nullptr, api);
     w->show();
-    app.exec();
+    app->exec();
 
     // shutdown
     delete w;
     delete api;
     delete pl;
+    delete app;
 
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     return 0;
