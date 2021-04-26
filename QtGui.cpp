@@ -63,10 +63,40 @@ static int initializeApi() {
         while (!deadbeef_internal) {
             usleep(10000);
         }
+
+        // provide dummy args for QApplication
+        char argv0[] = "a.out";
+        char *argv[] = {argv0, nullptr};
+        int argc = sizeof(argv) / sizeof(char*) - 1;
+        app = new QApplication(argc, argv);
+        QApplication::setOrganizationName("deadbeef");
+        QApplication::setApplicationName("DeaDBeeF");
+        dbtr = new DeadbeefTranslator(app);
+        app->installTranslator(dbtr);
+
+        //QApplication::setStyle(QStyleFactory::create("breeze"));
+
+    #ifdef __MINGW32__
+        QStringList theme_search_paths = QIcon::themeSearchPaths();
+        theme_search_paths.append("./share/icons");
+        QIcon::setThemeSearchPaths(theme_search_paths);
+        qDebug() << QIcon::themeSearchPaths();
+        //QIcon::setThemeName("Windows-10-Icons");
+        QIcon::setThemeName("Adwaita");
+    #endif
+
+        // setup settings
+        QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG), "qt5");
+        QtGuiSettings::setDefaultFormat(QSettings::IniFormat);
+        QtGuiSettings::setPath(QSettings::IniFormat, QSettings::UserScope, file);
+
+
         if (!pl) {
             pl = new PluginLoader();
         }
         api = new DBApi(app, deadbeef_internal);
+        // initialize window
+        w = new MainWindow(nullptr, api);
         plugin.plugin.message = pluginMessage_wrapper;
     }
     return 0;
@@ -92,45 +122,17 @@ static int pluginConnect() {
 }
 
 static int registerWidget (DBWidgetInfo *info) {
-    initializePluginLoader();
+    initializeApi();
     pl->widgetLibraryAppend(info);
     return 0;
 }
 
 
 static int pluginStart() {
-    // provide dummy args for QApplication
-    char argv0[] = "a.out";
-    char *argv[] = {argv0, nullptr};
-    int argc = sizeof(argv) / sizeof(char*) - 1;
-    app = new QApplication(argc, argv);
-    QApplication::setOrganizationName("deadbeef");
-    QApplication::setApplicationName("DeaDBeeF");
-    dbtr = new DeadbeefTranslator(app);
-    app->installTranslator(dbtr);
-
-    //QApplication::setStyle(QStyleFactory::create("breeze"));
-
-#ifdef __MINGW32__
-    QStringList theme_search_paths = QIcon::themeSearchPaths();
-    theme_search_paths.append("./share/icons");
-    QIcon::setThemeSearchPaths(theme_search_paths);
-    qDebug() << QIcon::themeSearchPaths();
-    //QIcon::setThemeName("Windows-10-Icons");
-    QIcon::setThemeName("Adwaita");
-#endif
-
-    // setup settings
-    QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG), "qt5");
-    QtGuiSettings::setDefaultFormat(QSettings::IniFormat);
-    QtGuiSettings::setPath(QSettings::IniFormat, QSettings::UserScope, file);
-
     initializeApi();
 
-    initializePluginLoader();
 
-    // initialize window
-    w = new MainWindow(nullptr, api);
+    w->loadConfig();
     w->show();
     app->exec();
 

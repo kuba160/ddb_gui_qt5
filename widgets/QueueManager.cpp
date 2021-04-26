@@ -1,9 +1,6 @@
 #include "QueueManager.h"
 
 QueueManager::QueueManager(QWidget *parent, DBApi *Api) : PlaylistView(parent,Api, new PlayqueueModel(Api,Api)) {
-    // Subscribe for queue change
-    connect(api,SIGNAL(queueChanged()),this, SLOT(onQueueChanged()));
-
     // properties ... not the most elegant way
     pi_model->setProperty("queue_remove_always_enabled",true);
     setProperty("pluginActionsDisabled", true);

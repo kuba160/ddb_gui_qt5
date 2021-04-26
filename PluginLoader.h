@@ -117,7 +117,7 @@ signals:
     //
     void widgetAdded(int num);
     void widgetRemoved(QString);
-    void widgetLibraryAdded(int num);
+    void widgetLibraryAdded(DBWidgetInfo i);
 };
 
 //}

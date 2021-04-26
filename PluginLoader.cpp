@@ -158,8 +158,12 @@ PluginLoader::~PluginLoader() {
 // widgetLibrary
 
 void PluginLoader::widgetLibraryAppend(DBWidgetInfo *wi) {
-    if (wi)
-        widgetLibrary.append(wi);
+    if (wi) {
+        DBWidgetInfo *clone = new DBWidgetInfo(*wi);
+        qDebug() << "qt5: PluginLoader:" << clone->internalName << "added to widgetLibrary";
+        widgetLibrary.append(clone);
+        emit widgetLibraryAdded(*clone);
+    }
 }
 
 DBWidgetInfo* PluginLoader::widgetLibraryGet(const QString name) {
@@ -244,7 +248,7 @@ void PluginLoader::RestoreWidgets(QMainWindow *parent) {
             loadFromWidgetLibrary(num);
         }
         else {
-            qDebug() << "qt5: PluginLoader: requested to load plugin" + slist.at(i) + "but it is missing from widget library!";
+            qDebug() << "qt5: PluginLoader: requested to load plugin " + slist.at(i) + " but it is missing from widget library!";
         }
     }
 }

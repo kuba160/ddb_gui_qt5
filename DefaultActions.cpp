@@ -68,6 +68,7 @@ DefaultActions::DefaultActions(DBApi *Api, QWidget *parent) : QWidget(parent), D
             new_plugins->addAction(acts_map.value(act));
         }
         // subscribe for future actions
+        connect (pl, SIGNAL(widgetLibraryAdded(DBWidgetInfo)), this, SLOT(onWidgetLibraryAdded(DBWidgetInfo)));
         connect (pl, SIGNAL(widgetAdded(int)), this, SLOT(onWidgetAdded(int)));
     }
 
@@ -227,6 +228,29 @@ void DefaultActions::onWidgetRemoved(QString name) {
             break;
         }
     }
+}
+
+void DefaultActions::onWidgetLibraryAdded(DBWidgetInfo i) {
+
+    // fix sorting
+    /*
+    QList<QAction*> acts = new_plugins.actions();
+    QList<DBWidgetInfo*> wilist = pl->getWidgetLibrary();
+    QHash<QString, QAction*> acts_map;
+    QStringList acts;
+    int i;
+    foreach (DBWidgetInfo *wi, wilist) {
+
+        if (new_widget.friendlyName >)
+        acts_map.insert(wi->friendlyName, a);
+        acts.append(wi->friendlyName);
+    }
+    acts.sort();
+    */
+    QAction *a = new QAction(i.friendlyName, new_plugins);
+    a->setProperty("internalName", i.internalName);
+    connect (a, SIGNAL(triggered()), this, SLOT(onWidgetAdd()));
+    new_plugins->addAction(a);
 }
 
 void DefaultActions::onTrackChanged() {

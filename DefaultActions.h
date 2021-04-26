@@ -41,6 +41,7 @@ public slots:
     // on new/removed widget
     void onWidgetAdded(int num);
     void onWidgetRemoved(QString internalName);
+    void onWidgetLibraryAdded(DBWidgetInfo i);
 
     void onTrackChanged();
 

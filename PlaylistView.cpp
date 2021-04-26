@@ -506,9 +506,11 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
     layout.addRow(tr("Type:"), &type);
     QStringList items;
     {
-        headerType t = headerType::HT_empty;
-        while (t < HT_END)
-            items.append(PlayItemModel::titleFromHeaderType(t));
+        int t = headerType::HT_itemIndex;
+        while (t < HT_END){
+            items.append(PlayItemModel::titleFromHeaderType((headerType) t));
+            t++;
+        }
     }
     type.addItems(items);
     //format.setEnabled(false);

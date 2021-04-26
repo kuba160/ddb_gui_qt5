@@ -105,6 +105,7 @@ QImage * thread_getCoverArt(QString fname, QString artist, QString album) {
         usleep(100000);
         while (!cac->cache.value(album)) {
             // TODO, what if callback gets never called? :(
+            return nullptr;
             usleep(500000);
         }
     }

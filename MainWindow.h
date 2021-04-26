@@ -26,12 +26,13 @@ public:
 
     DBApi *Api();
 
+    void loadConfig();
 protected:
     void closeEvent(QCloseEvent *);
 
 private:
     QMenuBar *mainMenu;
-    void loadConfig();
+
     void saveConfig();
     
     ActionOnClose actionOnClose;

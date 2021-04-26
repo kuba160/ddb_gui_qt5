@@ -34,14 +34,11 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     connect(api, SIGNAL(deadbeefActivated()), this, SLOT(on_deadbeefActivated()));
 
 
-    pl->RestoreWidgets(this);
-
     setWindowIcon(QIcon(":/root/images/deadbeef.png"));
 
     connect(&title_updater, SIGNAL(timeout()), this, SLOT(updateTitle()));
     title_updater.start(1000);
 
-    loadConfig();
     updateTitle();
 }
 
@@ -209,6 +206,8 @@ void MainWindow::configureActionOnClose(bool minimizeOnClose, bool hideTrayIcon)
 // config
 
 void MainWindow::loadConfig() {
+    pl->RestoreWidgets(this);
+
     QSize size       = SETTINGS->getValue("MainWindow", "WindowSize", QSize(640, 480)).toSize();
     QPoint point     = SETTINGS->getValue("MainWindow", "WindowPosition", QPoint(0, 0)).toPoint();
     QByteArray state = SETTINGS->getValue("MainWindow", "WindowState", QByteArray()).toByteArray();
