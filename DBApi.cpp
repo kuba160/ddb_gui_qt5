@@ -111,6 +111,7 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             break;
         case DB_EV_VOLUMECHANGED:
             emit volumeChanged(getVolume());
+            emit volumeChanged((int) getVolume());
             break;
         case DB_EV_PLAY_NUM:
         case DB_EV_PLAY_CURRENT:
@@ -300,6 +301,10 @@ void DBApi::setVolume(float value) {
     DBAPI->volume_set_db(value);
 }
 
+void DBApi::setVolume(int value) {
+    DBAPI->volume_set_db(value);
+}
+
 void DBApi::playTrackByIndex(uint32_t index) {
     DBAPI->sendmessage(DB_EV_PLAY_NUM, 0, index, 0);
 }
@@ -455,6 +460,11 @@ QFuture<QImage *> DBApi::loadCoverArt(DB_playItem_t *p) {
 
 QImage * DBApi::getDefaultCoverArt() {
     return CAC->getDefaultCoverArt();
+}
+
+void DBApi::coverArt_ref(QImage *) {
+    // TODO
+    return;
 }
 
 void DBApi::coverArt_unref(QImage *) {

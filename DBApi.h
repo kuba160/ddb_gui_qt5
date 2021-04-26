@@ -23,7 +23,7 @@
 
 // DBApi version
 #define DBAPI_VMAJOR 0
-#define DBAPI_VMINOR 3
+#define DBAPI_VMINOR 4
 
 typedef QList<DB_playItem_t *> playItemList;
 
@@ -52,12 +52,13 @@ public:
     QFuture<QImage *> loadCoverArt(DB_playItem_t *);
     QImage *getDefaultCoverArt();
     // Call after you are done with cover (not if used signal cover)
+    void coverArt_ref(QImage *);
     void coverArt_unref(QImage *);
 
     // Misc functions
     bool isPaused();
     void addTracksByUrl(const QUrl &url, int position = -1);
-    float getVolume();
+
     ddb_playback_state_t getOutputState();
     ddb_playback_state_t getInternalState();
 
@@ -98,6 +99,7 @@ public:
 signals:
     // Volume
     void volumeChanged(float);
+    void volumeChanged(int);
     // Playback
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
     void trackChanged();
@@ -128,32 +130,34 @@ signals:
 
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
-    // Change volume
-    void setVolume(float);
+    // Volume
+    virtual float getVolume();
+    virtual void setVolume(float);
+    virtual void setVolume(int);
     // Just send message (id only)
-    void sendPlayMessage(uint32_t id);
+    virtual void sendPlayMessage(uint32_t id);
     // Playback
-    void togglePause();
-    void play();
-    void playNext();
-    void playPrev();
-    void playTrackByIndex(uint32_t);
-    void stop();
+    virtual void togglePause();
+    virtual void play();
+    virtual void playNext();
+    virtual void playPrev();
+    virtual void playTrackByIndex(uint32_t);
+    virtual void stop();
     // Playlist
-    void changePlaylist(int);
-    void movePlaylist(int plt, int before);
-    void newPlaylist(QString);
-    void renamePlaylist(int plt, const QString *name);
-    void renamePlaylist(int plt); // Dialog
-    void removePlaylist(int plt);
-    void clearPlaylist(int plt);
-    void loadPlaylist(const QString &fname);
+    virtual void changePlaylist(int);
+    virtual void movePlaylist(int plt, int before);
+    virtual void newPlaylist(QString);
+    virtual void renamePlaylist(int plt, const QString *name);
+    virtual void renamePlaylist(int plt); // Dialog
+    virtual void removePlaylist(int plt);
+    virtual void clearPlaylist(int plt);
+    virtual void loadPlaylist(const QString &fname);
     // use if playItems are on same playlist
-    void removeTracks(playItemList list);
+    virtual void removeTracks(playItemList list);
 
     // Shuffle/Repeat
-    void setShuffle(ddb_shuffle_t);
-    void setRepeat(ddb_repeat_t);
+    virtual void setShuffle(ddb_shuffle_t);
+    virtual void setRepeat(ddb_repeat_t);
 
 private:
     void *coverart_cache;
