@@ -3,7 +3,7 @@ name: ddb_gui_qt5
 on: [ push, pull_request ]
 
 jobs:
-  build:
+  build_linux:
     name: Static linux
     runs-on: ubuntu-latest
     container: ubuntu:18.04
@@ -24,3 +24,25 @@ jobs:
       with:
         name: linux
         path: ddb_gui_qt5_linux-static.zip
+  build_windows:
+    name: CI for Windows
+    runs-on: windows-latest
+    steps:
+    - name: Checkout for Windows
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Install msys2
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-x86_64-qt5-static
+    - name: Build for Windows
+      shell: msys2 {0}
+      run: /mingw64/qt5-static/bin/qmake ; make ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows_static.zip plugins/*.dll
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows
+        path: ddb_gui_qt5_windows_static.zip
