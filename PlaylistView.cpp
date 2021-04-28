@@ -157,7 +157,7 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api, PlayItemModel *pim) : QT
     // save lock playlist
     headerContextMenu.addAction(headerActions[4]);
 
-    headerGrouping = headerContextMenu.addMenu(tr("Grouping"));
+    headerGrouping = headerContextMenu.addMenu(tr("Group By ..."));
     headerGrouping->setEnabled(false);
     //TODO
 
@@ -241,6 +241,7 @@ void PlaylistView::onCut() {
         api->clearClipboard();
         playItemList l = pi_model->tracks(qmil);
         api->clipboard->setMimeData(api->mime_playItemsCopy(l));
+        // todo call model
         api->removeTracks(l);
     }
 }

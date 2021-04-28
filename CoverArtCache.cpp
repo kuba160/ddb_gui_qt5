@@ -12,182 +12,191 @@
 
 extern DB_functions_t *deadbeef_internal;
 
-CoverArtCache::CoverArtCache(QObject *parent) : QObject(parent) {
-    artwork = static_cast<DB_artwork_plugin_t *>(static_cast<void *>(DBAPI->plug_get_for_id ("artwork")));
-    if (artwork) {
-        // force artwork to load default cover art
-        getDefaultCoverArt();
-    }
-    // fix cover loading on startup
-    QTimer::singleShot(1000,this, SLOT(refreshCoverArt()));
+#undef DBAPI
+#define DBAPI db
 
+bool operator==(const scaledCover &lhs, const scaledCover &rhs) noexcept {
+    return lhs.img == rhs.img && lhs.size == rhs.size;
+}
+
+uint qHash(const scaledCover &c, uint seed) noexcept {
+    QtPrivate::QHashCombine hash;
+    seed = hash(seed, c.img);
+    seed = hash(seed, c.size.height());
+    seed = hash(seed, c.size.width());
+    return seed;
+}
+
+CoverArtCache::CoverArtCache(QObject *parent, DB_functions_t *funcs) : QObject(parent) {
+    db = funcs;
+    if(DBAPI->plug_get_for_id ("artwork")) {
+        backend = new CoverArtLegacy(parent, db);
+    }
+    else if(DBAPI->plug_get_for_id ("artwork2")) {
+        backend = new CoverArtNew(parent, db);
+    }
+
+    default_image = new QImage(backend->getDefaultCoverArt());
+    cacheCoverArt(backend->getDefaultCoverArt(), default_image);
+    cacheRef(default_image);
 }
 
 CoverArtCache::~CoverArtCache() {
-    if (script_album_byte) {
-        DBAPI->tf_free (script_album_byte);
-        script_album_byte = nullptr;
+    if (default_image) {
+        cacheUnref(default_image);
     }
-    if (script_artist_byte) {
-        DBAPI->tf_free (script_artist_byte);
-        script_artist_byte = nullptr;
+    // TODO clean up cache
+    QList<QImage *> l = cache_refc.keys();
+    foreach(QImage *img, l) {
+        if (cache_refc.value(img) == 0) {
+            delete img;
+            QList<scaledCover> l_sc = cache_scaled.keys();
+            foreach (scaledCover sc, l_sc) {
+                if (sc.img == img) {
+                    delete cache_scaled.value(sc);
+                }
+            }
+        }
+        else {
+            qDebug() << QString("Image (path: %1) has refc=%2!").arg(cache_path.key(img)) .arg(cache_refc.value(img));
+        }
     }
 }
 
-DB_artwork_plugin_t * CoverArtCache::getCoverArtPlugin () {
-    return artwork;
+bool CoverArtCache::isCoverArtAvailable(DB_playItem_t *it) {
+    return cache.contains(it);
 }
 
-void CoverArtCache::refreshCoverArt() {
-    DB_playItem_t *it = DBAPI->streamer_get_playing_track();
-    if (it) {
-        currCover.setFuture(loadCoverArt(it));
-        DBAPI->pl_item_unref(it);
+QFuture<QImage *> CoverArtCache::requestCoverArt(DB_playItem_t *it) {
+    if (isCoverArtAvailable(it)) {
+        // shouldn't be calling it
+        return QtConcurrent::run(cover_art,cache.value(it));
+    }
+    return QtConcurrent::run(cover_art_load,this,it);
+}
+
+// Threaded static functions
+
+QImage * CoverArtCache::cover_art(QImage *cover) {
+    return cover;
+}
+
+QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it) {
+    if (!it) {
+        return nullptr;
+    }
+    QFuture<char *> c = cac->backend->loadCoverArt(it);
+    c.waitForFinished();
+    if (c.result() && strlen(c.result())) {
+        // check if path already cached
+        cac->cmut.lock();
+        QImage *img = cac->getCoverArt(c.result());
+        if (img) {
+            cac->cmut.unlock();
+            return img;
+        }
+        // result not cached, create new and cache
+        img = new QImage(c.result());
+        if (img) {
+            cac->cacheCoverArt(it,img);
+            cac->cacheCoverArt(c.result(),img);
+            cac->backend->unloadCoverArt(c.result());
+            cac->cmut.unlock();
+            return img;
+        }
+        else {
+            cac->cmut.unlock();
+            qDebug() << "loading image " << c.result() << " failed!" << ENDL;
+        }
+    }
+    return nullptr;
+}
+
+void CoverArtCache::cacheCoverArt(DB_playItem_t *it, QImage *img) {
+    if (cache.contains(it)) {
+        qDebug() << "already cached?";
+    }
+    cache.insert(it,img);
+    cacheRef(img);
+}
+
+void CoverArtCache::cacheCoverArt(QString path, QImage *img) {
+    cache_path.insert(path,img);
+}
+
+void CoverArtCache::cacheRef(QImage *img) {
+    if (cache_refc.contains(img)) {
+        int refc = cache_refc.take(img);
+        cache_refc.insert(img, refc+1);
     }
     else {
-        currCover.setFuture(loadCoverArt(nullptr,nullptr,nullptr));
+        cache_refc.insert(img,1);
     }
 }
 
-QImage *CoverArtCache::getDefaultCoverArt() {
-    if (!default_image) {
-        const char * def_cover = getCoverArtPlugin()->get_default_cover();
-        if (def_cover) {
-            default_image = new QImage(getCoverArtPlugin()->get_default_cover());
+void CoverArtCache::cacheUnref(QImage *img) {
+    if (cache_refc.contains(img)) {
+        // decrease
+        int refc = cache_refc.take(img);
+        cache_refc.insert(img, refc-1);
+        // remove if cache full
+        if (cache_refc.size() > CACHE_SIZE && cache_refc.value(img) == 0) {
+            qDebug() << "no more refc on image, deleting" << ENDL;
+            // cache
+            DB_playItem_t *it = cache.key(img);
+            if (it) {
+                cache.take(it);
+            }
+            QString s = cache_path.key(img);
+            if (!s.isEmpty()) {
+                cache_path.take(s);
+            }
+            QList<scaledCover> l_sc = cache_scaled.keys();
+            foreach (scaledCover sc, l_sc) {
+                if (sc.img == img) {
+                    QImage *i = cache_scaled.take(sc);
+                    delete i;
+                }
+            }
+            cache_refc.take(img);
+            delete img;
         }
+    }
+}
+
+QImage * CoverArtCache::getCoverArt(DB_playItem_t *it) {
+    if (cache.contains(it)) {
+        QImage *img = cache.value(it);
+        cacheRef(img);
+        return img;
+    }
+    return nullptr;
+}
+
+QImage * CoverArtCache::getCoverArt(QString path) {
+    if (cache_path.contains(path)) {
+        QImage *img = cache_path.value(path);
+        cacheRef(img);
+        return img;
+    }
+    return nullptr;
+}
+
+QImage * CoverArtCache::getCoverArtScaled(QImage *img, QSize size) {
+    scaledCover c = {img,size};
+    if (cache_scaled.contains(c)) {
+        return cache_scaled.value(c);
+    }
+    // create new one
+    QImage scaled = img->scaled(size,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    QImage *n = new QImage(scaled);
+    cache_scaled.insert(c,n);
+    return n;
+}
+
+QImage * CoverArtCache::getCoverArtDefault() {
+    if (default_image) {
+        cacheRef(default_image);
     }
     return default_image;
-}
-
-CoverArtCache *cac_current = nullptr;
-
-void cover_avail_callback(const char *fname, const char *artist, const char *album, void *user_data) {
-    if (!user_data) {
-        qDebug() << "cover_avail_callback: no user_data!" << ENDL;
-        return;
-    }
-    CoverArtCache *cac = static_cast<CoverArtCache *>(user_data);
-    if (!fname && !artist && !album) {
-        // well, artwork_legacy calls this when no cover is found
-        if (!cac->cache.value(cac->album_lookup))
-            cac->cache.insert(cac->album_lookup,cac->getDefaultCoverArt());
-        return;
-    }
-
-    DB_artwork_plugin_t *artwork = cac->getCoverArtPlugin();
-    char *image_fname = artwork->get_album_art(fname, artist, album, -1, (&cover_avail_callback), cac);
-    if (image_fname) {
-        // add to cac cache
-        qDebug() << "cover_avail_callback: adding" << album << "to cache.";
-        cac->cacheSizeCheck();
-        cac->cache.insert(album,new QImage(image_fname));
-    }
-    else {
-        // no image / add default
-        // note: this code will probably never be run
-        cac->cacheSizeCheck();
-        cac->cache.insert(album, cac->getDefaultCoverArt());
-    }
-    return;
-}
-
-QImage * thread_getCoverArt(QString fname, QString artist, QString album) {
-    CoverArtCache *cac = cac_current;
-    DB_artwork_plugin_t *artwork = cac->getCoverArtPlugin();
-
-    if (fname.isNull() && artist.isNull() && album.isNull()) {
-        return cac->getDefaultCoverArt();
-    }
-
-    char *image_fname = artwork->get_album_art(fname.toUtf8(), artist.toUtf8(), album.toUtf8(), -1, (&cover_avail_callback), cac);
-    if (!image_fname) {
-        // wait
-        usleep(100000);
-        while (!cac->cache.value(album)) {
-            // TODO, what if callback gets never called? :(
-            return nullptr;
-            usleep(500000);
-        }
-    }
-    else {
-        if (!cac->cache.value(album)) {
-            // cached by artwork, but not by us?
-            // caching anyway
-            qDebug() << "thread_getCoverArt: adding" << album << "to cache.";
-            cac->cacheSizeCheck();
-            cac->cache.insert(album,new QImage(image_fname));
-        }
-    }
-    return cac->cache.value(album);
-}
-
-
-QFuture<QImage *> CoverArtCache::loadCoverArt(DB_playItem_t *track) {
-    if (!artwork) {
-        return QFuture<QImage*>();
-    }
-    ddb_tf_context_t *context = new ddb_tf_context_t;
-    context->_size = sizeof(ddb_tf_context_t);
-    context->it = track;
-    context->iter = PL_MAIN;
-
-    if (!script_album_byte) {
-        script_album_byte = DBAPI->tf_compile("%album%");
-    }
-    if (!script_artist_byte) {
-        script_artist_byte = DBAPI->tf_compile("%artist%");
-    }
-
-    // TODO adjust length maybe
-    char fname[256];
-    char artist[256];
-    char album[256];
-    if (track) {
-        DBAPI->pl_lock();
-        strncpy(fname, DBAPI->pl_find_meta(track, ":URI"), 256);
-        DBAPI->pl_unlock();
-        DBAPI->tf_eval (context, script_artist_byte, artist, 256);
-        DBAPI->tf_eval (context, script_album_byte, album, 256);
-    }
-    delete context;
-    cac_current = this;
-    strcpy(album_lookup,album);
-    return QtConcurrent::run(thread_getCoverArt,QString(fname),QString(artist),QString(album));
-}
-
-
-QFuture<QImage *> CoverArtCache::loadCoverArt(const char *fname, const char *artist, const char *album) {
-    if (!artwork) {
-        return QFuture<QImage*>();
-    }
-    cac_current = this;
-    if (album)
-        strcpy(album_lookup,album);
-    return QtConcurrent::run(thread_getCoverArt,fname,artist,album);
-}
-
-void CoverArtCache::cacheClear() {
-    cache.clear();
-}
-
-void CoverArtCache::cacheSizeCheck() {
-    if (cache.size() >= CACHE_SIZE) {
-        // hope that constBegin is the oldest one...
-        cache.erase(cache.constBegin());
-    }
-}
-
-void CoverArtCache::removeCoverArt(const char *album) {
-    delete cache.value(album);
-    cache.remove(album);
-}
-
-void CoverArtCache::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
-    if (from != to && to) {
-        currCover.setFuture(loadCoverArt(to));
-    }
-    else {
-        // set empty cover
-        currCover.setFuture(loadCoverArt(nullptr,nullptr,nullptr));
-    }
 }

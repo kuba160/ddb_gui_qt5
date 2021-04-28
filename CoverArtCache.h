@@ -4,57 +4,64 @@
 #include <QImage>
 #include <QHash>
 #include <QFutureWatcher>
-#include "include/artwork.h"
+#include <CoverArtBackend.h>
+
 #include <deadbeef/deadbeef.h>
 
 #define COVERARTCACHE_P(X) (static_cast<CoverArtCache *>(X))
+
+// used internally to find scaled cover
+typedef struct scaledCover_s {
+    void *img;
+    QSize size;
+} scaledCover;
 
 class CoverArtCache : public QObject {
     Q_OBJECT
 
 public:
-    CoverArtCache(QObject *parent = nullptr);
+    CoverArtCache(QObject *parent = nullptr, DB_functions_t *funcs = nullptr);
     ~CoverArtCache();
 
-    // Get Cover Art plugin
-    DB_artwork_plugin_t *getCoverArtPlugin ();
-
+    // check if track already cached
+    bool isCoverArtAvailable(DB_playItem_t *);
     // QFuture pointer for cover loading
-    QFuture<QImage *> loadCoverArt(const char *fname, const char *artist, const char *album);
-    QFuture<QImage *> loadCoverArt(DB_playItem_t *);
+    QFuture<QImage *> requestCoverArt(DB_playItem_t *);
+    // load cached cover art
+    QImage * getCoverArt(DB_playItem_t *);
+    // load cached cover art, helper used when found that cover art is already cached
+    QImage * getCoverArt(QString path);
+    // scale coverart and cache it
+    QImage * getCoverArtScaled(QImage *img, QSize size);
+    // get default cover art
+    QImage * getCoverArtDefault();
 
-    // QFutureWatcher for watching for current cover art
-    inline QFutureWatcher<QImage *> getCurrentCoverWatcher();
+    // backend, either CoverArtLegacy or CoverArtNew (artwork2)
+    CoverArtBackend *backend = nullptr;
+    QImage *default_image = nullptr;
 
-    QImage *getDefaultCoverArt();
+    // functions to be called from thread
+    void cacheCoverArt(DB_playItem_t *it, QImage *img);
+    void cacheCoverArt(QString path, QImage *img);
 
+    // cache ref/unref
+    void cacheRef(QImage *img);
+    void cacheUnref(QImage *img);
 
-    // checks if cache reached predefined size, free oldest one if necessary to allow 1 more write
-    void cacheSizeCheck();
-    // empty the cache
-    void cacheClear();
-    //
-    void removeCoverArt(const char *album);
+protected:
+    static QImage * cover_art_load(CoverArtCache *, DB_playItem_t *);
+    static QImage *cover_art(QImage *cover);
 
     // Hashed covers
-    QHash<QString, QImage *> cache;
-    // currCover for subscription
-    QFutureWatcher<QImage *> currCover;
+    QHash<DB_playItem_t *, QImage *> cache;
+    QHash<QString, QImage *> cache_path;
+    QHash<QImage *, int> cache_refc;
+    QHash<scaledCover, QImage *> cache_scaled;
 
-
-    char album_lookup[255];
-
-private:
-    DB_artwork_plugin_t *artwork;
-    QImage *default_image = nullptr;
-    char *script_album_byte = nullptr;
-    char *script_artist_byte = nullptr;
-
-public slots:
-    // cache cover on song change
-    void trackChanged(DB_playItem_t *, DB_playItem_t *);
-    // refresh
-    void refreshCoverArt();
+    // mutex
+    QMutex cmut;
+    // function access
+    DB_functions_t *db;
 };
 
 #endif // COVERARTCACHE_H

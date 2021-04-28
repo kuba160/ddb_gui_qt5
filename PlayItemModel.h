@@ -50,7 +50,7 @@ public:
     ~PlayItemModel();
 
     /// TO BE IMPLEMENTED
-    // returns tracks to use for something, remember to unref
+    // returns tracks to use for something, remember to unref after use
     virtual playItemList tracks(const QModelIndexList &tracks) const;
     virtual playItemList tracks(const QList<int> &tracks) const;
     // same as above, but for one track

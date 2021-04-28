@@ -18,6 +18,7 @@ SOURCES  =  \
             AboutDialog.cpp \
             ActionManager.cpp \
             CoverArtCache.cpp \
+            CoverArtBackend.cpp \
             DBApi.cpp \
             DBFileDialog.cpp \
             DeadbeefTranslator.cpp \
@@ -47,6 +48,7 @@ HEADERS =   widgets/CoverArt.h \
             AboutDialog.h \
             ActionManager.h \
             CoverArtCache.h \
+            CoverArtBackend.h \
             DBApi.h \
             DBFileDialog.h \
             DeadbeefTranslator.h \

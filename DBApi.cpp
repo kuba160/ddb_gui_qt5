@@ -16,7 +16,7 @@
 #define AM (static_cast<ActionManager *>(action_manager))
 
 
-DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_cache(parent) {
+DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
     this->deadbeef = Api;
     if (DBAPI->conf_get_int("resume.paused", 0)) {
         // will be paused
@@ -46,12 +46,7 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent), coverart_c
     currRepeat = DBAPI->streamer_get_repeat();
 
     // CoverArt Cache
-    coverart_cache = new CoverArtCache();
-    if(COVERARTCACHE_P(coverart_cache)->getCoverArtPlugin()) {
-        connect(this, SIGNAL(trackChanged(DB_playItem_t*, DB_playItem_t*)),COVERARTCACHE_P(coverart_cache),
-                      SLOT(trackChanged(DB_playItem_t*, DB_playItem_t*)));
-    }
-    connect(&COVERARTCACHE_P(coverart_cache)->currCover,SIGNAL(finished()),this,SLOT(onCurrCoverChanged()));
+    coverart_cache = new CoverArtCache(this, Api);
 
     // Settings
     qt_settings = new QtGuiSettings(this);
@@ -447,33 +442,36 @@ void DBApi::setRepeat(ddb_repeat_t i) {
 }
 
 bool DBApi::isCoverArtPluginAvailable() {
-    return CAC->getCoverArtPlugin() ? true : false;
+    return CAC->backend ? true : false;
 }
 
-QFuture<QImage *> DBApi::loadCoverArt(const char *fname, const char *artist, const char *album) {
-    return CAC->loadCoverArt(fname,artist,album);
+bool DBApi::isCoverArtAvailable(DB_playItem_t *it) {
+    return CAC->isCoverArtAvailable(it);
 }
 
-QFuture<QImage *> DBApi::loadCoverArt(DB_playItem_t *p) {
-    return CAC->loadCoverArt(p);
+QFuture<QImage *> DBApi::requestCoverArt(DB_playItem_t *p) {
+    return CAC->requestCoverArt(p);
 }
 
-QImage * DBApi::getDefaultCoverArt() {
-    return CAC->getDefaultCoverArt();
+QImage * DBApi::getCoverArt(DB_playItem_t *it) {
+    return CAC->getCoverArt(it);
 }
 
-void DBApi::coverArt_ref(QImage *) {
-    // TODO
-    return;
+QImage * DBApi::getCoverArtDefault() {
+    return CAC->getCoverArtDefault();
 }
 
-void DBApi::coverArt_unref(QImage *) {
-    // TODO
-    return;
+QImage * DBApi::getCoverArtScaled(QImage *img, QSize size) {
+    return CAC->getCoverArtScaled(img,size);
 }
 
-void DBApi::onCurrCoverChanged() {
-    emit currCoverChanged(CAC->currCover.result());
+
+void DBApi::coverArt_ref(QImage *img) {
+    CAC->cacheRef(img);
+}
+
+void DBApi::coverArt_unref(QImage *img) {
+    CAC->cacheUnref(img);
 }
 
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {

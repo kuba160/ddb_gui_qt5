@@ -23,7 +23,7 @@
 
 // DBApi version
 #define DBAPI_VMAJOR 0
-#define DBAPI_VMINOR 4
+#define DBAPI_VMINOR 5
 
 typedef QList<DB_playItem_t *> playItemList;
 
@@ -47,13 +47,22 @@ public:
     //// CoverArt
     // use this function to ensure cover art plugin is available before using any functions below
     bool isCoverArtPluginAvailable();
-    // load CoverArt
-    QFuture<QImage *> loadCoverArt(const char *fname, const char *artist, const char *album);
-    QFuture<QImage *> loadCoverArt(DB_playItem_t *);
-    QImage *getDefaultCoverArt();
-    // Call after you are done with cover (not if used signal cover)
-    void coverArt_ref(QImage *);
+    // check if coverart is in cache, true: means you can call getCoverArt and get the cover
+    bool isCoverArtAvailable(DB_playItem_t *);
+    // load cover that is not in cache, QImage returned via QFuture has to be unref'd later
+    QFuture<QImage *> requestCoverArt(DB_playItem_t *);
+    // get cached cover art, nullptr if not cached (use requestCoverArt to cache it)
+    QImage * getCoverArt(DB_playItem_t *);
+    // default cover art
+    QImage * getCoverArtDefault();
+    // get scaled cover art (result will be cached)
+    // use if you need many covers of specific size, don't use for widget scaling etc.
+    // scaled cover is available as long as original cover was not unref'd
+    QImage * getCoverArtScaled(QImage *img, QSize size);
+    // Call after you are done with cover
     void coverArt_unref(QImage *);
+    void coverArt_ref(QImage *);
+
 
     // Misc functions
     bool isPaused();
@@ -120,8 +129,6 @@ signals:
     // Shuffle/Repeat
     void shuffleChanged();
     void repeatChanged();
-    // Cover
-    void currCoverChanged(QImage *);
     // Queue
     void queueChanged();
     // Specific actions triggered by user
@@ -174,8 +181,6 @@ private:
 
     int queue_count = 0;
 
-private slots:
-    void onCurrCoverChanged();
 };
 
 class DBWidgetInfo {

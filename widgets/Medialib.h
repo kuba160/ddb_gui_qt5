@@ -10,6 +10,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QActionGroup>
+#include <QFutureWatcher>
 
 #include <deadbeef/deadbeef.h>
 #include "DBApi.h"
@@ -28,11 +29,21 @@ typedef struct ddb_medialib_plugin_s {
 ////
 
 // MedialibTreeWidgetItem
-class MedialibTreeWidgetItem : public QTreeWidgetItem, public DBWidget {
+class MedialibTreeWidgetItem : public QObject, public QTreeWidgetItem, public DBWidget {
+    Q_OBJECT
 public:
     MedialibTreeWidgetItem (QWidget *parent = nullptr, DBApi *api = nullptr, ddb_medialib_item_t *it = nullptr);
-    QList<DB_playItem_t *> getTracks();
+    ~MedialibTreeWidgetItem();
+    playItemList getTracks();
+
+protected:
     DB_playItem_t *track = nullptr;
+    QImage *cover = nullptr;
+
+
+    QFutureWatcher<QImage *> *cover_watcher = nullptr;
+private slots:
+    void onCoverLoaded();
 };
 
 // MedialibTreeWidget
@@ -40,9 +51,10 @@ class MedialibTreeWidget : public QTreeWidget {
     Q_OBJECT
 public:
     MedialibTreeWidget(QWidget *parent = nullptr, DBApi *Api = nullptr);
+
+    QActionGroup *actions;
 protected:
     DBApi *api = nullptr;
-    QActionGroup *actions;
     QPoint dragStartPosition;
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
@@ -83,7 +95,7 @@ private:
     // Widget
     QHBoxLayout *search_layout = nullptr;
     QWidget *search_layout_widget;
-    QTreeWidget *tree = nullptr;
+    MedialibTreeWidget *tree = nullptr;
     QComboBox *search_query = nullptr;
     int search_query_count = 0;
     QLineEdit *search_box = nullptr;
