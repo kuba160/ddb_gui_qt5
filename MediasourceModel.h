@@ -58,7 +58,7 @@ protected:
     ddb_medialib_item_t *list = nullptr;
     QMutex *list_mutex;
     // Used for tracks
-    QRecursiveMutex *list_mutex_recursive;
+    QMutex *list_mutex_recursive;
     bool listToBeRefreshed = false;
     bool mediasource_model_reset = false;
     // Hash to map child QModelIndex to parent
