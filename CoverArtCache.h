@@ -47,6 +47,7 @@ public:
     // cache ref/unref
     void cacheRef(QImage *img);
     void cacheUnref(QImage *img);
+    void cacheUnrefTrack(DB_playItem_t *it);
 
 protected:
     static QImage * cover_art_load(CoverArtCache *, DB_playItem_t *);
@@ -60,6 +61,7 @@ protected:
 
     // mutex
     QMutex cmut;
+    QMutex cmut_refc;
     // function access
     DB_functions_t *db;
 };

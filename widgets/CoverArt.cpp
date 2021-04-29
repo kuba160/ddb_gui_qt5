@@ -54,7 +54,7 @@ void CoverArt::onTrackChanged(DB_playItem_t *from, DB_playItem_t *to) {
         refreshCover();
         return;
     }
-    bool avail = api->isCoverArtAvailable(to);
+    bool avail = api->isCoverArtCached(to);
     if (avail) {
         QImage *img = api->getCoverArt(to);
         if (cover_image != img) {

@@ -92,6 +92,12 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it) {
         cac->cmut.lock();
         QImage *img = cac->getCoverArt(c.result());
         if (img) {
+            if (!cac->cache.contains(it)) {
+                // same image for diff track, cache it
+                cac->cacheCoverArt(it,img);
+                // ref 2 times, fix it
+                cac->cacheUnref(img);
+            }
             cac->cmut.unlock();
             return img;
         }
@@ -109,6 +115,10 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it) {
             qDebug() << "loading image " << c.result() << " failed!" << ENDL;
         }
     }
+    else {
+        // no cover, cache anyway
+        cac->cacheCoverArt(it, nullptr);
+    }
     return nullptr;
 }
 
@@ -117,7 +127,9 @@ void CoverArtCache::cacheCoverArt(DB_playItem_t *it, QImage *img) {
         qDebug() << "already cached?";
     }
     cache.insert(it,img);
-    cacheRef(img);
+    if (img) {
+        cacheRef(img);
+    }
 }
 
 void CoverArtCache::cacheCoverArt(QString path, QImage *img) {
@@ -125,6 +137,7 @@ void CoverArtCache::cacheCoverArt(QString path, QImage *img) {
 }
 
 void CoverArtCache::cacheRef(QImage *img) {
+    cmut_refc.lock();
     if (cache_refc.contains(img)) {
         int refc = cache_refc.take(img);
         cache_refc.insert(img, refc+1);
@@ -132,9 +145,11 @@ void CoverArtCache::cacheRef(QImage *img) {
     else {
         cache_refc.insert(img,1);
     }
+    cmut_refc.unlock();
 }
 
 void CoverArtCache::cacheUnref(QImage *img) {
+    cmut_refc.lock();
     if (cache_refc.contains(img)) {
         // decrease
         int refc = cache_refc.take(img);
@@ -162,12 +177,23 @@ void CoverArtCache::cacheUnref(QImage *img) {
             delete img;
         }
     }
+    cmut_refc.unlock();
+}
+
+void CoverArtCache::cacheUnrefTrack(DB_playItem_t *it) {
+    if (cache.contains(it)) {
+        // track no longer existent, no need to keep it in cache
+        // cover arts are tracked separately
+        cache.take(it);
+    }
 }
 
 QImage * CoverArtCache::getCoverArt(DB_playItem_t *it) {
     if (cache.contains(it)) {
         QImage *img = cache.value(it);
-        cacheRef(img);
+        if (img) {
+            cacheRef(img);
+        }
         return img;
     }
     return nullptr;
@@ -176,7 +202,9 @@ QImage * CoverArtCache::getCoverArt(DB_playItem_t *it) {
 QImage * CoverArtCache::getCoverArt(QString path) {
     if (cache_path.contains(path)) {
         QImage *img = cache_path.value(path);
-        cacheRef(img);
+        if (img) {
+            cacheRef(img);
+        }
         return img;
     }
     return nullptr;

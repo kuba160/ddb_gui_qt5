@@ -445,7 +445,7 @@ bool DBApi::isCoverArtPluginAvailable() {
     return CAC->backend ? true : false;
 }
 
-bool DBApi::isCoverArtAvailable(DB_playItem_t *it) {
+bool DBApi::isCoverArtCached(DB_playItem_t *it) {
     return CAC->isCoverArtAvailable(it);
 }
 
@@ -472,6 +472,10 @@ void DBApi::coverArt_ref(QImage *img) {
 
 void DBApi::coverArt_unref(QImage *img) {
     CAC->cacheUnref(img);
+}
+
+void DBApi::coverArt_track_unref(DB_playItem_t *it) {
+    CAC->cacheUnrefTrack(it);
 }
 
 QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {

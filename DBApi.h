@@ -48,7 +48,8 @@ public:
     // use this function to ensure cover art plugin is available before using any functions below
     bool isCoverArtPluginAvailable();
     // check if coverart is in cache, true: means you can call getCoverArt and get the cover
-    bool isCoverArtAvailable(DB_playItem_t *);
+    // NOTE: this function returns true even if there is no cover for specific track
+    bool isCoverArtCached(DB_playItem_t *);
     // load cover that is not in cache, QImage returned via QFuture has to be unref'd later
     QFuture<QImage *> requestCoverArt(DB_playItem_t *);
     // get cached cover art, nullptr if not cached (use requestCoverArt to cache it)
@@ -62,6 +63,8 @@ public:
     // Call after you are done with cover
     void coverArt_unref(QImage *);
     void coverArt_ref(QImage *);
+    // Call if track becomes no longer accessible
+    void coverArt_track_unref(DB_playItem_t *);
 
 
     // Misc functions
@@ -167,7 +170,7 @@ public slots:
     virtual void setRepeat(ddb_repeat_t);
 
 private:
-    void *coverart_cache;
+    void *coverart_cache = nullptr;
     ddb_playback_state_t internal_state;
     void *qt_settings;
     void *action_manager;
@@ -222,6 +225,7 @@ public:
     DBWidget(QWidget *parent = nullptr, DBApi *api_a = nullptr) {
         if (api_a == nullptr) {
             qDebug() << "Widget (" << parent <<") initialized without api pointer!";
+            return;
         }
         api = api_a;
         if (parent) {
