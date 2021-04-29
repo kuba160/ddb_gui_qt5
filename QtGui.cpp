@@ -65,9 +65,9 @@ static int initializeApi() {
         }
 
         // provide dummy args for QApplication
-        char argv0[] = "a.out";
-        char *argv[] = {argv0, nullptr};
-        int argc = sizeof(argv) / sizeof(char*) - 1;
+        static char argv0[] = "a.out";
+        static char *argv[] = {argv0, nullptr};
+        static int argc = sizeof(argv) / sizeof(char*) - 1;
         app = new QApplication(argc, argv);
         QApplication::setOrganizationName("deadbeef");
         QApplication::setApplicationName("DeaDBeeF");

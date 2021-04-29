@@ -19,22 +19,12 @@ public:
         Right = 3,
     };
     TabBar(QWidget *parent = nullptr, DBApi *Api = nullptr);
-    ~TabBar();
 
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
     int selectTab(const QPoint &position) const;
-    void setShape(Shape shape);
-    
+
 private:
     QMenu tabContextMenu;
-    QAction *delPlaylist;
-    QAction *addPlaylist;
-    QAction *renPlaylist;
-
-    QAction *top;
-    QAction *bottom;
-    QAction *left;
-    QAction *right;
 
     void configure();
     void fillTabs();

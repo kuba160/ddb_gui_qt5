@@ -22,12 +22,6 @@ TabBar::TabBar(QWidget *parent, DBApi *Api) : QTabBar(parent), DBWidget(parent, 
     connect(api, SIGNAL(playlistRenamed(int)), this, SLOT(onPlaylistRenamed(int)));
 }
 
-TabBar::~TabBar() {
-    delete delPlaylist;
-    delete renPlaylist;
-    delete addPlaylist;
-}
-
 QWidget *TabBar::constructor(QWidget *parent, DBApi *Api) {
     QWidget *widget = new TabBar(parent, Api);
     return widget;
@@ -59,10 +53,6 @@ void TabBar::configure() {
 
 void TabBar::selectLastTab() {
     setCurrentIndex(DBAPI->plt_get_curr_idx());
-    if (count() == 1) {
-        //setTabsClosable(false);
-        delPlaylist->setEnabled(false);
-    }
 }
 
 void TabBar::mouseDoubleClickEvent(QMouseEvent *event) {
@@ -167,7 +157,6 @@ void TabBar::newPlaylist() {
             DBAPI->plt_add(cnt, name.toUtf8().constData());
             if (count() == 1) {
                 //setTabsClosable(true);
-                delPlaylist->setEnabled(true);
             }
             insertTab(cnt, name);
             setCurrentIndex(cnt);
@@ -181,7 +170,6 @@ void TabBar::newPlaylist() {
 void TabBar::closeTab(int index) {
     if (count() == 2) {
         setTabsClosable(false);
-        delPlaylist->setEnabled(false);
     }
     removeTab(index);
     emit tabClosed(index);
@@ -210,24 +198,3 @@ void TabBar::setRightPosition() {
 void TabBar::setTopPosition() {
     emit changeTabPosition(TabBar::Top);
 }
-
-void TabBar::setShape(QTabBar::Shape shape) {
-    switch (shape) {
-        case QTabBar::RoundedNorth:
-            top->setChecked(true);
-            break;
-        case QTabBar::RoundedSouth:
-            bottom->setChecked(true);
-            break;
-        case QTabBar::RoundedWest:
-            left->setChecked(true);
-            break;
-        case QTabBar::RoundedEast:
-            right->setChecked(true);
-            break;
-        default:
-            break;
-    }
-    QTabBar::setShape(shape);
-}
-
