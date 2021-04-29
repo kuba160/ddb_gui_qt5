@@ -7,7 +7,9 @@
 // CoverArtNew
 
 CoverArtNew::CoverArtNew(QObject *parent, DB_functions_t *funcs) : CoverArtBackend(parent, funcs) {
-    plug = static_cast<ddb_artwork_plugin_t *>(static_cast<void *>(DBAPI->plug_get_for_id ("artwork2")));
+    plug = DBAPI->plug_get_for_id("artwork2") ?
+            static_cast<ddb_artwork_plugin_t *>(static_cast<void *>(DBAPI->plug_get_for_id("artwork2"))):
+            static_cast<ddb_artwork_plugin_t *>(static_cast<void *>(DBAPI->plug_get_for_id("artwork")));
     if (!plug) {
         qDebug() << "failed to load artwork!" << ENDL;
     }
