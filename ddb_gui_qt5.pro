@@ -25,6 +25,7 @@ SOURCES  =  \
             DefaultActions.cpp \
             DefaultPlugins.cpp \
             MainWindow.cpp \
+            MediasourceModel.cpp \
             PlayItemModel.cpp \
             PlayqueueModel.cpp \
             PlaylistModel.cpp \
@@ -55,6 +56,7 @@ HEADERS =   widgets/CoverArt.h \
             DefaultActions.h \
             DefaultPlugins.h \
             MainWindow.h \
+            MediasourceModel.h \
             PlayItemModel.h \
             PlayqueueModel.h \
             PlaylistModel.h \

@@ -14,45 +14,27 @@
 
 #include <deadbeef/deadbeef.h>
 #include "DBApi.h"
+#include "medialib.h"
 
-// medialib.h
-#define DDB_MEDIALIB_VERSION_MAJOR 1
-#define DDB_MEDIALIB_VERSION_MINOR 0
+#include "../MediasourceModel.h"
+#include <QSortFilterProxyModel>
 
-typedef struct ddb_medialib_plugin_s {
-    DB_mediasource_t plugin;
-
-    unsigned (*folder_count)(ddb_mediasource_source_t source);
-    void (*folder_at_index)(ddb_mediasource_source_t source, int index, char *folder, size_t size);
-    void (*set_folders) (ddb_mediasource_source_t source, const char **folders, size_t count);
-} ddb_medialib_plugin_t;
-////
-
-// MedialibTreeWidgetItem
-class MedialibTreeWidgetItem : public QObject, public QTreeWidgetItem, public DBWidget {
+class MedialibSorted : public QSortFilterProxyModel {
     Q_OBJECT
 public:
-    MedialibTreeWidgetItem (QWidget *parent = nullptr, DBApi *api = nullptr, ddb_medialib_item_t *it = nullptr);
-    ~MedialibTreeWidgetItem();
-    playItemList getTracks();
-
-protected:
-    DB_playItem_t *track = nullptr;
-    QImage *cover = nullptr;
-
-
-    QFutureWatcher<QImage *> *cover_watcher = nullptr;
-private slots:
-    void onCoverLoaded();
+    MedialibSorted (QObject *parent = nullptr);
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 };
 
 // MedialibTreeWidget
-class MedialibTreeWidget : public QTreeWidget {
+class MedialibTreeView : public QTreeView {
     Q_OBJECT
 public:
-    MedialibTreeWidget(QWidget *parent = nullptr, DBApi *Api = nullptr);
+    MedialibTreeView(QWidget *parent = nullptr, DBApi *Api = nullptr);
 
     QActionGroup *actions;
+    MediasourceModel *ms_model = nullptr;
+    MedialibSorted *prox_model = nullptr;
 protected:
     DBApi *api = nullptr;
     QPoint dragStartPosition;
@@ -62,6 +44,8 @@ public slots:
     void showContextMenu(QPoint p);
     void onAddToPlaybackQueue();
     void onRemoveFromPlaybackQueue();
+
+    void onModelReset();
 };
 
 // Medialib
@@ -73,34 +57,26 @@ public:
     ~Medialib();
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
 
-    void updateTree();
-
-    void setFolders(QStringList *strlist);
-
 public slots:
-    void searchQueryChanged(int index);
-    void searchBoxChanged(const QString &text);
     void folderSetupDialog();
     void folderSetupDialogHandler(bool checked);
     void folderSetupDialogItemHandler(QListWidgetItem *item);
-private:
-    // DeaDBeeF
-    ddb_mediasource_source_t pl_mediasource;
-    DB_mediasource_t *ml = nullptr;
-    ddb_medialib_plugin_t *ml_source = nullptr;
-    ddb_mediasource_list_selector_t *ml_selector;
-    int listener_id = -1;
-    ddb_medialib_item_t *curr_it = nullptr;
 
+    void onSelectorChanged(int sel);
+private:
     // Widget
     QHBoxLayout *search_layout = nullptr;
     QWidget *search_layout_widget;
-    MedialibTreeWidget *tree = nullptr;
+    MedialibTreeView *tree = nullptr;
     QComboBox *search_query = nullptr;
-    int search_query_count = 0;
+    int search_query_curr = 0;
     QLineEdit *search_box = nullptr;
 
+    // Current selection
+    QStringList curr_item;
+
     // Action
+    QStringList folders;
     QAction *set_up_folders= nullptr;
 
     // Dialog
@@ -110,6 +86,7 @@ private:
     QPushButton *browse = nullptr;
     QPushButton *plus = nullptr;
     QPushButton *minus = nullptr;
+
 };
 
 #endif // MEDIALIB_H
