@@ -87,3 +87,32 @@ jobs:
       with:
         name: windows
         path: ddb_gui_qt5_windows-shared.zip
+  build_macos_shared:
+    name: Shared macOS
+    runs-on: macos-latest
+    steps:
+    - name: Checkout for macOS
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: brew install qt@5 gcc zip make
+    - name: Build for macOS
+      run: |
+        export PATH="/usr/local/opt/qt@5/bin:$PATH"
+        export LDFLAGS="-L/usr/local/opt/qt@5/lib"
+        export CPPFLAGS="-I/usr/local/opt/qt@5/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/qt@5/lib/pkgconfig"
+        export PATH="/usr/local/opt/zip/bin:$PATH"
+        export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
+        echo $PATH
+        qmake
+        make
+        mkdir -p plugins
+        cp ddb_gui_qt5.dylib plugins/
+        zip -r ddb_gui_qt5_macos-shared.zip plugins/*.dylib
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: macos
+        path: ddb_gui_qt5_macos-shared.zip
