@@ -187,7 +187,7 @@ void Medialib::onSelectorChanged(int sel) {
 }
 
 void Medialib::folderSetupDialog() {
-    QDialog d(this, Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
+    QDialog d(this, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
     d.setMinimumWidth(405);
     d.setWindowTitle("Set up medialib folders...");
     d.setLayout(new QVBoxLayout());
