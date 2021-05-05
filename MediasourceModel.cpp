@@ -346,3 +346,31 @@ void MediasourceModel::setDirectories(QStringList folders_inc) {
     mediasource_model_reset = true;
     onListenerCallback();
 }
+
+QModelIndex MediasourceModel::indexByPath(QStringList &l) {
+    int i = 0;
+    QModelIndex idx = QModelIndex();
+    ddb_medialib_item_t *it = list;
+    int row = 0;
+    while (it && i < l.length()) {
+        if (l[i] == QString(it->text)) {
+            idx = index(row,0,idx);
+            if (i+1 < l.length()) {
+                it = it->children;
+                row = 0;
+                i++;
+            }
+            else {
+                break;
+            }
+        }
+        else {
+            it = it->next;
+            row++;
+        }
+    }
+    if (it && l.last() == QString(it->text)) {
+        return idx;
+    }
+    return QModelIndex();
+}

@@ -26,6 +26,7 @@ public:
     static void source_listener(ddb_mediasource_event_type_t event, void *user_data);
     playItemList tracks(QModelIndexList &l);
     playItemList tracks(ddb_medialib_item_t *);
+    QModelIndex indexByPath(QStringList &l);
 
     // Model
     QModelIndex index(int row, int column, const QModelIndex &parent) const;

@@ -40,12 +40,16 @@ protected:
     QPoint dragStartPosition;
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
+
+    QStringList curr_selection;
+    bool curr_selection_expanded;
 public slots:
     void showContextMenu(QPoint p);
     void onAddToPlaybackQueue();
     void onRemoveFromPlaybackQueue();
 
     void onModelReset();
+    void onSearchQueryChanged(QString);
 };
 
 // Medialib

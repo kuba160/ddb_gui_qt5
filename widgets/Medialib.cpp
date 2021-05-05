@@ -64,6 +64,42 @@ MedialibTreeView::MedialibTreeView(QWidget *parent, DBApi *Api) : QTreeView(pare
 void MedialibTreeView::onModelReset() {
     expand(prox_model->index(0,0,QModelIndex()));
     sortByColumn(0,Qt::AscendingOrder);
+
+    // restore selection
+    if (curr_selection.length()) {
+        QModelIndex idx = ms_model->indexByPath(curr_selection);
+        if (idx.isValid()) {
+            QModelIndex idx_prx = prox_model->mapFromSource(idx);
+            selectionModel()->select(idx_prx,QItemSelectionModel::Select);
+
+            if (curr_selection_expanded) {
+                expand(idx_prx);
+            }
+            // Always expand parents so that selected item is visible
+            QModelIndex prx_parent = prox_model->parent(idx_prx);
+            while (prx_parent.isValid()) {
+                expand(prx_parent);
+                prx_parent =  prox_model->parent(prx_parent);
+            }
+        }
+    }
+}
+
+void MedialibTreeView::onSearchQueryChanged(QString str) {
+    QModelIndexList sel = GETSEL;
+    curr_selection.clear();
+    if (sel.length()) {
+        QModelIndex i = sel[0];
+        while (i.isValid()) {
+            QString n = static_cast<ddb_medialib_item_t *>(i.internalPointer())->text;
+            curr_selection.insert(0,n);
+            i = ms_model->parent(i);
+        }
+        qDebug() << curr_selection;
+        curr_selection_expanded = isExpanded(prox_model->mapFromSource(sel[0]));
+    }
+
+    ms_model->setSearchQuery(str);
 }
 
 void MedialibTreeView::showContextMenu(QPoint p) {
@@ -134,7 +170,7 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     layout()->addWidget(search_layout_widget);
     layout()->addWidget(tree);
     search_box->setPlaceholderText(QString(tr("Search")) + "...");
-    connect(search_box, SIGNAL(textChanged(QString)), tree->ms_model, SLOT(setSearchQuery(QString)));
+    connect(search_box, SIGNAL(textChanged(QString)), tree, SLOT(onSearchQueryChanged(QString)));
     // Restore folders
     folders = CONFGET("folders",QStringList()).toStringList();
     tree->ms_model->setDirectories(folders);
