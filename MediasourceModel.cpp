@@ -40,7 +40,11 @@ MediasourceModel::MediasourceModel(QObject *parent, DBApi *Api, QString plugname
     cover_arts_lock = new QMutex();
     future_list = new QHash<QFutureWatcher<QImage *>*, QModelIndex>;
     list_mutex = new QMutex();
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+    list_mutex_recursive = new QRecursiveMutex();
+#else
     list_mutex_recursive = new QMutex(QMutex::Recursive);
+#endif
 
     child_to_parent = new QHash<void*,QModelIndex>();
     //list = ms->create_list(source,selectors_internal[selector],search_query.toUtf8());
