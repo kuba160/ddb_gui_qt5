@@ -61,7 +61,10 @@ playItemList PlaylistModel::tracks(const QModelIndexList &tracks) const {
     QList<int> rowused;
     foreach(QModelIndex t, tracks) {
         if (!rowused.contains(t.row())) {
-            list.append(DBAPI->plt_get_item_for_idx(plt, t.row(), PL_MAIN));
+            DB_playItem_t *it = DBAPI->plt_get_item_for_idx(plt, t.row(), PL_MAIN);
+            if (it) {
+                list.append(it);
+            }
             rowused.append(t.row());
         }
     }

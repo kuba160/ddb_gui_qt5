@@ -297,7 +297,7 @@ void DefaultActions::on_actionStopAlbum_triggered(bool checked) {
 }
 
 void DefaultActions::on_actionJump_to_current_track_triggered() {
-    // TODO
+    api->changePlaylist(DBAPI->streamer_get_current_playlist());
     emit api->jumpToCurrentTrack();
 }
 

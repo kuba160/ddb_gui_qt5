@@ -390,6 +390,9 @@ void DBApi::removePlaylist(int plt) {
                                  question, QMessageBox::Yes | QMessageBox::No, w);
         int ret = confirmation.exec();
         if (ret == QMessageBox::Yes) {
+            if (plt == DBAPI->plt_get_curr_idx()) {
+                changePlaylist(plt-1 > 0 ? plt-1 : 0);
+            }
             DBAPI->plt_remove(plt);
             emit playlistRemoved(plt);
         }
