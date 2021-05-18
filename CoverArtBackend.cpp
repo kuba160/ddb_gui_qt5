@@ -43,7 +43,10 @@ char * CoverArtNew::getArtwork(DB_playItem_t *it, CoverArtNew *can) {
 void CoverArtNew::artwork_callback(int error, ddb_cover_query_t *query, ddb_cover_info_t *cover) {
     if (error) {
         // failed, create dummy ddb_cover_info_t and return
-        cover = new ddb_cover_info_t();
+        cover = (ddb_cover_info_t *) malloc(sizeof(ddb_cover_info_t));
+        cover->type = nullptr;
+        cover->image_filename = nullptr;
+        cover->blob = nullptr;
         cover->refc = 1;
     }
     *(static_cast<ddb_cover_info_t **>(query->user_data)) = cover;
