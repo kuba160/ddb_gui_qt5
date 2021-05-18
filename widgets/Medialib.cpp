@@ -157,7 +157,11 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     // Tree setup
     tree = new MedialibTreeView(this,Api);
     // Layout setup
-    setLayout(new QVBoxLayout(this));
+    if (layout()) {
+        delete layout();
+    }
+    QVBoxLayout *lout = new QVBoxLayout;
+    setLayout(lout);
     search_layout = new QHBoxLayout(this);
     search_query = new QComboBox(this);
     search_box = new QLineEdit(this);
