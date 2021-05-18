@@ -12,8 +12,9 @@
 
 Playlist::Playlist(QWidget *parent, DBApi *Api) : PlaylistView(parent,Api,new PlaylistModel(Api,Api)) {
     // Set current playlist
-    plt = DBAPI->plt_get_curr();
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     qobject_cast<PlaylistModel *>(model())->setPlaylist(plt);
+    DBAPI->plt_unref(plt);
 
     // Follow current playlist
     connect(api,SIGNAL(playlistChanged()),this,SLOT(onPlaylistChanged()));
@@ -45,9 +46,10 @@ void Playlist::trackDoubleClicked(QModelIndex index) {
 
 Playlist::~Playlist() {
     // save cursor
-    int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
-    DBAPI->conf_set_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8().constData(), cursor);
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
     if (plt) {
+        int cursor = DBAPI->plt_get_cursor(plt, PL_MAIN);
+        DBAPI->conf_set_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8().constData(), cursor);
         DBAPI->plt_unref(plt);
     }
 }
@@ -75,8 +77,8 @@ void Playlist::onSelectionChanged() {
 
 void Playlist::onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected) {
     // update deadbeef selection status to match gui selection
-    QList <QModelIndex> a = selected.indexes();
-    QList <int> select_int;
+    QList<QModelIndex> a = selected.indexes();
+    QVector<int> select_int;
     int i;
     for (i = 0; i < a.length(); i++) {
         if(!select_int.contains(a[i].row())) {
@@ -84,13 +86,13 @@ void Playlist::onSelectionChanged(const QItemSelection &selected, const QItemSel
         }
     }
     for (i = 0; i< select_int.length(); i++) {
-        DB_playItem_t *pl = DBAPI->plt_get_item_for_idx(plt,select_int[i], PL_MAIN);
+        DB_playItem_t *pl = DBAPI->pl_get_for_idx(select_int[i]);
         if (pl) {
             if (i == 0) {
-                DBAPI->plt_set_cursor(plt, select_int[i], PL_MAIN);
+                DBAPI->pl_set_cursor(PL_MAIN, select_int[i]);
                 DBAPI->conf_set_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8(), select_int[i]);
             }
-            DBAPI->plt_item_set_selected(plt, pl, true);
+            DBAPI->pl_set_selected(pl, true);
             //DBAPI->action_set_playlist(plt);
             DBAPI->pl_item_unref(pl);
         }
@@ -104,7 +106,7 @@ void Playlist::onSelectionChanged(const QItemSelection &selected, const QItemSel
         }
     }
     for (i = 0; i< select_int.length(); i++) {
-        DB_playItem_t *pl = DBAPI->plt_get_item_for_idx(plt,select_int[i], PL_MAIN);
+        DB_playItem_t *pl = DBAPI->pl_get_for_idx(select_int[i]);
         if (pl) {
             DBAPI->pl_set_selected(pl,false);
             DBAPI->pl_item_unref(pl);
@@ -114,8 +116,9 @@ void Playlist::onSelectionChanged(const QItemSelection &selected, const QItemSel
 
 void Playlist::onPlaylistChanged() {
     DBAPI->pl_lock();
-    ddb_playlist_t *plt = DBAPI->plt_get_curr();
-    qobject_cast<PlaylistModel *>(pi_model)->setPlaylist(plt);
+    ddb_playlist_t *plt_new = DBAPI->plt_get_curr();
+    qobject_cast<PlaylistModel *>(pi_model)->setPlaylist(plt_new);
+    DBAPI->plt_unref(plt_new);
 
     // restore cursor
     int cursor = DBAPI->conf_get_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8(), -1);
@@ -134,7 +137,6 @@ void Playlist::onPlaylistChanged() {
         }
     }
     selectionModel()->select(is,QItemSelectionModel::Select);
-    DBAPI->plt_unref(plt);
     DBAPI->pl_unlock();
 }
 

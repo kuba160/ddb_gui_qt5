@@ -13,7 +13,6 @@ public:
     static QWidget *constructor(QWidget *parent, DBApi *Api);
 
 protected:
-    ddb_playlist_t *plt;
     void mouseDoubleClickEvent(QMouseEvent *event);
 private slots:
     void onSelectionChanged();
