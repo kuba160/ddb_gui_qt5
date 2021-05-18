@@ -13,8 +13,10 @@ public:
     static QWidget *constructor(QWidget *parent, DBApi *Api);
 
 protected:
+    ddb_playlist_t *plt;
     void mouseDoubleClickEvent(QMouseEvent *event);
 private slots:
+    void onSelectionChanged();
     void onPlaylistChanged();
     void onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void trackDoubleClicked(QModelIndex index);
