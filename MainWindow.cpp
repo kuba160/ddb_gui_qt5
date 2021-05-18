@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     title_updater.start(1000);
 
     updateTitle();
+    actionOnClose = Exit;
 }
 
 MainWindow::~MainWindow() {
