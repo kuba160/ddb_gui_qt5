@@ -61,7 +61,6 @@ public:
     virtual void moveIndexes(QList<int> indices, int after);
     // remove tracks
     virtual void removeIndexes(QList<int> indices);
-protected:
     // number of rows
     virtual int rowCount(const QModelIndex &parent) const;
     // same as above currently? :(
@@ -72,7 +71,6 @@ protected:
     /// END OF FUNCTIONS TO BE IMPLEMENTED
     //
     /// Static functions
-public:
     // returns default column setup
     static QList<PlaylistHeader_t *> *defaultHeaders();
     // returns default format for specific header type
@@ -82,7 +80,6 @@ public:
 
 
     // Functions that can be reimplemented:
-protected:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     QVariant data(const QModelIndex &index, int role) const;
     int columnCount(const QModelIndex &parent) const;
