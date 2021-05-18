@@ -94,9 +94,11 @@ void StatusBar::update() {
 
     label->setText(str);
 
-    DBAPI->plt_unref(plt_curr);
     if (curr_track) {
         DBAPI->pl_item_unref(curr_track);
+    }
+    if (plt_curr) {
+        DBAPI->plt_unref(plt_curr);
     }
 
     timer.start(UPDATE_MSEC);
