@@ -182,7 +182,12 @@ QVariant PlayItemModel::data(const QModelIndex &index, int role = Qt::DisplayRol
         context._size = sizeof(ddb_tf_context_t);
         context.flags = 0;
         context.it = track(index);
-        context.plt = DBAPI->pl_get_playlist(context.it);
+        if (context.it) {
+            context.plt = DBAPI->pl_get_playlist(context.it);
+        }
+        else {
+            context.plt = nullptr;
+        }
         context.idx = 0;
         context.id = 0;
         context.iter = PL_MAIN;
