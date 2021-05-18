@@ -51,7 +51,9 @@ public:
     // NOTE: this function returns true even if there is no cover for specific track
     bool isCoverArtCached(DB_playItem_t *);
     // load cover that is not in cache, QImage returned via QFuture has to be unref'd later
-    QFuture<QImage *> requestCoverArt(DB_playItem_t *);
+    // if you set up size, the cover will be scaled and available with getCoverArtScaled
+    // in other words: even if you specify cover size, returned QImage will NOT be scaled
+    QFuture<QImage *> requestCoverArt(DB_playItem_t *, QSize size = QSize());
     // get cached cover art, nullptr if not cached (use requestCoverArt to cache it)
     QImage * getCoverArt(DB_playItem_t *);
     // default cover art

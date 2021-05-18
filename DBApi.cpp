@@ -452,8 +452,8 @@ bool DBApi::isCoverArtCached(DB_playItem_t *it) {
     return CAC->isCoverArtAvailable(it);
 }
 
-QFuture<QImage *> DBApi::requestCoverArt(DB_playItem_t *p) {
-    return CAC->requestCoverArt(p);
+QFuture<QImage *> DBApi::requestCoverArt(DB_playItem_t *p, QSize size) {
+    return CAC->requestCoverArt(p, size);
 }
 
 QImage * DBApi::getCoverArt(DB_playItem_t *it) {

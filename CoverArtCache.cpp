@@ -75,12 +75,12 @@ bool CoverArtCache::isCoverArtAvailable(DB_playItem_t *it) {
     return cache.contains(it);
 }
 
-QFuture<QImage *> CoverArtCache::requestCoverArt(DB_playItem_t *it) {
+QFuture<QImage *> CoverArtCache::requestCoverArt(DB_playItem_t *it, QSize size) {
     if (isCoverArtAvailable(it)) {
         // shouldn't be calling it
         return QtConcurrent::run(cover_art,cache.value(it));
     }
-    return QtConcurrent::run(cover_art_load,this,it);
+    return QtConcurrent::run(cover_art_load,this,it, size);
 }
 
 // Threaded static functions
@@ -89,7 +89,7 @@ QImage * CoverArtCache::cover_art(QImage *cover) {
     return cover;
 }
 
-QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it) {
+QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it, QSize size) {
     if (!it) {
         return nullptr;
     }
@@ -107,6 +107,10 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it) {
                 cac->cacheUnref(img);
             }
             cac->cmut.unlock();
+            if (size.isValid()) {
+                // cache sized cover
+                cac->getCoverArtScaled(img,size);
+            }
             return img;
         }
         // result not cached, create new and cache
@@ -116,6 +120,10 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it) {
             cac->cacheCoverArt(c.result(),img);
             cac->backend->unloadCoverArt(c.result());
             cac->cmut.unlock();
+            if (size.isValid()) {
+                // cache sized cover
+                cac->getCoverArtScaled(img,size);
+            }
             return img;
         }
         else {

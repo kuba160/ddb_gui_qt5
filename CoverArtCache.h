@@ -26,7 +26,7 @@ public:
     // check if track already cached
     bool isCoverArtAvailable(DB_playItem_t *);
     // QFuture pointer for cover loading
-    QFuture<QImage *> requestCoverArt(DB_playItem_t *);
+    QFuture<QImage *> requestCoverArt(DB_playItem_t *, QSize size);
     // load cached cover art
     QImage * getCoverArt(DB_playItem_t *);
     // load cached cover art, helper used when found that cover art is already cached
@@ -50,7 +50,7 @@ public:
     void cacheUnrefTrack(DB_playItem_t *it);
 
 protected:
-    static QImage * cover_art_load(CoverArtCache *, DB_playItem_t *);
+    static QImage * cover_art_load(CoverArtCache *, DB_playItem_t *, QSize size);
     static QImage *cover_art(QImage *cover);
 
     // Hashed covers

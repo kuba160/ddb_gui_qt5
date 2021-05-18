@@ -1,4 +1,5 @@
 #include "MediasourceModel.h"
+#include <QThread>
 
 #include "medialib.h"
 
@@ -51,6 +52,12 @@ MediasourceModel::MediasourceModel(QObject *parent, DBApi *Api, QString plugname
 }
 
 MediasourceModel::~MediasourceModel() {
+    ms->remove_listener(source,listener);
+
+    while (future_list->count()) {
+        QThread::msleep(10);
+    }
+
     cover_arts_lock->lock();
     QSet<QImage *>::const_iterator i = cover_arts->constBegin();
     while (i != cover_arts->constEnd()) {
@@ -61,18 +68,17 @@ MediasourceModel::~MediasourceModel() {
     cover_arts_lock->unlock();
     if (list) {
         // cannot free list here? todo
-        //ms->free_list(source,list);
+        ms->free_list(source,list);
     }
     ms->free_selectors(source,selectors_internal);
-    ms->remove_listener(source,listener);
     ms->free_source(source);
 
-    delete list;
     delete list_mutex;
     delete list_mutex_recursive;
     delete cover_arts;
     delete cover_arts_tracks;
     delete cover_arts_lock;
+    delete child_to_parent;
     delete future_list;
 }
 
@@ -123,23 +129,21 @@ void MediasourceModel::onListenerCallback() {
 
     // Full source reset (cont.)
     if (mediasource_model_reset) {
-        const char *arr[folders.length() ? folders.length() : 1];
+        QVector<const char*> vec;
         if (folders.length() > 0) {
-            int i = 0;
             foreach(QString str, folders) {
-                arr[i] = strdup(str.toUtf8().constData());
-                i++;
+                vec.append(strdup(str.toUtf8().constData()));
             }
         }
         else {
-            arr[0] = nullptr;
+            vec.append(nullptr);
         }
         if (mlp) {
-            mlp->set_folders(source,arr,folders.length() ? folders.length() : 1);
+            mlp->set_folders(source,vec.data(),folders.length() ? folders.length() : 1);
         }
         if (folders.length()) {
             for (int i = 0; i < folders.length(); i++) {
-                free((void *) arr[i]);
+                free((void *) vec[i]);
             }
         }
         mediasource_model_reset = false;
@@ -170,9 +174,7 @@ void MediasourceModel::onCoverReceived() {
         cover_arts_lock->unlock();
         // refresh index where cover art should be
         if (img && index.isValid() && index.internalPointer()) {
-            QVector<int> roles;
-            roles.append(Qt::DecorationRole);
-            emit dataChanged(index,index,roles);
+            emit dataChanged(index,index,QVector<int>(1,Qt::DecorationRole));
         }
         delete emitter;
         // refresh if all covers received and the list has changed
@@ -266,7 +268,7 @@ QVariant MediasourceModel::data(const QModelIndex &index, int role) const {
                     QFutureWatcher<QImage *> *fw = new QFutureWatcher<QImage *>;
                     connect(fw, SIGNAL(finished()), this, SLOT(onCoverReceived()));
                     future_list->insert(fw,index);
-                    fw->setFuture(api->requestCoverArt(playit));
+                    fw->setFuture(api->requestCoverArt(playit,cover_size));
                 }
                 cover_arts_lock->unlock();
             }

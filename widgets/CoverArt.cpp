@@ -85,6 +85,9 @@ void CoverArt::refreshCover() {
         fw.cancel();
     }
     if (!cover_image) {
+        if (!cover_default) {
+            cover_default = api->getCoverArtDefault();
+        }
         cover_image = cover_default;
     }
     // uses cover_image, updates size based on cover_size
