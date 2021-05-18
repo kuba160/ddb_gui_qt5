@@ -20,6 +20,7 @@ StatusBar::StatusBar(QWidget *parent, DBApi *Api) : QStatusBar(parent), DBWidget
 }
 
 StatusBar::~StatusBar() {
+    DBAPI->tf_free(track_script);
     delete label;
 }
 
