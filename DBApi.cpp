@@ -423,13 +423,15 @@ void DBApi::loadPlaylist(const QString &fname) {
 }
 
 void DBApi::removeTracks(playItemList list) {
-    ddb_playlist_t *plt = DBAPI->pl_get_playlist(list[0]);
-    foreach(DB_playItem_t *it, list) {
-        DBAPI->plt_remove_item(plt,it);
-        DBAPI->pl_item_unref(it);
+    if (list.count()) {
+        ddb_playlist_t *plt = DBAPI->pl_get_playlist(list[0]);
+        foreach(DB_playItem_t *it, list) {
+            DBAPI->plt_remove_item(plt,it);
+            DBAPI->pl_item_unref(it);
+        }
+        emit playlistContentChanged(plt);
+        DBAPI->plt_unref(plt);
     }
-    emit playlistContentChanged(plt);
-    DBAPI->plt_unref(plt);
 }
 
 void DBApi::setShuffle(ddb_shuffle_t i) {

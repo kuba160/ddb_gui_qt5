@@ -136,7 +136,7 @@
     </property>
     <widget class="QMenu" name="menuSelection">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="title">
       <string>Selection</string>
@@ -150,7 +150,7 @@
     </widget>
     <widget class="QMenu" name="menuSort_By">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="title">
       <string>Sort by</string>
@@ -397,7 +397,7 @@
   </action>
   <action name="actionDeselectAll">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="icon">
     <iconset theme="edit-select-none">
@@ -492,7 +492,7 @@
   </action>
   <action name="actionInvert_selection">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="icon">
     <iconset theme="edit-select-invert">

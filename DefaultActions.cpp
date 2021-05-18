@@ -421,3 +421,107 @@ void DefaultActions::on_actionSelectAll_triggered() {
     DBAPI->pl_select_all();
     emit api->selectionChanged();
 }
+
+void DefaultActions::on_actionDeselectAll_triggered() {
+    int count = DBAPI->pl_getcount(PL_MAIN);
+    for (int i = 0; i < count; i++) {
+        DB_playItem_t *it = DBAPI->pl_get_for_idx(i);
+        DBAPI->pl_set_selected(it, false);
+        DBAPI->pl_item_unref(it);
+    }
+    emit api->selectionChanged();
+}
+
+void DefaultActions::on_actionInvert_selection_triggered() {
+    int count = DBAPI->pl_getcount(PL_MAIN);
+    for (int i = 0; i < count; i++) {
+        DB_playItem_t *it = DBAPI->pl_get_for_idx(i);
+        DBAPI->pl_set_selected(it, !DBAPI->pl_is_selected(it));
+        DBAPI->pl_item_unref(it);
+    }
+    emit api->selectionChanged();
+}
+
+void DefaultActions::on_actionSelectionRemove_triggered() {
+    playItemList list;
+    int count = DBAPI->pl_getcount(PL_MAIN);
+    for (int i = 0; i < count; i++) {
+        DB_playItem_t *it = DBAPI->pl_get_for_idx(i);
+        if (DBAPI->pl_is_selected(it)) {
+            list.append(it);
+        }
+    }
+    if (list.count()) {
+        api->removeTracks(list);
+    }
+}
+
+void DefaultActions::on_actionSelectionCrop_triggered() {
+    playItemList list;
+    int count = DBAPI->pl_getcount(PL_MAIN);
+    for (int i = 0; i < count; i++) {
+        DB_playItem_t *it = DBAPI->pl_get_for_idx(i);
+        if (!DBAPI->pl_is_selected(it)) {
+            list.append(it);
+        }
+    }
+    if (list.count()) {
+        api->removeTracks(list);
+    }
+}
+
+void DefaultActions::sortPlaylist(const char *format, bool ascending) {
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    DBAPI->plt_sort_v2(plt, PL_MAIN, -1, format, ascending);
+    emit api->playlistContentChanged(plt);
+    DBAPI->plt_unref(plt);
+}
+
+void DefaultActions::on_actionSortTitle_triggered() {
+    static bool direction = false;
+    sortPlaylist("%title%", direction = !direction);
+}
+
+void DefaultActions::on_actionSortTrackNumber_triggered() {
+    static bool direction = false;
+    sortPlaylist("%tracknumber%", direction = !direction);
+}
+
+void DefaultActions::on_actionSortArtist_triggered() {
+    static bool direction = false;
+    sortPlaylist("%artist%", direction = !direction);
+}
+
+void DefaultActions::on_actionSortAlbum_triggered() {
+    static bool direction = false;
+    sortPlaylist("%album%", direction = !direction);
+}
+
+void DefaultActions::on_actionSortDate_triggered() {
+    static bool direction = false;
+    sortPlaylist("%year%", direction = !direction);
+}
+
+void DefaultActions::on_actionSortRandom_triggered() {
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    DBAPI->plt_sort_v2(plt, PL_MAIN, -1, nullptr, DDB_SORT_RANDOM);
+    emit api->playlistContentChanged(plt);
+    DBAPI->plt_unref(plt);
+}
+
+void DefaultActions::on_actionSortCustom_triggered() {
+    QString format = QInputDialog::getText(w,tr("Sort by").append("..."),tr("Format"));
+    if (!format.isEmpty()) {
+        QMessageBox msgbox(w);
+        msgbox.setText(QString("%1 / %2?").arg(tr("Ascending"), tr("Descending")));
+        msgbox.addButton(tr("Ascending"),QMessageBox::YesRole);
+        msgbox.addButton(tr("Descending"),QMessageBox::NoRole);
+        msgbox.exec();
+        if (msgbox.result() == QMessageBox::AcceptRole) {
+            sortPlaylist(format.toUtf8(),DDB_SORT_ASCENDING);
+        }
+        else if (msgbox.result() == QMessageBox::RejectRole) {
+            sortPlaylist(format.toUtf8(),DDB_SORT_DESCENDING);
+        }
+    }
+}

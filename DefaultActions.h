@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QMenuBar>
+#include <QDialog>
+#include <QFormLayout>
 #include "DBApi.h"
 //#include "ui_DefaultActions.h"
 
@@ -29,6 +31,7 @@ private:
     QMenu *new_plugins;
     QMenu *remove_plugins;
 
+    void sortPlaylist(const char *format, bool ascending);
 public slots:
     void shuffleRepeatHandler();
     // on triggered menu actions
@@ -65,6 +68,17 @@ private slots:
     void on_actionAddURL_triggered();
     void on_actionClearAll_triggered();
     void on_actionSelectAll_triggered();
+    void on_actionDeselectAll_triggered();
+    void on_actionInvert_selection_triggered();
+    void on_actionSelectionRemove_triggered();
+    void on_actionSelectionCrop_triggered();
+    void on_actionSortTitle_triggered();
+    void on_actionSortTrackNumber_triggered();
+    void on_actionSortArtist_triggered();
+    void on_actionSortAlbum_triggered();
+    void on_actionSortDate_triggered();
+    void on_actionSortRandom_triggered();
+    void on_actionSortCustom_triggered();
 };
 
 #endif // DEFAULTACTIONS_H
