@@ -39,6 +39,7 @@ private slots:
     //
     void onPlaylistRenamed(int);
     void onPlaylistRemoved(int);
+    void onPlaylistCreated();
 };
 
 #endif // PLAYLISTBROWSER_H

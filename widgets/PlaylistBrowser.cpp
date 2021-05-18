@@ -20,6 +20,7 @@ PlaylistBrowser::PlaylistBrowser(QWidget * parent, DBApi *Api) : QListWidget(par
     connect (api, SIGNAL(playlistMoved(int, int)), this, SLOT(playlistOrderChanged(int, int)));
     connect (api, SIGNAL(playlistRenamed(int)), this, SLOT(onPlaylistRenamed(int)));
     connect (api, SIGNAL(playlistRemoved(int)), this, SLOT(onPlaylistRemoved(int)));
+    connect (api, SIGNAL(playlistCreated()), this, SLOT(onPlaylistCreated()));
 
     // Stylesheet
     this->setStyleSheet(QString("QListView::item {padding: 5px}"));
@@ -85,5 +86,9 @@ void PlaylistBrowser::onPlaylistRenamed(int plt) {
 }
 
 void PlaylistBrowser::onPlaylistRemoved(int plt) {
-    removeItemWidget(item(plt));
+    delete takeItem(plt);
+}
+
+void PlaylistBrowser::onPlaylistCreated() {
+    addItem(api->playlistNameByIdx(api->getPlaylistCount()-1));
 }
