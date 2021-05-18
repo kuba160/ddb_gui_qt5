@@ -298,9 +298,7 @@ void ActionManager::playItemContextMenu(QWidget *parent, QPoint p) {
             track_properties->setEnabled(false);
         }
     }
-    ctxMenu->move(parent->mapToGlobal(QPoint(0,0)) + p);
-    playItemMenuPosition = parent->mapToGlobal(QPoint(0,0)) + p;
-    ctxMenu->show();
+    ctxMenu->popup(parent->mapToGlobal(QPoint(0,0)) + p);
 
     // Add to queue
     // Delete from queue
@@ -372,9 +370,7 @@ void ActionManager::playlistContextMenu(QWidget *parent, QPoint p, int plt) {
             track_properties->setEnabled(false);
         }
     }
-    ctxMenu->move(parent->mapToGlobal(QPoint(0,0)) + p);
-    playlistMenuPosition = parent->mapToGlobal(QPoint(0,0)) + p;
-    ctxMenu->show();
+    ctxMenu->popup(parent->mapToGlobal(QPoint(0,0)) + p);
 
     // Change playlist name
     // Delete playlist
