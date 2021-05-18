@@ -29,7 +29,10 @@ uint qHash(const scaledCover &c, uint seed) noexcept {
 
 CoverArtCache::CoverArtCache(QObject *parent, DB_functions_t *funcs) : QObject(parent) {
     db = funcs;
-    if(DBAPI->plug_get_for_id("artwork")) {
+    if (DBAPI->plug_get_for_id ("artwork2")) {
+            backend = new CoverArtNew(parent, db);
+    }
+    else if (DBAPI->plug_get_for_id("artwork")) {
         DB_plugin_t *p = DBAPI->plug_get_for_id("artwork");
         if (p->api_vmajor == 1) {
             backend = new CoverArtLegacy(parent, db);
@@ -37,9 +40,6 @@ CoverArtCache::CoverArtCache(QObject *parent, DB_functions_t *funcs) : QObject(p
         else if (p->api_vmajor == 2) {
             backend = new CoverArtNew(parent,db);
         }
-    }
-    else if(DBAPI->plug_get_for_id ("artwork2")) {
-        backend = new CoverArtNew(parent, db);
     }
 
     default_image = new QImage(backend->getDefaultCoverArt());
