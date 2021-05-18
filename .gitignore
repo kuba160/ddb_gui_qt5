@@ -16,6 +16,7 @@
 *.pro.user
 *.pro.user.*
 moc_*.cpp
+moc_*.h
 qrc_*.cpp
 Makefile
 *.Debug
@@ -26,5 +27,6 @@ ddb_gui_qt5_plugin_resources.cpp
 *-build-*
 ui_*
 config.log
+config.tests/libintl/libintl
 release/
 debug/
