@@ -42,9 +42,11 @@ CoverArtCache::CoverArtCache(QObject *parent, DB_functions_t *funcs) : QObject(p
         }
     }
 
-    default_image = new QImage(backend->getDefaultCoverArt());
-    cacheCoverArt(backend->getDefaultCoverArt(), default_image);
-    cacheRef(default_image);
+    if (backend && backend->getDefaultCoverArt()) {
+        default_image = new QImage(backend->getDefaultCoverArt());
+        cacheCoverArt(backend->getDefaultCoverArt(), default_image);
+        cacheRef(default_image);
+    }
 }
 
 CoverArtCache::~CoverArtCache() {
@@ -229,6 +231,11 @@ QImage * CoverArtCache::getCoverArtScaled(QImage *img, QSize size) {
 }
 
 QImage * CoverArtCache::getCoverArtDefault() {
+    if (!default_image && backend->getDefaultCoverArt()) {
+        default_image = new QImage(backend->getDefaultCoverArt());
+        cacheCoverArt(backend->getDefaultCoverArt(), default_image);
+        cacheRef(default_image);
+    }
     if (default_image) {
         cacheRef(default_image);
     }
