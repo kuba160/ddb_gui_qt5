@@ -273,35 +273,43 @@ void Medialib::folderSetupDialogHandler(bool checked) {
     if (s == plus) {
         QString str = ledit->text();
         if (str.length() > 0) {
+            folders = CONFGET("folders",QStringList()).toStringList();
             QListWidgetItem *item = new QListWidgetItem(str,lwidget);
             item->setFlags (item->flags() | Qt::ItemIsEditable);
             folders.append(str);
             CONFSET("folders",folders);
             ledit->setText("");
+            tree->ms_model->setDirectories(folders);
         }
     }
     else if (s == minus) {
         QList<QListWidgetItem *> list = lwidget->selectedItems();
-        QStringList folders = CONFGET("folders",QStringList()).toStringList();
-        for (int i = 0; i < list.length(); i++) {
-            int row = lwidget->row(list[i]);
-            lwidget->takeItem(row);
-            folders.takeAt(row);
+        if (list.count()) {
+            folders = CONFGET("folders",QStringList()).toStringList();
+            for (int i = 0; i < list.length(); i++) {
+                int row = lwidget->row(list[i]);
+                lwidget->takeItem(row);
+                folders.takeAt(row);
+            }
+            CONFSET("folders",folders);
+            tree->ms_model->setDirectories(folders);
         }
-        CONFSET("folders",folders);
-        tree->ms_model->setDirectories(folders);
     }
     else if (s == browse) {
         QFileDialog dialog(lwidget,tr("Select folder..."),ledit->text().length() ? ledit->text() : "");
         dialog.setFileMode(QFileDialog::Directory);
+        dialog.setOption(QFileDialog::ShowDirsOnly,true);
 
         if(dialog.exec()) {
+            folders = CONFGET("folders",QStringList()).toStringList();
             QStringList list = dialog.selectedFiles();
             QString str;
             foreach(str,list) {
                 QListWidgetItem *item = new QListWidgetItem(str,lwidget);
                 item->setFlags (item->flags() | Qt::ItemIsEditable);
+                folders.append(str);
             }
+            tree->ms_model->setDirectories(folders);
         }
     }
 }
