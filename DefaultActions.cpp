@@ -525,3 +525,40 @@ void DefaultActions::on_actionSortCustom_triggered() {
         }
     }
 }
+
+void DefaultActions::on_actionFind_triggered() {
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    if (plt) {
+        DBAPI->plt_search_reset(plt);
+        QDialog *dlg = new QDialog(w, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
+        dlg->setWindowTitle(tr("Search"));
+        dlg->setProperty("_internalNameWidget","search");
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        if (dlg->layout()) {
+            delete dlg->layout();
+        }
+        QVBoxLayout *vbox = new QVBoxLayout(dlg);
+        dlg->setLayout(vbox);
+        QLineEdit *le = new QLineEdit(dlg);
+        connect(le,SIGNAL(textEdited(QString)), this, SLOT(on_actionFind_searchBox_edited(QString)));
+        vbox->addWidget(le);
+        pv_search = new PlaylistView(dlg,api,new PlaylistModel(plt, dlg, api));
+        dlg->setMinimumSize(QSize(512,256));
+        pv_search->pi_model->setIter(PL_SEARCH);
+        vbox->addWidget(le);
+        vbox->addWidget(pv_search);
+        dlg->open();
+
+        DBAPI->plt_unref(plt);
+    }
+}
+
+void DefaultActions::on_actionFind_searchBox_edited(const QString str) {
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+    if (plt && pv_search) {
+        DBAPI->plt_search_process2(plt,str.toUtf8(), false);
+        // HACK: full playlist reload
+        pv_search->pi_model->setIter(PL_SEARCH);
+        DBAPI->plt_unref(plt);
+    }
+}

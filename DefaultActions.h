@@ -6,6 +6,7 @@
 #include <QDialog>
 #include <QFormLayout>
 #include "DBApi.h"
+#include "PlaylistView.h"
 //#include "ui_DefaultActions.h"
 
 namespace Ui {
@@ -30,6 +31,8 @@ private:
     QActionGroup *main_widgets_list;
     QMenu *new_plugins;
     QMenu *remove_plugins;
+
+    PlaylistView *pv_search = nullptr;
 
     void sortPlaylist(const char *format, bool ascending);
 public slots:
@@ -79,6 +82,8 @@ private slots:
     void on_actionSortDate_triggered();
     void on_actionSortRandom_triggered();
     void on_actionSortCustom_triggered();
+    void on_actionFind_triggered();
+    void on_actionFind_searchBox_edited(const QString);
 };
 
 #endif // DEFAULTACTIONS_H
