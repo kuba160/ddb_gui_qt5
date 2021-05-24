@@ -44,6 +44,14 @@ QString ActionItem::iconOnAction(QString action) {
         icon_map.insert("playlist_delete","edit-delete-remove");
         icon_map.insert("playlist_add","media-playlist-append");
         icon_map.insert("playlist_duplicate","document-duplicate");
+        icon_map.insert("skip_to_prev_genre", "view-media-genre");
+        icon_map.insert("skip_to_prev_composer", "view-media-similarartists");
+        icon_map.insert("skip_to_prev_artist", "view-media-artist");
+        icon_map.insert("skip_to_prev_album", "view-media-album-cover");
+        icon_map.insert("skip_to_next_genre", "view-media-genre");
+        icon_map.insert("skip_to_next_composer", "view-media-similarartists");
+        icon_map.insert("skip_to_next_artist", "view-media-artist");
+        icon_map.insert("skip_to_next_album", "view-media-album-cover");
 
 
     }
