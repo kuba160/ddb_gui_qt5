@@ -119,9 +119,13 @@ protected:
     bool m_playlistLock = false;
     // Properties to set up
     Q_PROPERTY(bool m_playlistLock READ playlistLock WRITE setPlaylistLock NOTIFY playlistLockChanged)
+
+    int m_iter = PL_MAIN;
 public:
     bool playlistLock() const {return m_playlistLock;}
     void setPlaylistLock(bool lock) {m_playlistLock = lock;emit playlistLockChanged();}
+    int iter();
+    void setIter(int iter);
 
 private slots:
     void onPlaybackChanged();

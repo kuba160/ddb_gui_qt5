@@ -42,7 +42,7 @@ int PlaylistModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     if (plt) {
         DBAPI->pl_lock ();
-        int rowCount = DBAPI->plt_get_item_count(plt, PL_MAIN);
+        int rowCount = DBAPI->plt_get_item_count(plt, m_iter);
         DBAPI->pl_unlock ();
         return rowCount;
     }
@@ -61,7 +61,7 @@ playItemList PlaylistModel::tracks(const QModelIndexList &tracks) const {
     QList<int> rowused;
     foreach(QModelIndex t, tracks) {
         if (!rowused.contains(t.row())) {
-            DB_playItem_t *it = DBAPI->plt_get_item_for_idx(plt, t.row(), PL_MAIN);
+            DB_playItem_t *it = DBAPI->plt_get_item_for_idx(plt, t.row(), m_iter);
             if (it) {
                 list.append(it);
             }
@@ -77,13 +77,13 @@ playItemList PlaylistModel::tracks(const QList<int> &tracks) const {
 
     playItemList list;
     foreach(int t, tracks) {
-        list.append(DBAPI->plt_get_item_for_idx(plt, t, PL_MAIN));
+        list.append(DBAPI->plt_get_item_for_idx(plt, t, m_iter));
     }
     return list;
 }
 
 DB_playItem_t * PlaylistModel::track(const QModelIndex &track) const {
-    return DBAPI->plt_get_item_for_idx(plt, track.row(), PL_MAIN);
+    return DBAPI->plt_get_item_for_idx(plt, track.row(), m_iter);
 }
 
 void PlaylistModel::sort(int n, Qt::SortOrder order) {
@@ -92,7 +92,7 @@ void PlaylistModel::sort(int n, Qt::SortOrder order) {
         return;
     }
     beginResetModel();
-    DBAPI->plt_sort_v2(plt, PL_MAIN, -1, columns[n]->format.toUtf8(), order);
+    DBAPI->plt_sort_v2(plt, m_iter, -1, columns[n]->format.toUtf8(), order);
     endResetModel();
 }
 
@@ -102,13 +102,13 @@ void PlaylistModel::insertTracks(playItemList *l, int after) {
         it = nullptr;
     }
     else if (after == -2) {
-        it = DBAPI->plt_get_last(plt,PL_MAIN);
+        it = DBAPI->plt_get_last(plt,m_iter);
     }
     else {
-        if (after > DBAPI->plt_get_item_count(plt, PL_MAIN)) {
+        if (after > DBAPI->plt_get_item_count(plt, m_iter)) {
             return;
         }
-        it = DBAPI->plt_get_item_for_idx(plt,after,PL_MAIN);
+        it = DBAPI->plt_get_item_for_idx(plt,after,m_iter);
     }
 
     DB_playItem_t *iter = it;
@@ -132,23 +132,23 @@ void PlaylistModel::moveIndexes(QList<int> ind, int after) {
     for (i = 0; i < ind.length(); i++) {
         inds[i] = ind[i];
     }
-    int lastItem = DBAPI->plt_get_item_count(plt, PL_MAIN) - 1;
+    int lastItem = DBAPI->plt_get_item_count(plt, m_iter) - 1;
     if (after == -2) {
         after = lastItem;
     }
     DB_playItem_t *bef;
     if (after == -1) {
-        bef = DBAPI->plt_get_first(plt,PL_MAIN);
+        bef = DBAPI->plt_get_first(plt,m_iter);
     }
     else {
         if (after > lastItem) {
             return;
         }
-        bef = DBAPI->plt_get_item_for_idx(plt, after+1, PL_MAIN);
+        bef = DBAPI->plt_get_item_for_idx(plt, after+1, m_iter);
     }
     beginResetModel();
     DBAPI->pl_lock();
-    DBAPI->plt_move_items(plt, PL_MAIN, plt, bef, inds, ind.length());
+    DBAPI->plt_move_items(plt, m_iter, plt, bef, inds, ind.length());
     if (bef) {
         DBAPI->pl_item_unref(bef);
     }

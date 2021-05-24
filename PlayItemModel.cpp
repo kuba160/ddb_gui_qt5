@@ -190,7 +190,7 @@ QVariant PlayItemModel::data(const QModelIndex &index, int role = Qt::DisplayRol
         }
         context.idx = 0;
         context.id = 0;
-        context.iter = PL_MAIN;
+        context.iter = m_iter;
         context.update = 0;
         context.dimmed = 0;
     }
@@ -397,4 +397,14 @@ void PlayItemModel::removeIndexes(QList<int> l) {
 
 int PlayItemModel::trackCount() const {
     return 0;
+}
+
+int PlayItemModel::iter() {
+    return m_iter;
+}
+
+void PlayItemModel::setIter(int iter) {
+    beginResetModel();
+    m_iter = iter;
+    endResetModel();
 }
