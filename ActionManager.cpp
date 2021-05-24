@@ -155,7 +155,9 @@ void ActionManager::loadActions() {
             // append all actions
             DB_plugin_action_t *itr = pluglist[i]->get_actions(nullptr); // kinda off implementation :(
             while(itr) {
-                actions.append(new ActionItem(itr));
+                if (QString("cd_add") != itr->name) {
+                    actions.append(new ActionItem(itr));
+                }
                 itr = itr->next;
             }
         }
