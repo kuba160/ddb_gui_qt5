@@ -535,7 +535,7 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
     // For edit
     if (editting) {
         if (header->title.isEmpty() && header->type != HT_custom) {
-            title.setText(PlaylistModel::titleFromHeaderType(header->type));
+            title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(header->type)));
         }
         else {
             title.setText(header->title);
