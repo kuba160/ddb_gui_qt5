@@ -543,6 +543,7 @@ void DefaultActions::on_actionFind_triggered() {
         connect(le,SIGNAL(textEdited(QString)), this, SLOT(on_actionFind_searchBox_edited(QString)));
         vbox->addWidget(le);
         pv_search = new PlaylistView(dlg,api,new PlaylistModel(plt, dlg, api));
+        pv_search->setDragEnabled(false);
         dlg->setMinimumSize(QSize(512,256));
         pv_search->pi_model->setIter(PL_SEARCH);
         vbox->addWidget(le);
