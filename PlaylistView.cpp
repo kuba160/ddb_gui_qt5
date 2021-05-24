@@ -509,7 +509,13 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
     {
         int t = headerType::HT_itemIndex;
         while (t < HT_END){
-            items.append(PlayItemModel::titleFromHeaderType((headerType) t));
+            if (t == HT_playing) {
+                // hack, different title/type text
+                items.append(tr("Playing"));
+            }
+            else {
+                items.append(PlayItemModel::titleFromHeaderType((headerType) t));
+            }
             t++;
         }
     }
@@ -528,7 +534,12 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
 
     // For edit
     if (editting) {
-        title.setText(header->title);
+        if (header->title.isEmpty() && header->type != HT_custom) {
+            title.setText(PlaylistModel::titleFromHeaderType(header->type));
+        }
+        else {
+            title.setText(header->title);
+        }
         type.setCurrentIndex(header->type-1);
         if (type.currentIndex() + 1 != HT_custom) {
             format.setReadOnly(true);
@@ -572,7 +583,8 @@ void HeaderDialog::typeChanged(int index) {
         format_saved = format.text();
         format.setReadOnly(true);
         format.setText(PlaylistModel::formatFromHeaderType(static_cast<headerType>(index + 1)));
-        if (type.itemText(h->type - 1) == title.text() || !title.text().length()) {
+        if (type.itemText(h->type - 1) == title.text() || !title.text().length() ||
+           (h->type == HT_playing && title.text() == "♫")) {
             title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(index + 1)));
             h->title = title.text();
         }
