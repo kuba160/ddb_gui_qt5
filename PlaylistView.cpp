@@ -445,6 +445,7 @@ void PlaylistView::headerDialogEdit(bool) {
 void PlaylistView::headerDialogRemove(bool) {
     headers.removeAt(headerMenu_pos);
     pi_model->removeColumn(headerMenu_pos);
+    saveHeaderState();
 }
 
 void PlaylistView::headerAdd(int before,PlaylistHeader_t *ph) {
