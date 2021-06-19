@@ -179,9 +179,9 @@ void Playlist::onTrackChanged() {
     }
     if (DBAPI->conf_get_int("playlist.scroll.cursorfollowplayback", true)) {
         if (DBAPI->streamer_get_current_playlist() == DBAPI->plt_get_curr_idx()) {
-            DB_playItem_t *it = DBAPI->streamer_get_playing_track();
-            if (it) {
-                int idx = DBAPI->pl_get_idx_of(it);
+            DB_playItem_t *it_curr = DBAPI->streamer_get_playing_track();
+            if (it_curr) {
+                int idx = DBAPI->pl_get_idx_of(it_curr);
                 QItemSelection sel;
                 int count = pi_model->trackCount();
                 for (int i = 0; i < count ; i++) {
@@ -196,6 +196,7 @@ void Playlist::onTrackChanged() {
                         DBAPI->pl_item_unref(it);
                     }
                 }
+                DBAPI->pl_item_unref(it_curr);
             }
         }
     }
