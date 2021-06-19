@@ -540,7 +540,7 @@ void DefaultActions::on_actionFind_triggered() {
         QVBoxLayout *vbox = new QVBoxLayout(dlg);
         dlg->setLayout(vbox);
         QLineEdit *le = new QLineEdit(dlg);
-        connect(le,SIGNAL(textEdited(QString)), this, SLOT(on_actionFind_searchBox_edited(QString)));
+        connect(le,SIGNAL(textEdited(QString)), this, SLOT(actionFind_searchBox_edited(QString)));
         vbox->addWidget(le);
         pv_search = new PlaylistView(dlg,api,new PlaylistModel(plt, dlg, api));
         pv_search->setDragEnabled(false);
@@ -554,7 +554,7 @@ void DefaultActions::on_actionFind_triggered() {
     }
 }
 
-void DefaultActions::on_actionFind_searchBox_edited(const QString str) {
+void DefaultActions::actionFind_searchBox_edited(const QString str) {
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     if (plt && pv_search) {
         DBAPI->plt_search_process2(plt,str.toUtf8(), false);

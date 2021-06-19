@@ -83,7 +83,7 @@ private slots:
     void on_actionSortRandom_triggered();
     void on_actionSortCustom_triggered();
     void on_actionFind_triggered();
-    void on_actionFind_searchBox_edited(const QString);
+    void actionFind_searchBox_edited(const QString);
 };
 
 #endif // DEFAULTACTIONS_H
