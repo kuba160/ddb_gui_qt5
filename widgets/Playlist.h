@@ -19,6 +19,7 @@ private slots:
     void onPlaylistChanged();
     void onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void trackDoubleClicked(QModelIndex index);
+    void onTrackChanged();
 public slots:
     void jumpToCurrentTrack();
 };

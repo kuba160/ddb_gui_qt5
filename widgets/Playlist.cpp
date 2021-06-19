@@ -28,6 +28,8 @@ Playlist::Playlist(QWidget *parent, DBApi *Api) : PlaylistView(parent,Api,new Pl
             this, SLOT(onSelectionChanged(QItemSelection,QItemSelection)));
     // Selection update from deadbeef
     connect(api, SIGNAL(selectionChanged()), this, SLOT(onSelectionChanged()));
+    // Playback follow handler
+    connect(api, SIGNAL(trackChanged()), this, SLOT(onTrackChanged()));
     // restore cursor
     int cursor = DBAPI->conf_get_int(QString("playlist.cursor.%1").arg(DBAPI->plt_get_curr_idx()).toUtf8(), -1);
     //setCurrentIndex()
@@ -157,4 +159,45 @@ void Playlist::jumpToCurrentTrack() {
             DBAPI->pl_item_unref(it);
         }
     //}
+}
+
+void Playlist::onTrackChanged() {
+    if (DBAPI->conf_get_int("playlist.scroll.followplayback", true)) {
+        if (DBAPI->streamer_get_current_playlist() == DBAPI->plt_get_curr_idx()) {
+            DB_playItem_t *it = DBAPI->streamer_get_playing_track();
+            if (it) {
+                int idx = DBAPI->pl_get_idx_of(it);
+                // check if visible
+                int range_lower = indexAt(viewport()->rect().topLeft()).row();
+                int range_upper = indexAt(viewport()->rect().bottomLeft()).row();
+                if ((range_lower > idx) || (range_upper < idx)) {
+                    scrollTo(pi_model->index(idx,0, QModelIndex()), QAbstractItemView::PositionAtCenter);
+                }
+                DBAPI->pl_item_unref(it);
+            }
+        }
+    }
+    if (DBAPI->conf_get_int("playlist.scroll.cursorfollowplayback", true)) {
+        if (DBAPI->streamer_get_current_playlist() == DBAPI->plt_get_curr_idx()) {
+            DB_playItem_t *it = DBAPI->streamer_get_playing_track();
+            if (it) {
+                int idx = DBAPI->pl_get_idx_of(it);
+                QItemSelection sel;
+                int count = pi_model->trackCount();
+                for (int i = 0; i < count ; i++) {
+                    DB_playItem_t *it = DBAPI->pl_get_for_idx(i);
+                    if (it) {
+                        if (idx == i) {
+                            DBAPI->pl_set_selected(it, true);
+                        }
+                        else {
+                            DBAPI->pl_set_selected(it, false);
+                        }
+                        DBAPI->pl_item_unref(it);
+                    }
+                }
+            }
+        }
+    }
+    onSelectionChanged();
 }
