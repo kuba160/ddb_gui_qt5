@@ -393,6 +393,9 @@ void PlaylistView::showContextMenu(QPoint point) {
 
 void PlaylistView::headerContextMenuRequested(QPoint pos) {
     headerMenu_pos =  header()->logicalIndexAt(pos);
+
+    headerActions[1]->setEnabled(headerMenu_pos == -1 ? false : true);
+    headerActions[2]->setEnabled(headerMenu_pos == -1 ? false : true);
     headerContextMenu.move(mapToGlobal(pos));
     headerContextMenu.show();
 }
