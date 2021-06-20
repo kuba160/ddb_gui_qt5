@@ -358,8 +358,19 @@ void DBApi::movePlaylist(int plt, int before) {
 }
 
 void DBApi::newPlaylist(QString name) {
-    // todo check if name exists, if thats the case add (%1)
-    // todo add newPlaylist with int before argument
+    // TODO add new playlist location
+    int count = 0;
+    for (int i = 0; i < DBAPI->plt_get_count(); i++) {
+        char buf[512];
+        DBAPI->plt_get_title(DBAPI->plt_get_for_idx(i), buf, 512);
+        QRegularExpression re(name + "( \\([1-9]+\\))?");
+        if (re.match(buf).hasMatch()) {
+            count++;
+        }
+    }
+    if (count) {
+        name.append(QString(" (%1)").arg(count));
+    }
     DBAPI->plt_add (DBAPI->plt_get_count(), name.toUtf8());
     playlistNames.append(name);
     emit playlistCreated();
