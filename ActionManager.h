@@ -57,7 +57,7 @@ protected:
     //
     int menuActionsAvailable(QObject *);
     static void insertActionWithName(QMenu *, QList<QAction*> *, QString name);
-    QList<QAction *> defaultPlaylistActions();
+    QList<QAction *> defaultPlaylistActions(int plt);
 
 
     void fillMenuBar();

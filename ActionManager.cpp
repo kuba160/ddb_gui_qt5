@@ -227,7 +227,7 @@ void ActionManager::insertActionWithName(QMenu *menu, QList<QAction*> *l, QStrin
     }
 }
 
-QList<QAction *> ActionManager::defaultPlaylistActions() {
+QList<QAction *> ActionManager::defaultPlaylistActions(int plt) {
     static QList<QAction *> actions;
     if (!actions.length()) {
         actions.append(new QAction(tr("Rename Playlist")));
@@ -245,6 +245,8 @@ QList<QAction *> ActionManager::defaultPlaylistActions() {
         connect(actions.last(), SIGNAL(triggered()), this, SLOT(onAddNewPlaylist()));
         ActionItem::setDefaultIcon(actions.last());
     }
+    actions[0]->setEnabled(plt != -1);
+    actions[1]->setEnabled(plt != -1);
     return actions;
 }
 
@@ -339,7 +341,7 @@ void ActionManager::playlistContextMenu(QWidget *parent, QPoint p, int plt) {
     QMenu *ctxMenu = new QMenu(parent);
 
     playlist_number = plt;
-    ctxMenu->addActions(defaultPlaylistActions());
+    ctxMenu->addActions(defaultPlaylistActions(plt));
 
     // Sort actions and format them as followed:
     QVariant wactions = parent->property("Actions");
