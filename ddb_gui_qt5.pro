@@ -28,6 +28,7 @@ SOURCES  =  \
             MediasourceModel.cpp \
             PlayItemModel.cpp \
             PlayqueueModel.cpp \
+            PlaylistBrowserModel.cpp \
             PlaylistModel.cpp \
             PlaylistView.cpp \
             PluginLoader.cpp \
@@ -59,6 +60,7 @@ HEADERS =   widgets/CoverArt.h \
             MediasourceModel.h \
             PlayItemModel.h \
             PlayqueueModel.h \
+            PlaylistBrowserModel.h \
             PlaylistModel.h \
             PlaylistView.h \
             PluginLoader.h \
