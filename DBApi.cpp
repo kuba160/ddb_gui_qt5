@@ -148,6 +148,14 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
 }
 
 QString const& DBApi::playlistNameByIdx(int idx) {
+    char buf[512];
+    static QString str;
+    ddb_playlist_t *plt = DBAPI->plt_get_for_idx(idx);
+    if (plt) {
+        DBAPI->plt_get_title(plt, buf, 512);
+        return str = buf;
+    }
+    // old method
     static QString empty;
     if (idx >= playlistNames.size()) {
         return empty;
