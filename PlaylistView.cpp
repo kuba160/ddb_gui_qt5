@@ -1,4 +1,4 @@
-#include "PlaylistView.h"
+﻿#include "PlaylistView.h"
 
 #include <QApplication>
 #include <QVBoxLayout>
@@ -51,12 +51,21 @@ bool AutoToolTipDelegate::helpEvent(QHelpEvent* e, QAbstractItemView* view, cons
 #if QT_VERSION > QT_VERSION_CHECK(5,11,0)
         int px = QFontMetrics(view->font()).horizontalAdvance(index.data(Qt::DisplayRole).toString().append(".."));
 #else
-    int px = QFontMetrics(view->font()).width(index.data(Qt::DisplayRole).toString().append(".."));
+        int px = QFontMetrics(view->font()).width(index.data(Qt::DisplayRole).toString().append(".."));
 #endif
+        // calculate identation
+        QModelIndex ident_scan = index;
+        int par = 0;
+        while (ident_scan.parent().isValid()) {
+            ident_scan = ident_scan.parent();
+            // todo more precise calculation
+            par++;
+        }
+        px += par >= 2 ? 55 : par == 1 ? 62 : 0;
         if (rect.width() < px) {
             QVariant tooltip = index.data(Qt::DisplayRole);
             if (tooltip.canConvert<QString>()) {
-                QToolTip::showText(e->globalPos(),tooltip.toString().toHtmlEscaped(),view);
+                QToolTip::showText(e->globalPos(),tooltip.toString(),view);
                 return true;
             }
         }

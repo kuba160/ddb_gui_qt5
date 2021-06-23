@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QFileDialog>
 
+#include "../PlaylistView.h"
 #include "Medialib.h"
 
 #define GETSEL (prox_model->mapSelectionToSource(selectionModel()->selection()).indexes())
@@ -49,6 +50,8 @@ MedialibTreeView::MedialibTreeView(QWidget *parent, DBApi *Api) : QTreeView(pare
     // Context menu
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
+
+    setItemDelegate(new AutoToolTipDelegate(this));
 
     actions = new QActionGroup(this);
     actions->setExclusive(false);
