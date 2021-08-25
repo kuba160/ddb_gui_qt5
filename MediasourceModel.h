@@ -19,6 +19,7 @@ public:
     ~MediasourceModel();
 
     DB_mediasource_t * getMediasourcePlugin();
+    ddb_mediasource_state_t getMediasourceState();
     QStringList getSelectors();
 
     void setDirectories(QStringList folders);

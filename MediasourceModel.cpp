@@ -5,7 +5,13 @@
 
 void MediasourceModel::source_listener(ddb_mediasource_event_type_t event, void *user_data) {
     Q_UNUSED(event);
-    emit static_cast<MediasourceModel *>(user_data)->listenerCallback();
+    qDebug() << event;
+    if (event == DDB_MEDIASOURCE_EVENT_STATE_DID_CHANGE) {
+        if (static_cast<MediasourceModel *>(user_data)->getMediasourceState() == DDB_MEDIASOURCE_STATE_IDLE) {
+            qDebug() << "Updating MEDIA\n";
+            emit static_cast<MediasourceModel *>(user_data)->listenerCallback();
+        }
+    }
 }
 
 MediasourceModel::MediasourceModel(QObject *parent, DBApi *Api, QString plugname) : QAbstractItemModel(parent), DBWidget(nullptr,Api) {
@@ -22,10 +28,10 @@ MediasourceModel::MediasourceModel(QObject *parent, DBApi *Api, QString plugname
     connect(this, SIGNAL(listenerCallback()), this, SLOT(onListenerCallback()));
     listener = ms->add_listener(source,source_listener,this);
 
-    selectors_internal = ms->get_selectors(source);
+    selectors_internal = ms->get_selectors_list(source);
 
     for (int i = 0; 1; i++) {
-        const char* s = ms->get_name_for_selector(source,selectors_internal[i]);
+        const char* s = ms->selector_name(source,selectors_internal[i]);
         if (s) {
             selectors_list.append(s);
         }
@@ -49,6 +55,8 @@ MediasourceModel::MediasourceModel(QObject *parent, DBApi *Api, QString plugname
 
     child_to_parent = new QHash<void*,QModelIndex>();
     //list = ms->create_list(source,selectors_internal[selector],search_query.toUtf8());
+
+    ms->refresh(source);
 }
 
 MediasourceModel::~MediasourceModel() {
@@ -68,9 +76,9 @@ MediasourceModel::~MediasourceModel() {
     cover_arts_lock->unlock();
     if (list) {
         // cannot free list here? todo
-        ms->free_list(source,list);
+        ms->free_item_tree(source,list);
     }
-    ms->free_selectors(source,selectors_internal);
+    ms->free_selectors_list(source,selectors_internal);
     ms->free_source(source);
 
     delete list_mutex;
@@ -86,6 +94,10 @@ DB_mediasource_t *MediasourceModel::getMediasourcePlugin() {
     return ms;
 }
 
+ddb_mediasource_state_t MediasourceModel::getMediasourceState() {
+    return ms->scanner_state(source);
+}
+
 void MediasourceModel::onListenerCallback() {
     if(future_list->count()) {
         listToBeRefreshed = true;
@@ -95,7 +107,7 @@ void MediasourceModel::onListenerCallback() {
     list_mutex->lock();
     list_mutex_recursive->lock();
     if (list) {
-        ms->free_list(source,list);
+        ms->free_item_tree(source,list);
         child_to_parent->clear();
     }
     // CoverArt free
@@ -115,17 +127,18 @@ void MediasourceModel::onListenerCallback() {
 
     // Full source reset (when updating folders)
     if (mediasource_model_reset) {
-        ms->free_selectors(source,selectors_internal);
+        ms->free_selectors_list(source,selectors_internal);
         ms->remove_listener(source,listener);
         ms->free_source(source);
         //
         source = ms->create_source("medialib");
         listener = ms->add_listener(source,source_listener,this);
-        selectors_internal = ms->get_selectors(source);
+        selectors_internal = ms->get_selectors_list(source);
+        ms->refresh(source);
     }
     // List update
     listToBeRefreshed = false;
-    list = ms->create_list(source,selectors_internal[selector], search_query.isEmpty() ? " " : search_query.toUtf8());
+    list = ms->create_item_tree(source,selectors_internal[selector], search_query.isEmpty() ? " " : search_query.toUtf8());
 
     // Full source reset (cont.)
     if (mediasource_model_reset) {
@@ -133,6 +146,7 @@ void MediasourceModel::onListenerCallback() {
         if (folders.length() > 0) {
             foreach(QString str, folders) {
                 vec.append(strdup(str.toUtf8().constData()));
+                qDebug() << str;
             }
         }
         else {
@@ -180,6 +194,7 @@ void MediasourceModel::onCoverReceived() {
         // refresh if all covers received and the list has changed
         if (listToBeRefreshed && !future_list->count()) {
             onListenerCallback();
+            ms->refresh(source);
         }
     }
     else {
