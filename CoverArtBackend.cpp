@@ -91,6 +91,9 @@ CoverArtLegacy::~CoverArtLegacy() {
 }
 
 QFuture<char*> CoverArtLegacy::loadCoverArt(DB_playItem_t *it) {
+    if (!it) {
+        return QtConcurrent::run(getArtwork,nullptr,nullptr,nullptr, plug);
+    }
     // unable to find cover by item in artwork-legacy, find artist, album and fname
     ddb_tf_context_t context;
     context._size = sizeof(ddb_tf_context_t);
