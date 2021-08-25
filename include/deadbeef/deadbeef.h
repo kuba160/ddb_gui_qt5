@@ -2,7 +2,7 @@
   deadbeef.h -- plugin API of the DeaDBeeF audio player
   http://deadbeef.sourceforge.net
 
-  Copyright (C) 2009-2013 Alexey Yakovenko
+  Copyright (C) 2009-2021 Alexey Yakovenko
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -71,7 +71,8 @@ extern "C" {
 // that there's a better replacement in the newer deadbeef versions.
 
 // api version history:
-// 1.13 -- deadbeef-1.9
+// 1.15 -- deadbeef-1.9.0 (medialib branch)
+// 1.14 -- deadbeef-1.8.8
 // 1.12 -- deadbeef-1.8.4
 // 1.11 -- deadbeef-1.8.3
 // 1.10 -- deadbeef-1.8.0
@@ -98,7 +99,7 @@ extern "C" {
 // 0.1 -- deadbeef-0.2.0
 
 #define DB_API_VERSION_MAJOR 1
-#define DB_API_VERSION_MINOR 13
+#define DB_API_VERSION_MINOR 15
 
 #if defined(__clang__)
 
@@ -133,6 +134,18 @@ extern "C" {
 
 #ifndef DDB_API_LEVEL
 #define DDB_API_LEVEL DB_API_VERSION_MINOR
+#endif
+
+#if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 15)
+#define DEPRECATED_115 DDB_DEPRECATED("since deadbeef API 1.15")
+#else
+#define DEPRECATED_115
+#endif
+
+#if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 14)
+#define DEPRECATED_114 DDB_DEPRECATED("since deadbeef API 1.14")
+#else
+#define DEPRECATED_114
 #endif
 
 #if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 13)
@@ -336,7 +349,7 @@ enum {
     DB_PLUGIN_VFS     = 5,
     DB_PLUGIN_PLAYLIST = 6,
     DB_PLUGIN_GUI = 7,
-#if (DDB_API_LEVEL >= 13)
+#if (DDB_API_LEVEL >= 15)
     DB_PLUGIN_MEDIASOURCE = 8,
 #endif
 };
@@ -477,7 +490,7 @@ enum {
 
     DB_EV_VOLUMECHANGED = 16, // volume was changed
     DB_EV_OUTPUTCHANGED = 17, // sound output plugin changed
-    DB_EV_PLAYLISTSWITCHED = 18, // playlist switch occured
+    DB_EV_PLAYLISTSWITCHED = 18, // playlist switch occurred
     DB_EV_SEEK = 19, // seek current track to position p1 (ms)
     DB_EV_ACTIONSCHANGED = 20, // plugin actions were changed, e.g. for reinitializing gui
     DB_EV_DSPCHAINCHANGED = 21, // emitted when any parameter of the main dsp chain has been changed
@@ -641,17 +654,11 @@ typedef struct {
 
 // since 1.5
 #if (DDB_API_LEVEL >= 5)
-#ifdef __APPLE__
-// FIXME: this is an API breaking change, so shouldn't be merged to master.
-// It's added purely to experiment with FFT on a branch.
-#define DDB_FREQ_BANDS 2048
-#else
-#define DDB_FREQ_BANDS 256
-#endif
-#define DDB_FREQ_MAX_CHANNELS 9
+static const int DDB_FREQ_BANDS DEPRECATED_115 = 256; // Do not use -- instead use the nframes field
+static const int DDB_FREQ_MAX_CHANNELS = 9;
 typedef struct ddb_audio_data_s {
-    const ddb_waveformat_t *fmt;
-    const float *data;
+    ddb_waveformat_t *fmt;
+    float *data;
     int nframes;
 } ddb_audio_data_t;
 
@@ -690,6 +697,9 @@ enum {
 #if (DDB_API_LEVEL >= 10)
 enum {
     DDB_TF_ESC_DIM = 1,
+#if DDB_API_LEVEL >= 14
+    DDB_TF_ESC_RGB = 2,
+#endif
 };
 #endif
 
@@ -753,7 +763,19 @@ enum {
     // UI should not auto-show the Log View for this layer.
     DDB_LOG_LAYER_INFO = 1,
 };
+#endif
 
+#if (DDB_API_LEVEL>=15)
+typedef enum {
+    DDB_INSERT_FILE_RESULT_SUCCESS = 0,
+    DDB_INSERT_FILE_RESULT_UNRECOGNIZED_FILE = 1, // File was not unrecognized
+    DDB_INSERT_FILE_RESULT_RECOGNIZED_FAILED = 2, // File extension was recognized, but could not be loaded by decoder
+    DDB_INSERT_FILE_RESULT_RELATIVE_PATH = 3, // File path is relative: unsupported
+    DDB_INSERT_FILE_RESULT_NULL_FILENAME = 4, // File name is NULL
+    DDB_INSERT_FILE_RESULT_ESCAPE_CHARACTERS_IN_FILENAME = 5, // Escape characters are not allowed in filenames
+    DDB_INSERT_FILE_RESULT_NO_FILE_EXTENSION = 6, // File doesn't have an extension
+    DDB_INSERT_FILE_RESULT_CUESHEET_ERROR = 7, // Error while loading cuesheet
+} ddb_insert_file_result_t;
 #endif
 
 // forward decl for plugin struct
@@ -1157,8 +1179,9 @@ typedef struct {
     void (*junk_apev2_free) (DB_apev2_tag_t *tag);
     int (*junk_apev2_write) (FILE *fp, DB_apev2_tag_t *tag, int write_header, int write_footer);
 
-    // Returns an offset to the audio packets, after ID3v2 and APEv2 tags.a
-    // Only positive values or can be returned.
+    // Returns an offset to the audio packets, after ID3v2 and APEv2 tags.
+    // Only the values >=0 can be returned.
+    // The position is relative to the current file offset, at the time of the call.
     int (*junk_get_leading_size) (DB_FILE *fp);
     int (*junk_get_leading_size_stdio) (FILE *fp);
 
@@ -1255,7 +1278,7 @@ typedef struct {
     void (*metacache_ref) (const char *str) DEPRECATED_113;
     void (*metacache_unref) (const char *str) DEPRECATED_113;
 
-    // this function must return original un-overriden value (ignoring the keys prefixed with '!')
+    // this function must return original un-overridden value (ignoring the keys prefixed with '!')
     // it's not thread-safe, and must be used under the same conditions as the
     // pl_find_meta
     const char *(*pl_find_meta_raw) (DB_playItem_t *it, const char *key);
@@ -1283,16 +1306,14 @@ typedef struct {
     // ctx must be unique
     // the waveform data can be arbitrary size
     // the samples are interleaved
-    void (*vis_waveform_listen) (void *ctx, void (*callback)(void *ctx, ddb_audio_data_t *data));
+    void (*vis_waveform_listen) (void *ctx, void (*callback)(void *ctx, const ddb_audio_data_t *data));
     void (*vis_waveform_unlisten) (void *ctx);
 
-    // register/unregister for getting continuous spectrum (frequency domain) data
-    // mainly for visualization
-    // ctx must be unique
-    // the data always contains DDB_FREQ_BANDS frames
-    // max number of channels is DDB_FREQ_MAX_CHANNELS
-    // the samples are non-interleaved
-    void (*vis_spectrum_listen) (void *ctx, void (*callback)(void *ctx, ddb_audio_data_t *data));
+    // This method used to subscribe to updates of FFT size 256
+    // This is no longer available, and starting with API 1.15 does nothing.
+    // Please use vis_spectrum_listen2
+    void (*vis_spectrum_listen) (void *ctx, void (*callback)(void *ctx, const ddb_audio_data_t *data)) DEPRECATED_115;
+
     void (*vis_spectrum_unlisten) (void *ctx);
 
     // this is useful to mute/unmute audio, and query the muted status, from
@@ -1575,9 +1596,49 @@ typedef struct {
 #if (DDB_API_LEVEL >= 13)
     void (*plt_item_set_selected)(ddb_playlist_t *plt, ddb_playItem_t *it, int sel);
     ddb_playlist_t * (*plt_find_by_name) (const char *name);
+
+    /// Append a playlist, and return the pointer
+    ///
+    /// NOTE: Before API level 15, this function had a bug and didn't increment reference count.
+    /// It's not recommended to use it unless API level 15 is available.
     ddb_playlist_t * (*plt_append) (const char *title);
     ddb_playItem_t * (*plt_get_head_item) (ddb_playlist_t *p, int iter);
     ddb_playItem_t * (*plt_get_tail_item) (ddb_playlist_t *p, int iter);
+#endif
+
+// since 1.14
+#if (DDB_API_LEVEL >= 14)
+    // Get full filesystem path to the specified plugin file (.so/.dll/.dylib)
+    const char* (*plug_get_path_for_plugin_ptr) (struct DB_plugin_s *plugin_ptr);
+#endif
+
+#if (DDB_API_LEVEL >= 15)
+    /// Register for getting continuous spectrum (frequency domain) data,
+    /// mainly for visualization
+    /// @param ctx Associated context, must be unique
+    /// @param callback The callback which will be called every time new fft data is ready
+    ///
+    /// Use the @c nframes field in the @c data to get the number of frequency samples.
+    ///
+    /// Max number of channels is DDB_FREQ_MAX_CHANNELS.
+    ///
+    /// The samples are planar-ordered (non-interleaved).
+    ///
+    /// Use vis_spectrum_unlisten to unregister.
+    ///
+    /// Callback will run on a background thread, so make sure to synchronize the data access.
+    void (*vis_spectrum_listen2) (void *ctx, void (*callback)(void *ctx, const ddb_audio_data_t *data));
+
+
+    ddb_playItem_t *(*plt_insert_dir3) (
+        int visibility,
+        ddb_playlist_t *plt,
+        ddb_playItem_t *after,
+        const char *dirname,
+        int *pabort,
+        int (*callback)(ddb_insert_file_result_t result, const char *filename, void *user_data),
+        void *user_data
+    );
 #endif
 } DB_functions_t;
 
@@ -1680,6 +1741,11 @@ enum {
 
     // Tells the system that the plugin supports replaygain, and streamer should not do it.
     DDB_PLUGIN_FLAG_REPLAYGAIN = 2,
+
+#if (DDB_API_LEVEL >= 14)
+    // Tells that the plugin implements ddb_decoder2_t interface
+    DDB_PLUGIN_FLAG_IMPLEMENTS_DECODER2 = 4,
+#endif
 };
 #endif
 
@@ -1720,8 +1786,7 @@ typedef struct DB_plugin_s {
     // it is called after all plugin's start method was executed
     // can be NULL
     // NOTE for GUI plugin developers: don't initialize your widgets/windows in
-    // the connect method. look for up-to-date information on wiki:
-    // http://github.com/DeaDBeeF-Player/deadbeef/wiki/Porting-GUI-plugins-to-deadbeef-from-0.5.x-to-0.6.0
+    // the connect method.
     int (*connect) (void);
 
     // opposite of connect, will be called before stop, while all plugins are still
@@ -1800,7 +1865,7 @@ enum {
     DDB_DECODER_HINT_CAN_LOOP = 0x4,
 #endif
 #if (DDB_API_LEVEL >= 10)
-    // Don't modify the stream (e.g. no replaygain, clipping, etc), provide the maximum possible precision, preferrably in float32.
+    // Don't modify the stream (e.g. no replaygain, clipping, etc), provide the maximum possible precision, preferably in float32.
     // Supposed to be used by converter, replaygain scanner, etc.
     DDB_DECODER_HINT_RAW_SIGNAL = 0x8,
 #endif
@@ -1859,6 +1924,23 @@ typedef struct DB_decoder_s {
     DB_fileinfo_t *(*open2) (uint32_t hints, DB_playItem_t *it);
 #endif
 } DB_decoder_t;
+
+#if (DDB_API_LEVEL >= 14)
+/// Extended decoder interface, with 64 bit seeking support.
+/// Usage:
+///    Use ddb_decoder2_t as your base plugin type
+///    Add DDB_PLUGIN_FLAG_IMPLEMENTS_DECODER2 to your plugin's flags field.
+typedef struct ddb_decoder2_s {
+    DB_decoder_t decoder;
+
+    // perform seeking in samples (if possible)
+    // return -1 if failed, or 0 on success
+    // if -1 is returned, that will mean that streamer must skip that song
+    int (*seek_sample64) (DB_fileinfo_t *info, int64_t sample);
+
+    void *padding[8];
+} ddb_decoder2_t;
+#endif
 
 // output plugin
 typedef struct DB_output_s {
@@ -2060,11 +2142,18 @@ typedef struct DB_playlist_s {
 
     // since 1.5
 #if (DDB_API_LEVEL >= 5)
+    // NOTE: load2 is not used by any existing plugins, and its purpose it lost in history.
+    // Supposedly, it was added to support plugins which could implement cuesheet loading
+    // as a playlist format, which didn't work out.
+    // Generally, it's not recommended to use this, as the behavior is undefined.
     DB_playItem_t * (*load2) (int visibility, ddb_playlist_t *plt, DB_playItem_t *after, const char *fname, int *pabort);
 #endif
 } DB_playlist_t;
 
-#if (DDB_API_LEVEL >= 13)
+// NOTE: Media source API is a work in progress, and is disabled in this version of source code.
+// This is to prevent plugin devs from releasing media source plugins, before this API is finalized.
+// Use the appropriate development branch to test media source plugins.
+#if (DDB_API_LEVEL >= 15)
 
 // Mediasource plugin
 // The purpose is to provide access to external media sources.
@@ -2078,12 +2167,19 @@ typedef struct ddb_medialib_item_s {
     struct ddb_medialib_item_s *next;
     struct ddb_medialib_item_s *children;
     int num_children;
+    // FIXME: add padding / size for extensibility -- this structure is inheritable.
 } ddb_medialib_item_t;
 
+/// Numbers from 0 to 999 are reserved to base interface, as declared in deadbeef.h
 typedef enum {
-    DDB_MEDIASOURCE_EVENT_CONTENT_CHANGED = 1,
-    DDB_MEDIASOURCE_EVENT_STATE_CHANGED = 1,
+    DDB_MEDIASOURCE_EVENT_CONTENT_DID_CHANGE = 0,
+    DDB_MEDIASOURCE_EVENT_STATE_DID_CHANGE = 1,
+    DDB_MEDIASOURCE_EVENT_ENABLED_DID_CHANGE = 2,
+    DDB_MEDIASOURCE_EVENT_SELECTORS_DID_CHANGE = 3,
 } ddb_mediasource_event_type_t;
+
+/// Numbers from 1000 and up can be used by the plugins for additional events.
+#define DDB_MEDIASOURCE_EVENT_MAX 1000
 
 typedef enum {
     DDB_MEDIASOURCE_STATE_IDLE,
@@ -2102,22 +2198,55 @@ typedef struct {
 
     const char *(*source_name)(void);
 
+    /// Creates a media source. It must be freed after use by calling the @c free_source
     /// @param source_path: a unique name to identify the instance, this will be used to prefix individual instance configuration files, caches, etc.
     ddb_mediasource_source_t (*create_source) (const char *source_path);
+
+    /// Free the @c source created by @c create_source
     void (*free_source) (ddb_mediasource_source_t source);
 
-    ddb_mediasource_list_selector_t *(*get_selectors)(ddb_mediasource_source_t source);
-    void (*free_selectors)(ddb_mediasource_source_t source, ddb_mediasource_list_selector_t *selectors);
-    const char *(*get_name_for_selector)(ddb_mediasource_source_t source, ddb_mediasource_list_selector_t selector);
+    /// Enable or disable the source
+    void (*set_source_enabled)(ddb_mediasource_source_t source, int enabled);
 
+    /// Get the enabled state
+    int (*get_source_enabled)(ddb_mediasource_source_t source);
+
+    /// This tells the source to start operating with the current configuration.
+    /// It is supposed to cancel any current operation, and get the new state with the new settings.
+    /// For example, the medialib plugin is supposed to start the scanner (if enabled).
+    /// This source is not supposed to run any operations automatically, and the caller is expected to call refresh
+    /// every time when the plugin configuration changes.
+    void (*refresh)(ddb_mediasource_source_t source);
+
+    /// A selector is a token, which can be used to find out all top level items that can be queries from the library.
+    /// For example - Folders, Albums, Artists, Genres.
+    /// @return the list of selectors. The caller must free the list after use, by calling @c free_selectors
+    ddb_mediasource_list_selector_t *(*get_selectors_list)(ddb_mediasource_source_t source);
+
+    /// Free the selector list
+    void (*free_selectors_list)(ddb_mediasource_source_t source, ddb_mediasource_list_selector_t *selectors);
+
+    /// Get selector name
+    const char *(*selector_name)(ddb_mediasource_source_t source, ddb_mediasource_list_selector_t selector);
+
+    /// Add a listener
     int (*add_listener)(ddb_mediasource_source_t source, ddb_medialib_listener_t listener, void *user_data);
+
+    /// Remove a listener
     void (*remove_listener)(ddb_mediasource_source_t source, int listener_id);
 
-    ddb_medialib_item_t * (*create_list)(ddb_mediasource_source_t source, ddb_mediasource_source_t selector, const char *filter);
-    void (*free_list) (ddb_mediasource_source_t source, ddb_medialib_item_t *list);
+    /// Create a tree of items for the given @c selector.
+    /// The tree is immutable, and can be used by the caller in any way it needs.
+    /// The caller must free the returned object by calling the @c free_list
+    ddb_medialib_item_t * (*create_item_tree)(ddb_mediasource_source_t source, ddb_mediasource_source_t selector, const char *filter);
+
+    /// Free the tree created by the @c create_list
+    void (*free_item_tree) (ddb_mediasource_source_t source, ddb_medialib_item_t *list);
 
     /// Whether the scanner/indexer is active
     ddb_mediasource_state_t (*scanner_state) (ddb_mediasource_source_t source);
+
+    // FIXME: add padding / size for extensibility -- this structure is inheritable.
 } DB_mediasource_t;
 
 #endif
