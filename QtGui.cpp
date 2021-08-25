@@ -137,7 +137,7 @@ static int pluginStart() {
     app->exec();
 
     // shutdown
-    delete w;
+    //delete w;
     delete api;
     delete pl;
     delete app;

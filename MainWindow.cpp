@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
     mainMenu->setNativeMenuBar(true);
 
     setContextMenuPolicy(Qt::NoContextMenu);
+    setAttribute(Qt::WA_DeleteOnClose);
 
     // Connections
     connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)), this, SLOT(trackChanged(DB_playItem_t *, DB_playItem_t *)));
@@ -132,9 +133,9 @@ void MainWindow::updateTitle() {
 void MainWindow::closeEvent(QCloseEvent *e) {
     saveConfig();
     switch (actionOnClose) {
+    default:
     case Exit:
-        saveConfig();
-        e->accept();
+        QMainWindow::closeEvent(e);
         break;
     case Hide:
         saveConfig();
