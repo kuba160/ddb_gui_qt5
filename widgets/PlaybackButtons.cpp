@@ -28,7 +28,7 @@ button_t buttons[] = {{QString("Stop") , QStyle::SP_MediaStop,  SLOT(stop())},
 PlaybackButtons::PlaybackButtons(QWidget *parent, DBApi *Api) : QToolBar(parent), DBWidget(parent, Api) {
     // Setup
     this->setIconSize(QSize(16, 16));
-    this->setStyleSheet("QToolButton{padding: 6px;}");
+    this->setStyleSheet("QToolButton{padding: 6px;} QToolBar{padding: 0px; margin: 0px;}");
 
     // Add actions
     int i;
