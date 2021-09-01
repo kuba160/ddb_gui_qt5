@@ -49,19 +49,15 @@ public:
     bool isCoverArtPluginAvailable();
     // check if coverart is in cache, true: means you can call getCoverArt and get the cover
     // NOTE: this function returns true even if there is no cover for specific track
-    bool isCoverArtCached(DB_playItem_t *);
+    bool isCoverArtCached(DB_playItem_t *, QSize size = QSize());
     // load cover that is not in cache, QImage returned via QFuture has to be unref'd later
-    // if you set up size, the cover will be scaled and available with getCoverArtScaled
-    // in other words: even if you specify cover size, returned QImage will NOT be scaled
+    // if you set up size, the cover will be scaled
+    // use scaling if you need many covers of specific size, don't use for widget scaling etc.
     QFuture<QImage *> requestCoverArt(DB_playItem_t *, QSize size = QSize());
     // get cached cover art, nullptr if not cached (use requestCoverArt to cache it)
-    QImage * getCoverArt(DB_playItem_t *);
+    QImage * getCoverArt(DB_playItem_t *, QSize size = QSize());
     // default cover art
     QImage * getCoverArtDefault();
-    // get scaled cover art (result will be cached)
-    // use if you need many covers of specific size, don't use for widget scaling etc.
-    // scaled cover is available as long as original cover was not unref'd
-    QImage * getCoverArtScaled(QImage *img, QSize size);
     // Call after you are done with cover
     void coverArt_unref(QImage *);
     void coverArt_ref(QImage *);

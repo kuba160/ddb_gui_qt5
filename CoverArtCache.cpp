@@ -5,47 +5,38 @@
 #include "DBApi.h"
 #include "QtGui.h"
 
-#undef DBAPI
-#define DBAPI deadbeef_internal
-
 #define CACHE_SIZE 100
 
 extern DB_functions_t *deadbeef_internal;
 
-#undef DBAPI
-#define DBAPI db
-
-bool operator==(const scaledCover &lhs, const scaledCover &rhs) noexcept {
-    return lhs.img == rhs.img && lhs.size == rhs.size;
+bool operator==(const coverSearch &lhs, const coverSearch &rhs) noexcept {
+    return lhs.path == rhs.path && lhs.size == rhs.size;
 }
 
-uint qHash(const scaledCover &c, uint seed) noexcept {
+uint qHash(const coverSearch &c, uint seed) noexcept {
     QtPrivate::QHashCombine hash;
-    seed = hash(seed, c.img);
+    seed = hash(seed, c.path);
     seed = hash(seed, c.size.height());
     seed = hash(seed, c.size.width());
     return seed;
 }
 
-CoverArtCache::CoverArtCache(QObject *parent, DB_functions_t *funcs) : QObject(parent) {
-    db = funcs;
-    if (DBAPI->plug_get_for_id ("artwork2")) {
-            backend = new CoverArtNew(parent, db);
+CoverArtCache::CoverArtCache(QObject *parent, DB_functions_t *dbapi) : QObject(parent) {
+    if (dbapi->plug_get_for_id ("artwork2")) {
+            backend = new CoverArtNew(parent, dbapi);
     }
-    else if (DBAPI->plug_get_for_id("artwork")) {
-        DB_plugin_t *p = DBAPI->plug_get_for_id("artwork");
+    else if (dbapi->plug_get_for_id("artwork")) {
+        DB_plugin_t *p = dbapi->plug_get_for_id("artwork");
         if (p->api_vmajor == 1) {
-            backend = new CoverArtLegacy(parent, db);
+            backend = new CoverArtLegacy(parent, dbapi);
         }
         else if (p->api_vmajor == 2) {
-            backend = new CoverArtNew(parent,db);
+            backend = new CoverArtNew(parent,dbapi);
         }
     }
-
     if (backend && backend->getDefaultCoverArt()) {
         default_image = new QImage(backend->getDefaultCoverArt());
-        cacheCoverArt(backend->getDefaultCoverArt(), default_image);
-        cacheRef(default_image);
+        cacheCoverArt(coverSearchValue(backend->getDefaultCoverArt()), default_image);
     }
 }
 
@@ -53,32 +44,38 @@ CoverArtCache::~CoverArtCache() {
     if (default_image) {
         cacheUnref(default_image);
     }
-    // TODO clean up cache
     QList<QImage *> l = cache_refc.keys();
     foreach(QImage *img, l) {
         if (cache_refc.value(img) == 0) {
-            delete img;
-            QList<scaledCover> l_sc = cache_scaled.keys();
-            foreach (scaledCover sc, l_sc) {
-                if (sc.img == img) {
-                    delete cache_scaled.value(sc);
+            // reverse lookup :)
+            coverSearch s;
+            while (!(s = cache.key(img)).path.isEmpty()) {
+                cache.remove(s);
+                ddb_playItem_t *it;
+                while ((it = cache_path.key(s.path))) {
+                    cache_path.remove(it);
                 }
+
             }
+            delete img;
         }
         else {
-            qDebug() << QString("Image (path: %1) has refc=%2!").arg(cache_path.key(img)) .arg(cache_refc.value(img));
+            qDebug() << QString("Image (path: %1, size %2) has refc=%3!").arg(cache.key(img).path) .arg(cache.key(img).size.width()) .arg(cache_refc.value(img));
         }
     }
 }
 
-bool CoverArtCache::isCoverArtAvailable(DB_playItem_t *it) {
-    return cache.contains(it);
+bool CoverArtCache::isCoverArtAvailable(DB_playItem_t *it, QSize size) {
+    if (cache_path.contains(it)) {
+        return cache.contains(coverSearchValue(cache_path.value(it),size));
+    }
+    return false;
 }
 
 QFuture<QImage *> CoverArtCache::requestCoverArt(DB_playItem_t *it, QSize size) {
     if (isCoverArtAvailable(it)) {
         // shouldn't be calling it
-        return QtConcurrent::run(cover_art,cache.value(it));
+        return QtConcurrent::run(cover_art,cache.value(coverSearchValue(cache_path.value(it),size)));
     }
     return QtConcurrent::run(cover_art_load,this,it, size);
 }
@@ -93,63 +90,65 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it, QS
     if (!it) {
         return nullptr;
     }
-    QFuture<char *> c = cac->backend->loadCoverArt(it);
-    c.waitForFinished();
-    if (c.result() && strlen(c.result())) {
-        // check if path already cached
-        cac->cmut.lock();
-        QImage *img = cac->getCoverArt(c.result());
-        if (img) {
-            if (!cac->cache.contains(it)) {
-                // same image for diff track, cache it
-                cac->cacheCoverArt(it,img);
-                // ref 2 times, fix it
-                cac->cacheUnref(img);
-            }
-            cac->cmut.unlock();
-            if (size.isValid()) {
-                // cache sized cover
-                cac->getCoverArtScaled(img,size);
-            }
-            return img;
-        }
-        // result not cached, create new and cache
-        img = new QImage(c.result());
-        if (img) {
-            cac->cacheCoverArt(it,img);
-            cac->cacheCoverArt(c.result(),img);
-            cac->backend->unloadCoverArt(c.result());
-            cac->cmut.unlock();
-            if (size.isValid()) {
-                // cache sized cover
-                cac->getCoverArtScaled(img,size);
-            }
-            return img;
+    QImage *ret = nullptr;
+    // cache path for track
+    if (cac->getCoverArtPath(it).isEmpty()) {
+        QFuture<char *> c = cac->backend->loadCoverArt(it);
+        c.waitForFinished();
+        if (c.result() && strlen(c.result())) {
+            cac->cachePath(it,c.result());
         }
         else {
-            cac->cmut.unlock();
-            qDebug() << "loading image " << c.result() << " failed!" << ENDL;
+            // no cover, use default
+            cac->cachePath(it,"");
         }
     }
-    else {
-        // no cover, cache anyway
-        cac->cacheCoverArt(it, nullptr);
+    // load full cover if missing
+    bool unref_full_cover = false;
+    if (!cac->isCoverArtAvailable(it,size) && !cac->isCoverArtAvailable(it)) {
+        if (!cac->getCoverArtPath(it).isEmpty()) {
+            QImage *img = new QImage(cac->getCoverArtPath(it));
+            cac->cacheCoverArt(coverSearchValue(cac->getCoverArtPath(it),QSize()),img);
+            ret = img;
+            if (size.isValid()) {
+                unref_full_cover = true;
+            }
+        }
+        else {
+            cac->cacheCoverArt(coverSearchValue(cac->getCoverArtPath(it),QSize()),nullptr);
+        }
     }
-    return nullptr;
+    // scale cover if missing
+    if (!cac->isCoverArtAvailable(it,size) && size.isValid() && !cac->getCoverArtPath(it).isEmpty()) {
+        QImage *img = cac->getCoverArt(it);
+        QImage scaled = img->scaled(size,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+        QImage *n = new QImage(scaled);
+        cac->cacheCoverArt(coverSearchValue(cac->getCoverArtPath(it),size),n);
+        cac->cacheUnref(img);
+        if (unref_full_cover) {
+            cac->cacheUnref(img, true);
+        }
+        ret = n;
+    }
+    return ret;
 }
 
-void CoverArtCache::cacheCoverArt(DB_playItem_t *it, QImage *img) {
-    if (cache.contains(it)) {
+void CoverArtCache::cacheCoverArt(coverSearch s, QImage *img) {
+    if (cache.contains(s)) {
         qDebug() << "already cached?";
+        return;
     }
-    cache.insert(it,img);
+    cache.insert(s,img);
     if (img) {
         cacheRef(img);
     }
 }
 
-void CoverArtCache::cacheCoverArt(QString path, QImage *img) {
-    cache_path.insert(path,img);
+void CoverArtCache::cachePath(ddb_playItem_t *it, QString path) {
+    if (cache_path.contains(it)) {
+        cache_path.remove(it);
+    }
+    cache_path.insert(it,path);
 }
 
 void CoverArtCache::cacheRef(QImage *img) {
@@ -164,32 +163,25 @@ void CoverArtCache::cacheRef(QImage *img) {
     cmut_refc.unlock();
 }
 
-void CoverArtCache::cacheUnref(QImage *img) {
+void CoverArtCache::cacheUnref(QImage *img, bool force_unref) {
     cmut_refc.lock();
     if (cache_refc.contains(img)) {
         // decrease
         int refc = cache_refc.take(img);
         cache_refc.insert(img, refc-1);
         // remove if cache full
-        if (cache_refc.size() > CACHE_SIZE && cache_refc.value(img) == 0) {
-            qDebug() << "no more refc on image, deleting" << ENDL;
-            // cache
-            DB_playItem_t *it = cache.key(img);
-            if (it) {
-                cache.take(it);
-            }
-            QString s = cache_path.key(img);
-            if (!s.isEmpty()) {
-                cache_path.take(s);
-            }
-            QList<scaledCover> l_sc = cache_scaled.keys();
-            foreach (scaledCover sc, l_sc) {
-                if (sc.img == img) {
-                    QImage *i = cache_scaled.take(sc);
-                    delete i;
+        if ((cache_refc.size() > CACHE_SIZE || force_unref) && cache_refc.value(img) == 0) {
+            cache_refc.remove(img);
+            // reverse lookup :)
+            coverSearch s;
+            while (!(s = cache.key(img)).path.isEmpty()) {
+                cache.remove(s);
+                ddb_playItem_t *it;
+                while ((it = cache_path.key(s.path))) {
+                    cache_path.remove(it);
                 }
+
             }
-            cache_refc.take(img);
             delete img;
         }
     }
@@ -197,16 +189,16 @@ void CoverArtCache::cacheUnref(QImage *img) {
 }
 
 void CoverArtCache::cacheUnrefTrack(DB_playItem_t *it) {
-    if (cache.contains(it)) {
+    if (cache_path.contains(it)) {
         // track no longer existent, no need to keep it in cache
         // cover arts are tracked separately
-        cache.take(it);
+        cache_path.take(it);
     }
 }
 
-QImage * CoverArtCache::getCoverArt(DB_playItem_t *it) {
-    if (cache.contains(it)) {
-        QImage *img = cache.value(it);
+QImage * CoverArtCache::getCoverArt(DB_playItem_t *it, QSize size) {
+    if (cache_path.contains(it) && cache.contains(coverSearchValue(cache_path.value(it),size))) {
+        QImage *img = cache.value(coverSearchValue(cache_path.value(it),size));
         if (img) {
             cacheRef(img);
         }
@@ -215,34 +207,17 @@ QImage * CoverArtCache::getCoverArt(DB_playItem_t *it) {
     return nullptr;
 }
 
-QImage * CoverArtCache::getCoverArt(QString path) {
-    if (cache_path.contains(path)) {
-        QImage *img = cache_path.value(path);
-        if (img) {
-            cacheRef(img);
-        }
-        return img;
+QString CoverArtCache::getCoverArtPath(DB_playItem_t *it) {
+    if (cache_path.contains(it)) {
+        return cache_path.value(it);
     }
-    return nullptr;
+    return QString();
 }
 
-QImage * CoverArtCache::getCoverArtScaled(QImage *img, QSize size) {
-    scaledCover c = {img,size};
-    if (cache_scaled.contains(c)) {
-        return cache_scaled.value(c);
-    }
-    // create new one
-    QImage scaled = img->scaled(size,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-    QImage *n = new QImage(scaled);
-    cache_scaled.insert(c,n);
-    return n;
-}
 
 QImage * CoverArtCache::getCoverArtDefault() {
     if (!default_image && backend->getDefaultCoverArt()) {
         default_image = new QImage(backend->getDefaultCoverArt());
-        cacheCoverArt(backend->getDefaultCoverArt(), default_image);
-        cacheRef(default_image);
     }
     if (default_image) {
         cacheRef(default_image);

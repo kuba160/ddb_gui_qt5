@@ -76,6 +76,7 @@ protected:
     QMutex *cover_arts_lock;
     QHash<QFutureWatcher<QImage *>*, QModelIndex> *future_list;
     QSize cover_size;
+    QPixmap *empty_pixmap;
 
     // Folders (if supported)
     QStringList folders;

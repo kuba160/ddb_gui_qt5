@@ -53,6 +53,8 @@ MediasourceModel::MediasourceModel(QObject *parent, DBApi *Api, QString plugname
     list_mutex_recursive = new QMutex(QMutex::Recursive);
 #endif
 
+    empty_pixmap = new QPixmap(cover_size.width(),cover_size.height());
+    empty_pixmap->fill(Qt::transparent);
     child_to_parent = new QHash<void*,QModelIndex>();
     //list = ms->create_list(source,selectors_internal[selector],search_query.toUtf8());
 
@@ -217,7 +219,10 @@ QModelIndex MediasourceModel::index(int row, int column, const QModelIndex &pare
                 child = child->next;
                 i--;
             }
-            child_to_parent->insert(child,parent);
+            if (!(child_to_parent->contains(child) && child_to_parent->value(child) == parent)) {
+                child_to_parent->remove(child);
+                child_to_parent->insert(child,parent);
+            }
             return createIndex(row,column,child);
         }
     }
@@ -265,18 +270,14 @@ QVariant MediasourceModel::data(const QModelIndex &index, int role) const {
             DB_playItem_t *playit = it->children ? it->children->track : nullptr;
             if (playit && api->isCoverArtPluginAvailable()) {
                 cover_arts_lock->lock();
-                if (api->isCoverArtCached(playit)) {
-                    QImage *img_orig = api->getCoverArt(playit);
-                    if (img_orig) {
-                        if (cover_arts->contains(img_orig)) {
-                            api->coverArt_unref(img_orig);
-                        }
-                        else {
-                            cover_arts->insert(img_orig);
-                            cover_arts_tracks->insert(playit);
-                        }
-                        QImage *img = api->getCoverArtScaled(img_orig,cover_size);
+                if (api->isCoverArtCached(playit,cover_size)) {
+                    QImage *img = api->getCoverArt(playit,cover_size);
+                    if (img) {
                         ret = QPixmap::fromImage(*img);
+                        api->coverArt_unref(img);
+                    }
+                    else {
+                        ret = *empty_pixmap;
                     }
                 }
                 else if (!future_list->values().contains(index) && !listToBeRefreshed) {
@@ -284,6 +285,7 @@ QVariant MediasourceModel::data(const QModelIndex &index, int role) const {
                     connect(fw, SIGNAL(finished()), this, SLOT(onCoverReceived()));
                     future_list->insert(fw,index);
                     fw->setFuture(api->requestCoverArt(playit,cover_size));
+                    ret = *empty_pixmap;
                 }
                 cover_arts_lock->unlock();
             }

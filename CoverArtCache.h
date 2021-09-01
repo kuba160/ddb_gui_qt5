@@ -10,11 +10,10 @@
 
 #define COVERARTCACHE_P(X) (static_cast<CoverArtCache *>(X))
 
-// used internally to find scaled cover
-typedef struct scaledCover_s {
-    void *img;
+typedef struct coverSearch_s {
+    QString path;
     QSize size;
-} scaledCover;
+} coverSearch;
 
 class CoverArtCache : public QObject {
     Q_OBJECT
@@ -23,16 +22,14 @@ public:
     CoverArtCache(QObject *parent = nullptr, DB_functions_t *funcs = nullptr);
     ~CoverArtCache();
 
-    // check if track already cached
-    bool isCoverArtAvailable(DB_playItem_t *);
+    // check if track already cached (full size or specific size)
+    bool isCoverArtAvailable(DB_playItem_t *it, QSize size = QSize());
     // QFuture pointer for cover loading
     QFuture<QImage *> requestCoverArt(DB_playItem_t *, QSize size);
     // load cached cover art
-    QImage * getCoverArt(DB_playItem_t *);
-    // load cached cover art, helper used when found that cover art is already cached
-    QImage * getCoverArt(QString path);
-    // scale coverart and cache it
-    QImage * getCoverArtScaled(QImage *img, QSize size);
+    QImage * getCoverArt(DB_playItem_t *, QSize size = QSize());
+    // get coverart path
+    QString getCoverArtPath(DB_playItem_t *it);
     // get default cover art
     QImage * getCoverArtDefault();
 
@@ -41,29 +38,35 @@ public:
     QImage *default_image = nullptr;
 
     // functions to be called from thread
-    void cacheCoverArt(DB_playItem_t *it, QImage *img);
-    void cacheCoverArt(QString path, QImage *img);
+    void cacheCoverArt(coverSearch, QImage *img);
+    void cachePath(ddb_playItem_t *it, QString);
 
     // cache ref/unref
     void cacheRef(QImage *img);
-    void cacheUnref(QImage *img);
+    void cacheUnref(QImage *img, bool force_unref = false);
     void cacheUnrefTrack(DB_playItem_t *it);
 
+    static coverSearch coverSearchValue(QString path, QSize size = QSize()) {
+        coverSearch s;
+        s.path = path;
+        s. size = size;
+        return s;
+    }
+
 protected:
-    static QImage * cover_art_load(CoverArtCache *, DB_playItem_t *, QSize size);
+    // Threaded static functions
+    static QImage *cover_art_load(CoverArtCache *, DB_playItem_t *, QSize size);
     static QImage *cover_art(QImage *cover);
 
-    // Hashed covers
-    QHash<DB_playItem_t *, QImage *> cache;
-    QHash<QString, QImage *> cache_path;
+    // Hashed covers (path and size links to QImage)
+    QHash<coverSearch, QImage *> cache;
+    // a playitem links to path
+    QHash<ddb_playItem_t *, QString> cache_path;
+    // QImage links to refc
     QHash<QImage *, int> cache_refc;
-    QHash<scaledCover, QImage *> cache_scaled;
 
     // mutex
-    QMutex cmut;
     QMutex cmut_refc;
-    // function access
-    DB_functions_t *db;
 };
 
 #endif // COVERARTCACHE_H

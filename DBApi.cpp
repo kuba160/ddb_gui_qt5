@@ -469,26 +469,21 @@ bool DBApi::isCoverArtPluginAvailable() {
     return CAC->backend ? true : false;
 }
 
-bool DBApi::isCoverArtCached(DB_playItem_t *it) {
-    return CAC->isCoverArtAvailable(it);
+bool DBApi::isCoverArtCached(DB_playItem_t *it, QSize size) {
+    return CAC->isCoverArtAvailable(it, size);
 }
 
 QFuture<QImage *> DBApi::requestCoverArt(DB_playItem_t *p, QSize size) {
     return CAC->requestCoverArt(p, size);
 }
 
-QImage * DBApi::getCoverArt(DB_playItem_t *it) {
-    return CAC->getCoverArt(it);
+QImage * DBApi::getCoverArt(DB_playItem_t *it, QSize size) {
+    return CAC->getCoverArt(it, size);
 }
 
 QImage * DBApi::getCoverArtDefault() {
     return CAC->getCoverArtDefault();
 }
-
-QImage * DBApi::getCoverArtScaled(QImage *img, QSize size) {
-    return CAC->getCoverArtScaled(img,size);
-}
-
 
 void DBApi::coverArt_ref(QImage *img) {
     CAC->cacheRef(img);
