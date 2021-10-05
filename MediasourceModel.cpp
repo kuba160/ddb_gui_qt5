@@ -408,7 +408,7 @@ void MediasourceModel::setDirectories(QStringList folders_inc) {
     }
     if (folders.length()) {
         for (int i = 0; i < folders.length(); i++) {
-            qDebug() << "mediasourcemodel: added " << vec[i];
+            qDebug() << "mediasourcemodel[" << medialib_name <<"]: added " << vec[i];
             free((void *) vec[i]);
         }
     }

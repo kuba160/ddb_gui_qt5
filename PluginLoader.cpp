@@ -47,14 +47,12 @@ LoadedWidget::LoadedWidget(DBWidgetInfo &info, PluginLoader *pl) : header(info) 
 
     // Tranlate friendly name and set up name with instance number
     QString friendlyName = tr(info.friendlyName.toUtf8());
-    QString internalName;
+    QString internalName = info.internalName;
     if (instance) {
         qDebug() << "qt5: PluginLoader: Loading new instance of plugin" << info.internalName;
-        friendlyName = QString("%1 (%2)") .arg(friendlyName) .arg(instance);
         internalName = QString(QString("%1_%2") .arg(internalName) .arg(instance));
-    }
-    else {
-        internalName = info.internalName;
+        friendlyName = settings->getValue("PluginLoader", QString("%1_name").arg(internalName), QString("%1 (%2)") .arg(friendlyName) .arg(instance)).toString();
+
     }
     setProperty("friendlyName", friendlyName);
     setProperty("internalName", internalName);
