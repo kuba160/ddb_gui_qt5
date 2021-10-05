@@ -33,6 +33,8 @@ bool MedialibSorted::lessThan(const QModelIndex &left, const QModelIndex &right)
 
 
 MedialibTreeView::MedialibTreeView(QWidget *parent, DBApi *Api) : QTreeView(parent) {
+    setProperty("internalName",parent->property("internalName"));
+    qDebug() << "medialibtreeview: " << property("internalName").toString();
     api = Api;
     // Tree setup
     setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -158,6 +160,8 @@ void MedialibTreeView::mouseMoveEvent(QMouseEvent *event) {
 
 Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     // Tree setup
+    qDebug() << "medialib: " << _internalNameWidget;
+    setProperty("internalName", parent->property("internalName"));
     tree = new MedialibTreeView(this,Api);
     // Layout setup
     if (layout()) {
