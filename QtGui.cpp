@@ -82,7 +82,9 @@ static int initializeApi() {
         QIcon::setThemeSearchPaths(theme_search_paths);
         qDebug() << QIcon::themeSearchPaths();
         //QIcon::setThemeName("Windows-10-Icons");
-        QIcon::setThemeName("Adwaita");
+        QIcon::setThemeName("breeze");
+        qDebug() << QStyleFactory::keys();
+        QApplication::setStyle(QStringLiteral("breeze"));
     #endif
 
         // setup settings

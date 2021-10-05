@@ -12,11 +12,23 @@
 #define MS_P(X) (static_cast<DB_mediasource_t *>((void *)X))
 #define MLP_P(X) (static_cast<ddb_medialib_plugin_t *>((void *)X))
 
+typedef struct CurrentState_s {
+public:
+    ddb_medialib_item_t *list = nullptr;
+    QSet<QImage *> cover_arts;
+    QSet<DB_playItem_t *> cover_arts_tracks;
+    //QMutex cover_arts_lock;
+    QHash<QFutureWatcher<QImage *>*, QModelIndex> future_list;
+    QHash<void *,QModelIndex> child_to_parent;
+} CurrentState_t;
+
 class MediasourceModel : public QAbstractItemModel, public DBWidget {
     Q_OBJECT
 public:
     MediasourceModel(QObject *parent = nullptr, DBApi *Api = nullptr, QString plugname = QString());
     ~MediasourceModel();
+
+    QString medialib_name;
 
     DB_mediasource_t * getMediasourcePlugin();
     ddb_mediasource_state_t getMediasourceState();
@@ -29,6 +41,8 @@ public:
     playItemList tracks(ddb_medialib_item_t *);
     QModelIndex indexByPath(QStringList &l);
 
+
+
     // Model
     QModelIndex index(int row, int column, const QModelIndex &parent) const;
     int rowCount(const QModelIndex &parent) const;
@@ -36,14 +50,21 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     QModelIndex parent(const QModelIndex &index) const;
 signals:
-    void listenerCallback();
+    // signals emitted from mediasource plugin
+    // process them in updateCurrentState/Selectors to not block the plugin
+    void mediasource_content_changed();
+    void mediasource_selectors_changed();
 
 public slots:
+    void updateCurrentState();
+    void updateSelectors();
+
+
     void setSelector(int selector);
     void setSearchQuery(const QString query);
 
 private slots:
-    void onListenerCallback();
+    //void onListenerCallback();
     void onCoverReceived();
 protected:
     DB_mediasource_t *ms = nullptr;
@@ -56,29 +77,21 @@ protected:
     int selector = 1;
     QString search_query;
 
+    CurrentState_t *cs = nullptr;
+    CurrentState_t *cs_old = nullptr;
+
     // List
-    ddb_medialib_item_t *list = nullptr;
-    QMutex *list_mutex;
+    //ddb_medialib_item_t *list = nullptr;
+    //QMutex *list_mutex;
     // Used for tracks
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-    QRecursiveMutex *list_mutex_recursive;
+    //QRecursiveMutex *list_mutex_recursive;
 #else
-    QMutex *list_mutex_recursive;
+    //QMutex *list_mutex_recursive;
 #endif
-    bool listToBeRefreshed = false;
-    bool mediasource_model_reset = false;
-    // Hash to map child QModelIndex to parent
-    QHash<void *,QModelIndex> *child_to_parent = nullptr;
-
-    // Coverart
-    QSet<QImage *> *cover_arts;
-    QSet<DB_playItem_t *> *cover_arts_tracks;
-    QMutex *cover_arts_lock;
-    QHash<QFutureWatcher<QImage *>*, QModelIndex> *future_list;
+    QStringList folders;
     QSize cover_size;
 
-    // Folders (if supported)
-    QStringList folders;
 };
 
 #endif // MEDIASOURCEMODEL_H

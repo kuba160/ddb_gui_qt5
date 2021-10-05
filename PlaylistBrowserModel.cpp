@@ -1,3 +1,4 @@
+#include <QIODevice>
 #include "PlaylistBrowserModel.h"
 
 PlaylistBrowserModel::PlaylistBrowserModel(QObject *parent, DBApi *Api) : QAbstractListModel(parent), DBWidget(nullptr, Api) {
