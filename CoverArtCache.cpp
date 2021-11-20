@@ -121,14 +121,16 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it, QS
     // scale cover if missing
     if (!cac->isCoverArtAvailable(it,size) && size.isValid() && !cac->getCoverArtPath(it).isEmpty()) {
         QImage *img = cac->getCoverArt(it);
-        QImage scaled = img->scaled(size,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        QImage *n = new QImage(scaled);
-        cac->cacheCoverArt(coverSearchValue(cac->getCoverArtPath(it),size),n);
-        cac->cacheUnref(img);
-        if (unref_full_cover) {
-            cac->cacheUnref(img, true);
+        if (img) {
+            QImage scaled = img->scaled(size,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            QImage *n = new QImage(scaled);
+            cac->cacheCoverArt(coverSearchValue(cac->getCoverArtPath(it),size),n);
+            cac->cacheUnref(img);
+            if (unref_full_cover) {
+                cac->cacheUnref(img, true);
+            }
+            ret = n;
         }
-        ret = n;
     }
     return ret;
 }
