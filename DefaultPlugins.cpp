@@ -31,6 +31,7 @@
 #include "widgets/LogViewer.h"
 #include "widgets/QueueManager.h"
 #include "widgets/StatusBar.h"
+#include "widgets/VolumeSliderQuick.h"
 
 #undef _
 #include "DeadbeefTranslator.h"
@@ -129,6 +130,13 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     statusBar.type = DBWidgetInfo::TypeStatusBar;
     statusBar.constructor = StatusBar::constructor;
     widgetLibrary->push_back(statusBar);
+
+    volumeSliderQuick.internalName = QString("volumeSliderQuick");
+    volumeSliderQuick.friendlyName = QString(tr("Volume bar (QtQuick)"));
+    volumeSliderQuick.type = DBWidgetInfo::TypeToolbar;
+    volumeSliderQuick.constructor = VolumeSliderQuick::constructor;
+    widgetLibrary->push_back(volumeSliderQuick);
+
 }
 
 DefaultPlugins::~DefaultPlugins() {

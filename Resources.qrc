@@ -5,4 +5,7 @@
         <file>images/play_16.png</file>
         <file>images/pause_16.png</file>
     </qresource>
+    <qresource prefix="/">
+        <file>widgets/VolumeSliderQuick.qml</file>
+    </qresource>
 </RCC>

@@ -34,7 +34,8 @@ SOURCES  =  \
             PluginLoader.cpp \
             QtGui.cpp \
             QtGuiSettings.cpp \
-            SystemTrayIcon.cpp
+            SystemTrayIcon.cpp \
+            widgets/VolumeSliderQuick.cpp
 
 HEADERS =   widgets/CoverArt.h \
             widgets/LogViewer.h \
@@ -66,14 +67,15 @@ HEADERS =   widgets/CoverArt.h \
             PluginLoader.h \
             QtGui.h \
             QtGuiSettings.h \
-            SystemTrayIcon.h
+            SystemTrayIcon.h \
+            widgets/VolumeSliderQuick.h
 
 FORMS =     AboutDialog.ui \
             DefaultActions.ui
 
 RESOURCES = Resources.qrc
 
-QT += gui widgets concurrent svg
+QT += gui widgets concurrent svg quickwidgets
 DEFINES += ARTWORK_ENABLED HOTKEYS_ENABLED "DEADBEEF_PREFIX=\\\"donotuse\\\""
 
 # link with gettext?
