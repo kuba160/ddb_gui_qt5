@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies for Linux
       run: |
         apt-get -qq update
-        apt-get install -y -qq qtbase5-dev libqt5svg5-dev make \
+        apt-get install -y -qq qtbase5-dev qtquickcontrols2-5-dev qtdeclarative5-dev libqt5svg5-dev make \
           g++ wget zip unzip
     - name: Checkout for Linux
       uses: actions/checkout@v1
