@@ -31,9 +31,11 @@ QWidget *VolumeSliderQuick::constructor(QWidget *parent, DBApi *api) {
 }
 
 void VolumeSliderQuick::resizeEvent(QResizeEvent *event) {
-    // resize qml widget
     QQuickWidget::resizeEvent(event);
-    rootObject()->setSize(event->size());
+    // resize qml widget
+    if (rootObject()) {
+        rootObject()->setSize(event->size());
+    }
 }
 
 void VolumeSliderQuick::wheelEvent(QWheelEvent *ev) {

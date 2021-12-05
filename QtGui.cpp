@@ -30,6 +30,7 @@
 #include "QtGuiSettings.h"
 #include <QStyleFactory>
 #include <QLocale>
+#include <QQuickWindow>
 
 #include "PluginLoader.h"
 #include "DeadbeefTranslator.h"
@@ -83,6 +84,11 @@ static int initializeApi() {
         qDebug() << QIcon::themeSearchPaths();
         //QIcon::setThemeName("Windows-10-Icons");
         QIcon::setThemeName("Adwaita");
+
+        // Set opengl api for qt quick (qt 6 and higher)
+        #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
+        #endif
     #endif
 
         // setup settings
