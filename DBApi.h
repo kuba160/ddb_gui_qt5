@@ -182,6 +182,11 @@ private:
 
     int queue_count = 0;
 
+    // internal volume
+    float m_volume;
+public:
+    // Qt quick
+    Q_PROPERTY(float volume READ getVolume WRITE setVolume NOTIFY volumeChanged)
 };
 
 class DBWidgetInfo {

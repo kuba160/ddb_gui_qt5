@@ -57,6 +57,9 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
 
     // clipboard
     clipboard = QGuiApplication::clipboard();
+
+    // volume
+    m_volume = DBAPI->volume_get_db();
 }
 
 DBApi::~DBApi() {
@@ -301,11 +304,19 @@ void DBApi::addTracksByUrl(const QUrl &url, int position) {
 // slots
 
 void DBApi::setVolume(float value) {
-    DBAPI->volume_set_db(value);
+    if (m_volume != value) {
+        DBAPI->volume_set_db(value);
+        m_volume = value;
+        emit volumeChanged(value);
+    }
 }
 
 void DBApi::setVolume(int value) {
-    DBAPI->volume_set_db(value);
+    if (DBAPI->volume_get_db() != value) {
+        DBAPI->volume_set_db(value);
+        m_volume = value;
+        emit volumeChanged(value);
+    }
 }
 
 void DBApi::playTrackByIndex(uint32_t index) {
