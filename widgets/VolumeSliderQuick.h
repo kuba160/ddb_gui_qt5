@@ -1,7 +1,6 @@
 #ifndef VOLUMESLIDERQUICK_H
 #define VOLUMESLIDERQUICK_H
 
-#include <QSlider>
 #include <QQuickWidget>
 #include "DBApi.h"
 
@@ -11,6 +10,10 @@ class VolumeSliderQuick : public QQuickWidget, public DBWidget {
 public:
     VolumeSliderQuick(QWidget *parent = nullptr, DBApi *api = nullptr);
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *api =nullptr);
+
+protected:
+    void resizeEvent(QResizeEvent *) override;
+    void wheelEvent(QWheelEvent *ev) override;
 };
 
 #endif // VOLUMESLIDERQUICK_H
