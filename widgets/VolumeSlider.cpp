@@ -35,7 +35,7 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBWid
     // SLIDER -> API
     connect(this, SIGNAL(volumeChanged(float)), api, SLOT(setVolume(float)));
     // SLIDER INTERNAL
-    connect(this, SIGNAL(valueChanged(int)), this, SLOT(onSliderValueChanged(int)));
+    connect(this, SIGNAL(sliderMoved(int)), this, SLOT(onSliderValueChanged(int)));
 }
 
 QWidget *VolumeSlider::constructor(QWidget *parent, DBApi *api) {
