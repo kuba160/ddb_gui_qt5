@@ -44,6 +44,9 @@ CoverArtCache::~CoverArtCache() {
     if (default_image) {
         cacheUnref(default_image);
     }
+    cmut_cache.lock();
+    cmut_path.lock();
+    cmut_refc.lock();
     QList<QImage *> l = cache_refc.keys();
     foreach(QImage *img, l) {
         if (cache_refc.value(img) == 0) {
@@ -63,6 +66,9 @@ CoverArtCache::~CoverArtCache() {
             qDebug() << QString("Image (path: %1, size %2) has refc=%3!").arg(cache.key(img).path) .arg(cache.key(img).size.width()) .arg(cache_refc.value(img));
         }
     }
+    cmut_cache.unlock();
+    cmut_path.unlock();
+    cmut_refc.unlock();
 }
 
 bool CoverArtCache::isCoverArtAvailable(DB_playItem_t *it, QSize size) {
