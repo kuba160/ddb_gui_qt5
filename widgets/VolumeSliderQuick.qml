@@ -101,6 +101,7 @@ Slider {
         }
         // Volume text info
         Rectangle {
+            id: info
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             color: "white"
@@ -117,7 +118,36 @@ Slider {
             }
             width: text.width + 5
             height: text.height
-            visible: pressed
+
+            state: control.pressed ? "pressed" : "default"
+            states: [
+                State {
+                    name: "default"
+                },
+                State {
+                    name: "pressed"
+                }
+            ]
+            opacity: 0
+            transitions: [
+                Transition {
+                    from: "default"; to: "pressed"
+                    OpacityAnimator {
+                        target: info
+                        from: 0; to: 1;
+                        duration: 10
+                    }
+                },
+                Transition {
+                    from: "pressed"; to: "default"
+                    OpacityAnimator {
+                        target: info
+                        from: 1; to: 0;
+                        easing.type: Easing.InCubic
+                        duration: 1000
+                    }
+                }
+            ]
         }
     }
     // Dummy handle
