@@ -92,6 +92,7 @@ LoadedWidget::LoadedWidget(DBWidgetInfo &info, PluginLoader *pl) : header(info) 
 }
 
 LoadedWidget::~LoadedWidget() {
+    return; // true_parent is child of window w
     if (true_parent)
         delete true_parent;
 }
@@ -141,7 +142,9 @@ PluginLoader::PluginLoader() : QObject(nullptr) {
         DBWidgetInfo *info_toload;
         while ((info_toload = dp.WidgetReturn(i))) {
             qDebug() << "qt5: PluginLoader:" << info_toload->internalName << "added to widgetLibrary";
-            widgetLibrary.append(info_toload);
+            DBWidgetInfo *ncp = new DBWidgetInfo;
+            *ncp = *info_toload;
+            widgetLibrary.append(ncp);
             i++;
         }
     }
@@ -149,8 +152,19 @@ PluginLoader::PluginLoader() : QObject(nullptr) {
 }
 
 PluginLoader::~PluginLoader() {
-
     qDebug() << "qt5: PluginLoader cleaning";
+
+    // loadedWidget
+    for (int i = 0; i < loadedWidgets.length(); i++) {
+        delete loadedWidgets[i];
+    }
+    loadedWidgets.clear();
+
+    // widgetLibrary
+    for (int i = 0; i < widgetLibrary.length(); i++) {
+        delete widgetLibrary[i];
+    }
+    widgetLibrary.clear();
 }
 
 // widgetLibrary
