@@ -15,11 +15,14 @@
 typedef struct CurrentState_s {
 public:
     ddb_medialib_item_t *list = nullptr;
-    QSet<QImage *> cover_arts;
-    QSet<DB_playItem_t *> cover_arts_tracks;
+    //QSet<QImage *> cover_arts;
+    //QSet<DB_playItem_t *> cover_arts_tracks;
+    QHash<DB_playItem_t *, QImage *> cover_arts;
+    QHash<DB_playItem_t *, QPixmap> cover_arts_pixmaps;
     //QMutex cover_arts_lock;
     QHash<QFutureWatcher<QImage *>*, QModelIndex> future_list;
     QHash<void *,QModelIndex> child_to_parent;
+    QSet<DB_playItem_t *> cover_enqueued;
 } CurrentState_t;
 
 class MediasourceModel : public QAbstractItemModel, public DBWidget {

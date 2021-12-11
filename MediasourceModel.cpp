@@ -73,23 +73,17 @@ void MediasourceModel::currentStateClean(CurrentState_t *curr_state) {
     }
     // CoverArt free
     //cover_arts_lock->lock();
-    if (curr_state->cover_arts_tracks.count()) {
-        QSet<QImage *>::const_iterator i = curr_state->cover_arts.constBegin();
+    if (curr_state->cover_arts.count()) {
+        QHash<DB_playItem_t *,QImage *>::const_iterator i = curr_state->cover_arts.constBegin();
         while (i != curr_state->cover_arts.constEnd()) {
-            api->coverArt_unref(*i);
+            api->coverArt_unref(i.value());
+            api->coverArt_track_unref(i.key());
             ++i;
         }
     }
-    if (curr_state->cover_arts_tracks.count()) {
-        QSet<DB_playItem_t *>::const_iterator j = curr_state->cover_arts_tracks.constBegin();
-        while (j != curr_state->cover_arts_tracks.constEnd()) {
-            api->coverArt_track_unref(*j);
-            ++j;
-        }
-    }
     curr_state->cover_arts.clear();
-    curr_state->cover_arts_tracks.clear();
     curr_state->child_to_parent.clear();
+    curr_state->cover_arts_pixmaps.clear();
 
     QHash<QFutureWatcher<QImage *>*, QModelIndex>::const_iterator orphan_iter;
     for (orphan_iter = curr_state->future_list.constBegin(); orphan_iter != curr_state->future_list.constEnd(); ++orphan_iter) {
@@ -199,15 +193,12 @@ void MediasourceModel::onCoverReceived() {
         if (img && index.isValid() && index.internalPointer()) {
             ddb_medialib_item_t *root = static_cast<ddb_medialib_item_t *>(index.internalPointer());
             if (root->children && root->children->track) {
-                // cover used, put in set to be unrefed later
-                if (state->cover_arts.contains(img)) {
+                if (state->cover_arts.contains(root->children->track)) {
                     // fix for multiple cover art searches
-                    //qDebug() << "cover already in current state cache?";
                     api->coverArt_unref(img);
                 }
                 else {
-                    state->cover_arts.insert(emitter->result());
-                    state->cover_arts_tracks.insert(root->children->track);
+                    state->cover_arts.insert(root->children->track, img);
                 }
             }
         }
@@ -289,26 +280,38 @@ QVariant MediasourceModel::data(const QModelIndex &index, int role) const {
         if (index.isValid() && index.internalPointer()) {
             ddb_medialib_item_t *it = static_cast<ddb_medialib_item_t *>(index.internalPointer());
             DB_playItem_t *playit = it->children ? it->children->track : nullptr;
-            if (playit && api->isCoverArtPluginAvailable()) {
+            if (playit && cs->cover_arts.contains(playit)) {
+                if (cs->cover_arts_pixmaps.contains(playit)) {
+                    ret = cs->cover_arts_pixmaps.value(playit);
+                }
+                else {
+                    QPixmap p = QPixmap::fromImage(*cs->cover_arts.value(playit), Qt::AutoColor);
+                    cs->cover_arts_pixmaps.insert(playit, p);
+                    ret = p;
+                }
+            }
+            else if (playit && api->isCoverArtPluginAvailable()) {
                 //cover_arts_lock->lock();
                 if (api->isCoverArtCached(playit, cover_size)) {
                     QImage *img = api->getCoverArt(playit, cover_size);
                     if (img) {
-                        if (cs->cover_arts.contains(img)) {
+                        if (cs->cover_arts.contains(playit) && cs->cover_arts.value(playit) == img) {
                             api->coverArt_unref(img);
                         }
                         else {
-                            cs->cover_arts.insert(img);
-                            cs->cover_arts_tracks.insert(playit);
+                            cs->cover_arts.insert(playit, img);
                         }
                         ret = QPixmap::fromImage(*img);
                     }
                 }
                 else if (!cs->future_list.values().contains(index)) {
-                    QFutureWatcher<QImage *> *fw = new QFutureWatcher<QImage *>;
-                    connect(fw, SIGNAL(finished()), this, SLOT(onCoverReceived()));
-                    cs->future_list.insert(fw,index);
-                    fw->setFuture(api->requestCoverArt(playit,cover_size));
+                    if (!cs->cover_enqueued.contains(playit)) {
+                        cs->cover_enqueued.insert(playit);
+                        QFutureWatcher<QImage *> *fw = new QFutureWatcher<QImage *>;
+                        connect(fw, SIGNAL(finished()), this, SLOT(onCoverReceived()));
+                        cs->future_list.insert(fw,index);
+                        fw->setFuture(api->requestCoverArt(playit,cover_size));
+                    }
                 }
                 //cover_arts_lock->unlock();
             }
