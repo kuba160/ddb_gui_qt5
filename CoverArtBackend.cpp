@@ -99,6 +99,10 @@ QFuture<char*> CoverArtLegacy::loadCoverArt(DB_playItem_t *it) {
     context._size = sizeof(ddb_tf_context_t);
     context.it = it;
     context.iter = PL_MAIN;
+    context.flags = 0;
+    context.update = 0;
+    context.plt = nullptr;
+
 
     // TODO adjust length maybe
 #define ENTRY_LEN 256
