@@ -11,7 +11,7 @@ VolumeSliderQuick::VolumeSliderQuick(QWidget *parent, DBApi *api) : QQuickWidget
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // 17 bars default (TODO hardcoded)
-    setMinimumWidth(70);
+    setMinimumWidth(90);
     setMinimumHeight(27);
 
     // Transparency fix
