@@ -107,9 +107,6 @@ public:
     const char *_(const char *);
 // Signals are subscribed by different parts of gui
 signals:
-    // Volume
-    void volumeChanged(float);
-    void volumeChanged(int);
     // Playback
     void trackChanged(DB_playItem_t *, DB_playItem_t *);
     void trackChanged();
@@ -139,8 +136,6 @@ signals:
 // Slots redirect messages from qt gui to deadbeef internal system
 public slots:
     // Volume
-    virtual float getVolume();
-    virtual void setVolume(float);
     virtual void setVolume(int);
     // Just send message (id only)
     virtual void sendPlayMessage(uint32_t id);
@@ -182,11 +177,23 @@ private:
 
     int queue_count = 0;
 
+    /// Qt quick section
+
     // internal volume
     float m_volume;
+    //
 public:
-    // Qt quick
+    // Volume (in dB)
     Q_PROPERTY(float volume READ getVolume WRITE setVolume NOTIFY volumeChanged)
+
+public slots:
+    // Volume
+    virtual float getVolume();
+    virtual void setVolume(float);
+
+signals:
+    void volumeChanged(float);
+
 };
 
 class DBWidgetInfo {
