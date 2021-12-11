@@ -52,7 +52,7 @@ Slider {
                     anchors.bottom: parent.bottom
                     width: base.barWidth
                     height: base.barHeight(index, base.barAmount, base.minHeight, base.maxHeight)
-                    color: "gray"
+                    color: "#c0d9eb"
                 }
             }
         }
@@ -70,12 +70,15 @@ Slider {
                     anchors.bottom: parent.bottom
                     width: base.barWidth
                     height: base.barHeight(index, base.barAmount, base.minHeight, base.maxHeight)
+                    color: "#2b7fba"
+                    /*
                     SequentialAnimation on color {
                         loops: Animation.Infinite
                         ColorAnimation { from: "#ff0000"; to: "#00ff00"; duration: 2000 }
                         ColorAnimation { from: "#00ff00"; to: "#0000ff"; duration: 2000 }
                         ColorAnimation { from: "#0000ff"; to: "#ff0000"; duration: 2000 }
                     }
+                    */
                 }
             }
         }

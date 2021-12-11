@@ -15,10 +15,18 @@ VolumeSliderQuick::VolumeSliderQuick(QWidget *parent, DBApi *api) : QQuickWidget
     setMinimumHeight(27);
 
     // Transparency fix
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     setWindowFlags(Qt::SplashScreen);
     setAttribute(Qt::WA_AlwaysStackOnTop);
     setAttribute(Qt::WA_TranslucentBackground);
     setClearColor(Qt::transparent);
+#else
+    // TODO fix transparency for qt 6
+    setWindowFlags(Qt::SplashScreen);
+    setAttribute(Qt::WA_AlwaysStackOnTop);
+    setAttribute(Qt::WA_TranslucentBackground);
+    setClearColor(Qt::transparent);
+#endif
 
     // Set API and load widget
     rootContext()->setContextProperty("api", api);
