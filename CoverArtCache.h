@@ -67,6 +67,8 @@ protected:
 
     // mutex
     QMutex cmut_refc;
+    QMutex cmut_cache;
+    QMutex cmut_path;
 };
 
 #endif // COVERARTCACHE_H

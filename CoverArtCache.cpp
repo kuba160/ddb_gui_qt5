@@ -136,6 +136,7 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it, QS
 }
 
 void CoverArtCache::cacheCoverArt(coverSearch s, QImage *img) {
+    cmut_cache.lock();
     if (cache.contains(s)) {
         qDebug() << "already cached?";
         return;
@@ -144,13 +145,16 @@ void CoverArtCache::cacheCoverArt(coverSearch s, QImage *img) {
     if (img) {
         cacheRef(img);
     }
+    cmut_cache.unlock();
 }
 
 void CoverArtCache::cachePath(ddb_playItem_t *it, QString path) {
+    cmut_path.lock();
     if (cache_path.contains(it)) {
         cache_path.remove(it);
     }
     cache_path.insert(it,path);
+    cmut_path.unlock();
 }
 
 void CoverArtCache::cacheRef(QImage *img) {
