@@ -7,5 +7,7 @@
     </qresource>
     <qresource prefix="/">
         <file>widgets/VolumeSliderQuick.qml</file>
+        <file>widgets/SeekSliderQuick.qml</file>
+        <file>widgets/TabBarQuick.qml</file>
     </qresource>
 </RCC>

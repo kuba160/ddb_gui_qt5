@@ -11,8 +11,10 @@ SOURCES  =  \
             widgets/Playlist.cpp \
             widgets/PlaylistBrowser.cpp \
             widgets/SeekSlider.cpp \
+            widgets/SeekSliderQuick.cpp \
             widgets/StatusBar.cpp \
             widgets/TabBar.cpp \
+            widgets/TabBarQuick.cpp \
             widgets/VolumeSlider.cpp \
             widgets/QueueManager.cpp \
             AboutDialog.cpp \
@@ -44,8 +46,10 @@ HEADERS =   widgets/CoverArt.h \
             widgets/Playlist.h \
             widgets/PlaylistBrowser.h \
             widgets/SeekSlider.h \
+            widgets/SeekSliderQuick.h \
             widgets/StatusBar.h \
             widgets/TabBar.h \
+            widgets/TabBarQuick.h \
             widgets/VolumeSlider.h \
             widgets/QueueManager.h \
             AboutDialog.h \

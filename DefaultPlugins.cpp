@@ -32,6 +32,8 @@
 #include "widgets/QueueManager.h"
 #include "widgets/StatusBar.h"
 #include "widgets/VolumeSliderQuick.h"
+#include "widgets/SeekSliderQuick.h"
+#include "widgets/TabBarQuick.h"
 
 #undef _
 #include "DeadbeefTranslator.h"
@@ -132,10 +134,23 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     widgetLibrary->push_back(statusBar);
 
     volumeSliderQuick.internalName = QString("volumeSliderQuick");
-    volumeSliderQuick.friendlyName = QString(tr("Volume bar (QtQuick)"));
+    volumeSliderQuick.friendlyName = QString(tr("Volume bar")).append(" (QtQuick)");
     volumeSliderQuick.type = DBWidgetInfo::TypeToolbar;
     volumeSliderQuick.constructor = VolumeSliderQuick::constructor;
     widgetLibrary->push_back(volumeSliderQuick);
+
+    seekSliderQuick.internalName = QString("seekSliderQuick");
+    seekSliderQuick.friendlyName = QString(tr("Seekbar")).append(" (QtQuick)");
+    seekSliderQuick.type = DBWidgetInfo::TypeToolbar;
+    seekSliderQuick.constructor = SeekSliderQuick::constructor;
+    widgetLibrary->push_back(seekSliderQuick);
+
+    tabBarQuick.internalName = QString("tabBarQuick");
+    tabBarQuick.friendlyName = QString(tr("Tab strip")).append(" (QtQuick)");
+    tabBarQuick.type = DBWidgetInfo::TypeToolbar;
+    tabBarQuick.constructor = TabBarQuick::constructor;
+    widgetLibrary->push_back(tabBarQuick);
+
 
 }
 
