@@ -3,7 +3,8 @@ import QtQuick.Controls 2.12
 
 Slider {
     id: control
-    padding:5
+    padding: 4
+    height: 28
 
     // volume range / step size
     from: -50
@@ -15,7 +16,7 @@ Slider {
     onMoved: {
         api.volume = value
     }
-
+    wheelEnabled: true
     // Selection drawing
     background: Item {
         id: base
@@ -39,7 +40,7 @@ Slider {
             return (minheight) + (bar/total)*(maxheight-minheight)
         }
 
-        // Blank bars
+        // Bars
         Row {
             id: row_bg
             anchors.bottom: parent.bottom
@@ -52,33 +53,7 @@ Slider {
                     anchors.bottom: parent.bottom
                     width: base.barWidth
                     height: base.barHeight(index, base.barAmount, base.minHeight, base.maxHeight)
-                    color: "#c0d9eb"
-                }
-            }
-        }
-
-        // "Selected" bars
-        Row {
-            id: row_fg
-            anchors.bottom: parent.bottom
-            spacing: base.barSpacing
-            z: 2
-            Repeater {
-                // selected bars
-                model: base.selectedBarAmount
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: base.barWidth
-                    height: base.barHeight(index, base.barAmount, base.minHeight, base.maxHeight)
-                    color: "#2b7fba"
-                    /*
-                    SequentialAnimation on color {
-                        loops: Animation.Infinite
-                        ColorAnimation { from: "#ff0000"; to: "#00ff00"; duration: 2000 }
-                        ColorAnimation { from: "#00ff00"; to: "#0000ff"; duration: 2000 }
-                        ColorAnimation { from: "#0000ff"; to: "#ff0000"; duration: 2000 }
-                    }
-                    */
+                    color: index < base.selectedBarAmount ? "#2b7fba" : "#c0d9eb"
                 }
             }
         }

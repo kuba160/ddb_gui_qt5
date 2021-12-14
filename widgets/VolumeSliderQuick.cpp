@@ -8,11 +8,11 @@
 
 VolumeSliderQuick::VolumeSliderQuick(QWidget *parent, DBApi *api) : QQuickWidget(parent), DBWidget(parent, api) {
     // Allow resize
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
 
     // 17 bars default (TODO hardcoded)
-    setMinimumWidth(90);
-    setMinimumHeight(27);
+    setMinimumWidth(76);
+    setMinimumHeight(28);
 
     // Transparency fix
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
@@ -43,20 +43,5 @@ void VolumeSliderQuick::resizeEvent(QResizeEvent *event) {
     // resize qml widget
     if (rootObject()) {
         rootObject()->setSize(event->size());
-    }
-}
-
-void VolumeSliderQuick::wheelEvent(QWheelEvent *ev) {
-    // for some reason wheelEvent is not passed to QQuickWidget
-    // increase volume manually
-    float volume = api->getVolume();
-    const float s = 1.0;
-    if (ev->angleDelta().y() > 0) {
-        //QMetaObject::invokeMethod(rootObject(), "increase");
-        api->setVolume(volume + s > 0.0 ? 0 : volume + s);
-    }
-    else if (ev->angleDelta().y() < 0) {
-        QMetaObject::invokeMethod(rootObject(), "decrease");
-        api->setVolume(volume - s < -50.0 ? (float) -50.0 : volume - s);
     }
 }

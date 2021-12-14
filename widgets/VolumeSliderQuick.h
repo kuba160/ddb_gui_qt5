@@ -13,7 +13,6 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *) override;
-    void wheelEvent(QWheelEvent *ev) override;
 };
 
 #endif // VOLUMESLIDERQUICK_H
