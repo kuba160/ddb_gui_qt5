@@ -25,7 +25,7 @@ public slots:
     // called when value changes because of slider
     void onSliderValueChanged(int value);
     // called when value changes because of deadbeef (other plugin etc.)
-    void onDeadbeefValueChanged(float value);
+    void onDeadbeefValueChanged();
     // increase / decrease volume by x amount
     void adjustVolume(float value);
 signals:

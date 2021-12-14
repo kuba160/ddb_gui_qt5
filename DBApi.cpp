@@ -80,6 +80,9 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     ddb_playback_state_t state;
     switch (id) {
         case DB_EV_SONGCHANGED:
+            emit stateStoppedChanged();
+            emit statePlayingChanged();
+            emit statePausedChanged();
             ev = (ddb_event_trackchange_t *)ctx;
             if (ev->to) {
                 internal_state = DDB_PLAYBACK_STATE_PLAYING;
@@ -90,8 +93,12 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             emit trackChanged(ev->from, ev->to);
             emit trackChanged();
             emit queueChanged();
+            emit playingLengthChanged();
             break;
         case DB_EV_PAUSED:
+            emit stateStoppedChanged();
+            emit statePlayingChanged();
+            emit statePausedChanged();
             state = p1 ? DDB_PLAYBACK_STATE_PAUSED : DDB_PLAYBACK_STATE_PLAYING;
             if (internal_state != state) {
                 internal_state = state;
@@ -108,16 +115,22 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             emit deadbeefActivated();
             break;
         case DB_EV_VOLUMECHANGED:
-            emit volumeChanged(getVolume());
-            emit volumeChanged((int) getVolume());
+            emit volumeChanged();
             break;
         case DB_EV_PLAY_NUM:
         case DB_EV_PLAY_CURRENT:
         case DB_EV_PLAY_RANDOM:
         case DB_EV_SONGSTARTED:
+            emit stateStoppedChanged();
+            emit statePlayingChanged();
+            emit statePausedChanged();
             emit playbackStarted();
+            emit playingLengthChanged();
             break;
         case DB_EV_STOP:
+            emit stateStoppedChanged();
+            emit statePlayingChanged();
+            emit statePausedChanged();
             internal_state = DDB_PLAYBACK_STATE_STOPPED;
             emit playbackStopped();
             emit queueChanged();
@@ -128,6 +141,9 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             if (p1 == DDB_PLAYLIST_CHANGE_PLAYQUEUE) {
                 emit queueChanged();
             }
+            emit stateStoppedChanged();
+            emit statePlayingChanged();
+            emit statePausedChanged();
             // output state?
             ddb_playback_state_t output_state = internal_state; //DBAPI->get_output()->state();
             if (internal_state != output_state) {
@@ -171,7 +187,8 @@ unsigned long DBApi::getPlaylistCount() {
 }
 
 bool DBApi::isPaused() {
-    return (internal_state == DDB_PLAYBACK_STATE_PAUSED) ? true : false;
+    return DBAPI->get_output()->state() == DDB_PLAYBACK_STATE_PAUSED;
+    //return (internal_state == DDB_PLAYBACK_STATE_PAUSED) ? true : false;
 }
 
 float DBApi::getVolume() {
@@ -300,6 +317,48 @@ void DBApi::addTracksByUrl(const QUrl &url, int position) {
     DBAPI->plt_unref(plt);
 }
 
+float DBApi::getPosition() {
+    return DBAPI->playback_get_pos();
+}
+
+int DBApi::getCurrentPlaylist() {
+    return DBAPI->plt_get_curr_idx();
+}
+
+QStringList DBApi::getPlaylists() {
+    QStringList l;
+    int count = DBAPI->plt_get_count();
+    for (int i = 0; i < count; i++) {
+        char buf[512];
+        ddb_playlist_t *plt = DBAPI->plt_get_for_idx(i);
+        if (plt) {
+            DBAPI->plt_get_title(plt, buf, 512);
+            l.append(QString(buf));
+        }
+        DBAPI->plt_unref(plt);
+    }
+    return l;
+}
+
+// isPaused goes here...
+
+bool DBApi::isPlaying() {
+    return DBAPI->get_output()->state() == DDB_PLAYBACK_STATE_PLAYING;
+}
+
+bool DBApi::isStopped() {
+    return DBAPI->get_output()->state() == DDB_PLAYBACK_STATE_STOPPED;
+}
+
+float DBApi::getPlayingLength() {
+    DB_playItem_t *it = DBAPI->streamer_get_playing_track();
+    float len = 0.0;
+    if (it) {
+        len = DBAPI->pl_get_item_duration(it);
+        DBAPI->pl_item_unref(it);
+    }
+    return len;
+}
 
 // slots
 
@@ -307,7 +366,7 @@ void DBApi::setVolume(float value) {
     if (m_volume != value) {
         DBAPI->volume_set_db(value);
         m_volume = value;
-        emit volumeChanged(value);
+        emit volumeChanged();
     }
 }
 
@@ -315,7 +374,61 @@ void DBApi::setVolume(int value) {
     if (DBAPI->volume_get_db() != value) {
         DBAPI->volume_set_db(value);
         m_volume = value;
-        emit volumeChanged(value);
+        emit volumeChanged();
+    }
+}
+
+void DBApi::setPosition(float pos) {
+    DBAPI->playback_set_pos(pos);
+    emit positionChanged();
+}
+
+void DBApi::setCurrentPlaylist(int plt) {
+    if (DBAPI->plt_get_curr_idx() != plt) {
+        if (plt < DBAPI->plt_get_count() && plt >= 0) {
+            changePlaylist(plt);
+            emit currentPlaylistChanged();
+        }
+    }
+}
+
+void DBApi::setPaused(bool pause) {
+    if (internal_state == DDB_PLAYBACK_STATE_PLAYING && pause) {
+        togglePause();
+        emit statePausedChanged();
+        emit statePlayingChanged();
+    }
+    else if (internal_state == DDB_PLAYBACK_STATE_PAUSED && !pause) {
+        togglePause();
+        emit statePausedChanged();
+        emit statePlayingChanged();
+    }
+}
+
+void DBApi::setPlaying(bool playing) {
+    if (internal_state != DDB_PLAYBACK_STATE_PLAYING && playing) {
+        play();
+        emit statePlayingChanged();
+        emit stateStoppedChanged();
+    }
+    else if (internal_state == DDB_PLAYBACK_STATE_PLAYING && !playing) {
+        stop();
+        emit statePlayingChanged();
+        emit stateStoppedChanged();
+    }
+}
+
+void DBApi::setStopped(bool stopped) {
+    if (internal_state != DDB_PLAYBACK_STATE_STOPPED && stopped) {
+        stop();
+        emit stateStoppedChanged();
+        if (internal_state == DDB_PLAYBACK_STATE_PLAYING)
+            emit statePlayingChanged();
+        else
+            emit statePausedChanged();
+    }
+    else if (internal_state == DDB_PLAYBACK_STATE_STOPPED && !stopped) {
+        play();
     }
 }
 
@@ -354,6 +467,7 @@ void DBApi::changePlaylist(int idx) {
         DBAPI->conf_set_int("playlist.current", idx);
         emit playlistChanged(idx);
         emit playlistChanged();
+        emit currentPlaylistChanged();
     }
 }
 
@@ -365,6 +479,7 @@ void DBApi::movePlaylist(int plt, int before) {
            playlist_internal = before;
        }
        emit playlistMoved(plt, before);
+       emit playlistNamesChanged();
     }
 }
 
@@ -397,6 +512,7 @@ void DBApi::renamePlaylist(int plt, const QString *name) {
         playlistNames.insert(plt, *name);
         playlistNames.removeAt(plt+1);
         emit playlistRenamed(plt);
+        emit playlistNamesChanged();
     }
 }
 

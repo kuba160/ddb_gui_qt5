@@ -31,7 +31,7 @@ VolumeSlider::VolumeSlider(QWidget *parent, DBApi *api) : QSlider(parent), DBWid
     QSlider::setValue(Volume);
     setToolTip(QString("%1dB") .arg (Volume));
     // API -> SLIDER
-    connect(api, SIGNAL(volumeChanged(float)), this, SLOT(onDeadbeefValueChanged(float)));
+    connect(api, SIGNAL(volumeChanged()), this, SLOT(onDeadbeefValueChanged()));
     // SLIDER -> API
     connect(this, SIGNAL(volumeChanged(float)), api, SLOT(setVolume(float)));
     // SLIDER INTERNAL
@@ -149,9 +149,9 @@ void VolumeSlider::onSliderValueChanged(int value) {
     emit volumeChanged(value);
 }
 
-void VolumeSlider::onDeadbeefValueChanged(float value) {
-    QSlider::setValue(value);
-    Volume = value;
+void VolumeSlider::onDeadbeefValueChanged() {
+    Volume = api->getVolume();
+    QSlider::setValue(Volume);
     // do not emit signal back
 }
 

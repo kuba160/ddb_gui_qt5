@@ -80,10 +80,12 @@ public:
     QString const& playlistNameByIdx(int idx);
     unsigned long getPlaylistCount();
 
+public slots:
     // Menus
     void playItemContextMenu(QWidget *w, QPoint p);
     void playlistContextMenu(QWidget *w, QPoint p, int plt);
 
+public:
     // MenuBar
     // TODO make use actions;
     QMenuBar *getMainMenuBar();
@@ -181,19 +183,59 @@ private:
 
     // internal volume
     float m_volume;
-    //
+
 public:
     // Volume (in dB)
     Q_PROPERTY(float volume READ getVolume WRITE setVolume NOTIFY volumeChanged)
+    virtual float getVolume();
+    // Position (0..100)
+    Q_PROPERTY(float position READ getPosition WRITE setPosition NOTIFY positionChanged)
+    virtual float getPosition();
+    // Current Playlist
+    Q_PROPERTY(int current_playlist READ getCurrentPlaylist WRITE setCurrentPlaylist NOTIFY currentPlaylistChanged)
+    virtual int getCurrentPlaylist();
+    // Playlists
+    Q_PROPERTY(QStringList playlists READ getPlaylists NOTIFY playlistNamesChanged)
+    virtual QStringList getPlaylists();
+    // Playback States
+    Q_PROPERTY(bool paused READ isPaused WRITE setPaused NOTIFY statePausedChanged)
+    // virtual bool isPaused();
+    Q_PROPERTY(bool playing READ isPlaying WRITE setPlaying NOTIFY statePlayingChanged)
+    virtual bool isPlaying();
+    Q_PROPERTY(bool stopped READ isStopped WRITE setStopped NOTIFY stateStoppedChanged)
+    virtual bool isStopped();
+    // Current playing length
+    Q_PROPERTY(float playing_length READ getPlayingLength NOTIFY playingLengthChanged)
+    virtual float getPlayingLength();
+
 
 public slots:
     // Volume
-    virtual float getVolume();
     virtual void setVolume(float);
+    // Position (0..100)
+    virtual void setPosition(float);
+    // Current Playlist
+    virtual void setCurrentPlaylist(int);
+    // Playback States
+    virtual void setPaused(bool);
+    virtual void setPlaying(bool);
+    virtual void setStopped(bool);
 
 signals:
-    void volumeChanged(float);
-
+    // Volume
+    void volumeChanged();
+    // Position
+    void positionChanged();
+    // Current Playlist
+    void currentPlaylistChanged();
+    // Playlists
+    void playlistNamesChanged();
+    // Playback States
+    void statePausedChanged();
+    void statePlayingChanged();
+    void stateStoppedChanged();
+    // Current playing length
+    void playingLengthChanged();
 };
 
 class DBWidgetInfo {
