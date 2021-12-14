@@ -344,42 +344,44 @@ void ActionManager::playlistContextMenu(QWidget *parent, QPoint p, int plt) {
     ctxMenu->addActions(defaultPlaylistActions(plt));
 
     // Sort actions and format them as followed:
-    QVariant wactions = parent->property("Actions");
-    if (wactions.isValid()) {
-        int acts = menuActionsAvailable(parent) + ActionsTrackProp;
-        QActionGroup *actions_group = reinterpret_cast<QActionGroup *>(wactions.toUInt());
-        QList<QAction*> l = actions_group->actions();
+    if (parent) {
+        QVariant wactions = parent->property("Actions");
+        if (wactions.isValid()) {
+            int acts = menuActionsAvailable(parent) + ActionsTrackProp;
+            QActionGroup *actions_group = reinterpret_cast<QActionGroup *>(wactions.toUInt());
+            QList<QAction*> l = actions_group->actions();
 
-        if (acts & ActionsPlugins) {
-            ctxMenu->addSeparator();
-            foreach (ActionItem *ait, actions) {
-                uint32_t flags = ait->property("Flags").toULongLong();
-                if (((flags & (DB_ACTION_SINGLE_TRACK)) || (flags & DB_ACTION_MULTIPLE_TRACKS)) &&
-                    !(flags & DB_ACTION_COMMON) && !(flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST)) {
-                    if (ait->objectName() == "add_to_playback_queue" || ait->objectName() == "remove_from_playback_queue") {
-                        continue;
-                    }
-                    ctxMenu->addAction(ait);
-                    if (!parent->property("playItemsSelected").toInt()) {
-                        ait->setEnabled(false);
-                    }
-                    else {
-                        ait->setEnabled(true);
+            if (acts & ActionsPlugins) {
+                ctxMenu->addSeparator();
+                foreach (ActionItem *ait, actions) {
+                    uint32_t flags = ait->property("Flags").toULongLong();
+                    if (((flags & (DB_ACTION_SINGLE_TRACK)) || (flags & DB_ACTION_MULTIPLE_TRACKS)) &&
+                        !(flags & DB_ACTION_COMMON) && !(flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST)) {
+                        if (ait->objectName() == "add_to_playback_queue" || ait->objectName() == "remove_from_playback_queue") {
+                            continue;
+                        }
+                        ctxMenu->addAction(ait);
+                        if (!parent->property("playItemsSelected").toInt()) {
+                            ait->setEnabled(false);
+                        }
+                        else {
+                            ait->setEnabled(true);
+                        }
                     }
                 }
             }
-        }
-        if (acts & ActionsCustom) {
-            ctxMenu->addSeparator();
-            ctxMenu->addActions(l);
-        }
-        if (acts & ActionsTrackProp) {
-            // TODO
-            ctxMenu->addSeparator();
-            QAction *track_properties = ctxMenu->addAction(tr("Track Properties"));
-            track_properties->setObjectName("track_properties");
-            ActionItem::setDefaultIcon(track_properties);
-            track_properties->setEnabled(false);
+            if (acts & ActionsCustom) {
+                ctxMenu->addSeparator();
+                ctxMenu->addActions(l);
+            }
+            if (acts & ActionsTrackProp) {
+                // TODO
+                ctxMenu->addSeparator();
+                QAction *track_properties = ctxMenu->addAction(tr("Track Properties"));
+                track_properties->setObjectName("track_properties");
+                ActionItem::setDefaultIcon(track_properties);
+                track_properties->setEnabled(false);
+            }
         }
     }
     ctxMenu->popup(p);
