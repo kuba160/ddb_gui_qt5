@@ -42,7 +42,7 @@ QSize TabBar::tabSizeHint(int index) const {
 }
 
 void TabBar::showTabContextMenu(int index, QPoint pos) {
-    api->playlistContextMenu(this,pos,index);
+    api->playlistContextMenu(this,mapToGlobal(pos),index);
 }
 
 void TabBar::onTabMoved(int to, int from) {

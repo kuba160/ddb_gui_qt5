@@ -382,7 +382,7 @@ void ActionManager::playlistContextMenu(QWidget *parent, QPoint p, int plt) {
             track_properties->setEnabled(false);
         }
     }
-    ctxMenu->popup(parent->mapToGlobal(QPoint(0,0)) + p);
+    ctxMenu->popup(p);
 
     // Change playlist name
     // Delete playlist

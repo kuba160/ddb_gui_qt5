@@ -32,7 +32,7 @@ void PlaylistBrowser::mousePressEvent(QMouseEvent *event) {
         return;
     }
     else if (event->button() == Qt::RightButton) {
-        api->playlistContextMenu(this,event->pos(),indexAt(event->pos()).row());
+        api->playlistContextMenu(this,mapToGlobal(event->pos()),indexAt(event->pos()).row());
         event->accept();
     }
 }
