@@ -500,6 +500,7 @@ void DBApi::newPlaylist(QString name) {
     DBAPI->plt_add (DBAPI->plt_get_count(), name.toUtf8());
     playlistNames.append(name);
     emit playlistCreated();
+    emit playlistNamesChanged();
 }
 
 void DBApi::renamePlaylist(int plt, const QString *name) {
@@ -541,6 +542,7 @@ void DBApi::removePlaylist(int plt) {
             }
             DBAPI->plt_remove(plt);
             emit playlistRemoved(plt);
+            emit playlistNamesChanged();
         }
     }
 }
