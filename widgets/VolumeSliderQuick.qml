@@ -4,8 +4,10 @@ import QtQuick.Controls 2.12
 Slider {
     id: control
     padding: 4
+    bottomPadding: 6
+    topPadding: 6
     height: 28
-
+    implicitWidth: 76
     // volume range / step size
     from: -50
     to: 0
@@ -20,8 +22,8 @@ Slider {
     // Selection drawing
     background: Item {
         id: base
-        width: control.width - control.padding*2
-        height: control.height - control.padding*2
+        width: control.width - control.leftPadding - control.rightPadding
+        height: control.height - control.topPadding - control.bottomPadding
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
 

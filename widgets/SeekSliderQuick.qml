@@ -3,6 +3,7 @@ import QtQuick.Controls 2.12
 
 Slider {
     id: control
+    property bool expandable: true
     padding: 1
     from: 0.0
     to: 100.0
