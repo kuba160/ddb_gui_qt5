@@ -18,6 +18,8 @@
 */
 #include <QObject>
 #include <QDebug>
+#include <QQmlContext>
+#include <QQuickItem>
 #include "PluginLoader.h"
 #include "QtGui.h"
 #include "QtGuiSettings.h"
@@ -71,7 +73,20 @@ LoadedWidget::LoadedWidget(DBWidgetInfo &info, PluginLoader *pl) : header(info) 
     }
 
     bool locked = api->confGetValue("PluginLoader", "designMode", false).toBool();
-    widget = info.constructor(true_parent,api);
+    if (info.isQuickWidget) {
+        DBQuickWidget * nquick = new DBQuickWidget(true_parent, api, info.sourceUrl);
+        widget = nquick;
+        if (nquick->rootObject()) {
+            nquick->rootObject()->setProperty("friendlyName", friendlyName);
+            nquick->rootObject()->setProperty("internalName", internalName);
+            widget->setSizePolicy(nquick->rootObject()->property("expandable").toBool() ?
+                                      QSizePolicy::Expanding : QSizePolicy::Minimum, QSizePolicy::Minimum);
+            //widget->setMinimumHeight(nquick->rootObject()->property("implicitHeight").toFloat());
+        }
+    }
+    else {
+        widget = info.constructor(true_parent,api);
+    }
     if (info.type == DBWidgetInfo::TypeToolbar) {
         qobject_cast<QToolBar *>(true_parent)->addWidget(widget);
         qobject_cast<QToolBar *>(true_parent)->setMovable(!locked);
@@ -132,6 +147,45 @@ void LoadedWidget::setMain(bool state) {
         true_parent->setVisible(!state);
     }
 }
+
+
+DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQuickWidget(parent), DBWidget(parent, api) {
+    // Allow resize
+    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    // 17 bars default (TODO hardcoded)
+    setMinimumWidth(76);
+    setMinimumHeight(28);
+
+    // Transparency fix
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    setWindowFlags(Qt::SplashScreen);
+    setAttribute(Qt::WA_AlwaysStackOnTop);
+    setAttribute(Qt::WA_TranslucentBackground);
+    setClearColor(Qt::transparent);
+#else
+    // TODO fix transparency for qt 6
+    setWindowFlags(Qt::SplashScreen);
+    setAttribute(Qt::WA_AlwaysStackOnTop);
+    setAttribute(Qt::WA_TranslucentBackground);
+    setClearColor(Qt::transparent);
+#endif
+
+    // Set API and load widget
+    rootContext()->setContextProperty("api", api);
+
+    QUrl url(source);
+    setSource(url);
+}
+
+void DBQuickWidget::resizeEvent(QResizeEvent *event) {
+    QQuickWidget::resizeEvent(event);
+    // resize qml widget
+    if (rootObject()) {
+        rootObject()->setSize(event->size());
+    }
+}
+
 
 PluginLoader::PluginLoader() : QObject(nullptr) {
     qDebug() << "qt5: PluginLoader initialize:";
@@ -352,6 +406,15 @@ int PluginLoader::removeWidget(int num) {
 
     if (lw->header.type == DBWidgetInfo::TypeStatusBar) {
         w->setStatusBar(nullptr);
+    }
+
+
+
+    if (lw->widget) {
+        delete lw->widget;
+    }
+    if (lw->true_parent) {
+        delete lw->true_parent;
     }
 
     QString name = QString(lw->property("internalName").toString());

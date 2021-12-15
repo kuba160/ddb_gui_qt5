@@ -9,5 +9,6 @@
         <file>widgets/VolumeSliderQuick.qml</file>
         <file>widgets/SeekSliderQuick.qml</file>
         <file>widgets/TabBarQuick.qml</file>
+        <file>widgets/PlaybackButtonsQuick.qml</file>
     </qresource>
 </RCC>

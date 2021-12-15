@@ -16,7 +16,7 @@ private:
     DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget,
                  playlistWidget, tabBar, tabBarD, dummy, medialib, logviewer,
                  queueManager, statusBar, volumeSliderQuick, seekSliderQuick,
-                 tabBarQuick;
+                 tabBarQuick, playbackButtonsQuick;
     DBWidgetInfo playlistBrowser;
 };
 

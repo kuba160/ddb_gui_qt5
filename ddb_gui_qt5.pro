@@ -11,10 +11,8 @@ SOURCES  =  \
             widgets/Playlist.cpp \
             widgets/PlaylistBrowser.cpp \
             widgets/SeekSlider.cpp \
-            widgets/SeekSliderQuick.cpp \
             widgets/StatusBar.cpp \
             widgets/TabBar.cpp \
-            widgets/TabBarQuick.cpp \
             widgets/VolumeSlider.cpp \
             widgets/QueueManager.cpp \
             AboutDialog.cpp \
@@ -37,7 +35,6 @@ SOURCES  =  \
             QtGui.cpp \
             QtGuiSettings.cpp \
             SystemTrayIcon.cpp \
-            widgets/VolumeSliderQuick.cpp
 
 HEADERS =   widgets/CoverArt.h \
             widgets/LogViewer.h \
@@ -46,10 +43,8 @@ HEADERS =   widgets/CoverArt.h \
             widgets/Playlist.h \
             widgets/PlaylistBrowser.h \
             widgets/SeekSlider.h \
-            widgets/SeekSliderQuick.h \
             widgets/StatusBar.h \
             widgets/TabBar.h \
-            widgets/TabBarQuick.h \
             widgets/VolumeSlider.h \
             widgets/QueueManager.h \
             AboutDialog.h \
@@ -72,7 +67,6 @@ HEADERS =   widgets/CoverArt.h \
             QtGui.h \
             QtGuiSettings.h \
             SystemTrayIcon.h \
-            widgets/VolumeSliderQuick.h
 
 FORMS =     AboutDialog.ui \
             DefaultActions.ui

@@ -4,6 +4,8 @@
 #include <deadbeef/deadbeef.h>
 #include <QtWidgets>
 #include <QAction>
+#include <QQuickWidget>
+#include <QQmlImageProviderBase>
 #include "DBApi.h"
 #include "DefaultPlugins.h"
 
@@ -36,6 +38,15 @@ public:
 
     // can be toolbar
     QWidget *true_parent;
+};
+
+// General Qt Quick widget encapsulation
+class DBQuickWidget : public QQuickWidget, DBWidget {
+    Q_OBJECT
+public:
+    DBQuickWidget(QWidget *parent, DBApi *api, QString source);
+protected:
+    void resizeEvent(QResizeEvent *) override;
 };
 
 class PluginLoader : public QObject{

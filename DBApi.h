@@ -270,6 +270,15 @@ public:
     //   - Delete: delete
     //   - Track properties: track_properties
     // - playItemsSelected - used for Actions, int of how many tracks are selected
+
+    // Quick Widget
+    bool isQuickWidget;
+    // Url for widget
+    QString sourceUrl;
+    // Quick Widget will have friendlyName and internalName set as properties,
+    // DBApi can be accessed through 'api' property
+    // TODO: add size and size policy?
+
 };
 
 class DBWidget {
