@@ -33,7 +33,12 @@ char * CoverArtNew::getArtwork(DB_playItem_t *it, CoverArtNew *can) {
     }
 
     if (!cover_info->cover_found) {
-        can->plug->cover_info_free(cover_info);
+        if (!cover_info->refc) {
+            delete cover_info;
+        }
+        else {
+            can->plug->cover_info_free(cover_info);
+        }
         return nullptr;
     }
     can->ht.insert(cover_info->image_filename,cover_info);
@@ -47,7 +52,7 @@ void CoverArtNew::artwork_callback(int error, ddb_cover_query_t *query, ddb_cove
         cover->type = nullptr;
         cover->image_filename = nullptr;
         cover->blob = nullptr;
-        cover->refc = 1;
+        cover->refc = 0;
     }
     *(static_cast<ddb_cover_info_t **>(query->user_data)) = cover;
     delete query;
