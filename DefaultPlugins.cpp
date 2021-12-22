@@ -171,6 +171,12 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     playbackButtonsQuick.sourceUrl = "qrc:/widgets/PlaybackButtonsQuick.qml";
     widgetLibrary->push_back(playbackButtonsQuick);
 
+    playlistQuick.internalName = QString("playlistQuick");
+    playlistQuick.friendlyName = QString(tr("Playlist")).append(" (QtQuick)");
+    playlistQuick.type = DBWidgetInfo::TypeMainWidget;
+    playlistQuick.isQuickWidget = true;
+    playlistQuick.sourceUrl = "qrc:/widgets/PlaylistQuick.qml";
+    widgetLibrary->push_back(playlistQuick);
 }
 
 DefaultPlugins::~DefaultPlugins() {

@@ -10,5 +10,6 @@
         <file>widgets/SeekSliderQuick.qml</file>
         <file>widgets/TabBarQuick.qml</file>
         <file>widgets/PlaybackButtonsQuick.qml</file>
+        <file>widgets/PlaylistQuick.qml</file>
     </qresource>
 </RCC>

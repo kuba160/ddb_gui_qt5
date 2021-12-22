@@ -22,4 +22,6 @@ extern DBApi *api;
 extern PluginLoader *pl;
 //extern MainWindow *w;
 
+DBApi* getDBApi();
+
 #endif // QTGUI_H

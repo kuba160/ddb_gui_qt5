@@ -30,6 +30,9 @@
 #include "DefaultPlugins.h"
 #include "DeadbeefTranslator.h"
 
+// for model access in qml
+#include "PlaylistModel.h"
+
 #define GETCONF(X,Y) confGetValue(QString("PluginLoader"),X,Y)
 #define SETCONF(X,Y) confSetValue(QString("PluginLoader"),X,Y)
 
@@ -173,6 +176,7 @@ DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQui
 
     // Set API and load widget
     rootContext()->setContextProperty("api", api);
+    qmlRegisterType<PlaylistModel>("DBApi.PlaylistModel", 1, 0, "PlaylistModel");
 
     QUrl url(source);
     setSource(url);

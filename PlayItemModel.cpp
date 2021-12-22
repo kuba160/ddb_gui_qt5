@@ -3,10 +3,17 @@
 #include "MainWindow.h"
 #include "DeadbeefTranslator.h"
 
+#include "QtGui.h"
+
 PlayItemModel::PlayItemModel(QObject *parent, DBApi *api_a) : QAbstractItemModel(parent),
                                                 DBWidget(nullptr,api_a),
                                                 playIcon(":/root/images/play_16.png"),
                                                 pauseIcon(":/root/images/pause_16.png") {
+
+
+    if (api_a == nullptr) {
+        this->api = getDBApi();
+    }
     // Events to show current status next to playing track
     connect(api, SIGNAL(trackChanged(DB_playItem_t*,DB_playItem_t*)),
             this, SLOT(onTrackChanged(DB_playItem_t*,DB_playItem_t*)));

@@ -25,6 +25,17 @@ public:
     playItemList tracks(const QModelIndexList &tracks) const;
     playItemList tracks(const QList<int> &tracks) const;
     DB_playItem_t *track(const QModelIndex &track) const;
+
+    // Qt Quick
+    // Playlist property based on iter
+    Q_PROPERTY(int plt_num READ getPltNum WRITE setPltNum NOTIFY pltNumChanged)
+    void setPltNum(int plt);
+    int getPltNum();
+protected:
+    int m_plt_num;
+signals:
+    void pltNumChanged();
+
 protected:
     int rowCount(const QModelIndex &parent) const;
     int trackCount() const;

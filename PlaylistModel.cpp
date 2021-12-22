@@ -4,7 +4,12 @@
 #include "MainWindow.h"
 #include "DeadbeefTranslator.h"
 
+#include "QtGui.h"
+
 PlaylistModel::PlaylistModel(QObject *parent, DBApi *Api) : PlayItemModel(parent,Api) {
+    if (Api == nullptr) {
+        this->api = getDBApi();
+    }
     connect(api, SIGNAL(playlistContentChanged(ddb_playlist_t*)),
             this, SLOT(onPlaylistContentChanged(ddb_playlist_t*)));
 }
@@ -29,6 +34,21 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
         DBAPI->plt_ref(plt);
     }
     endResetModel();
+}
+
+void PlaylistModel::setPltNum(int plt_num) {
+    beginResetModel();
+    ddb_playlist_t *p =  DBAPI->plt_get_for_idx(plt_num);
+    if (p) {
+        plt = p;
+        m_plt_num = plt_num;
+        emit pltNumChanged();
+    }
+    endResetModel();
+}
+
+int PlaylistModel::getPltNum() {
+    return m_plt_num;
 }
 
 void PlaylistModel::onPlaylistContentChanged(ddb_playlist_t *plt_changed) {

@@ -59,6 +59,10 @@ static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32
     return api->pluginMessage(id, ctx, p1, p2);
 }
 
+DBApi* getDBApi() {
+    return api;
+}
+
 static int initializeApi() {
     if (!api) {
         while (!deadbeef_internal) {
