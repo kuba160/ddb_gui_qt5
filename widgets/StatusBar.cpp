@@ -16,6 +16,10 @@ StatusBar::StatusBar(QWidget *parent, DBApi *Api) : QStatusBar(parent), DBWidget
     connect(api, SIGNAL(playbackStarted()), this, SLOT(update()));
     connect(api, SIGNAL(playbackStopped()), this, SLOT(update()));
     connect(api, SIGNAL(playlistChanged()), this, SLOT(update()));
+
+    // macos size fix
+    setAttribute(Qt::WA_MacSmallSize);
+    label->setAttribute(Qt::WA_MacMiniSize);
     update();
 }
 
