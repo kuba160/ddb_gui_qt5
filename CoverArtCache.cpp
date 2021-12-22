@@ -144,6 +144,7 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it, QS
 void CoverArtCache::cacheCoverArt(coverSearch s, QImage *img) {
     cmut_cache.lock();
     if (cache.contains(s)) {
+        cmut_cache.unlock();
         qDebug() << "already cached?";
         return;
     }
