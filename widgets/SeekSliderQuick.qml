@@ -30,8 +30,7 @@ Slider {
         id: base
         width: control.width - 2*control.padding
         height: parent.height
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.fill: parent
         property int h: 10
         property int rad: 10
         property int bw: 2
@@ -39,8 +38,7 @@ Slider {
         Rectangle {
             z: 0
             width: parent.width
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.centerIn: parent
             height: base.h
             radius: base.rad
             color: "transparent"
@@ -49,7 +47,7 @@ Slider {
         }
         Item {
             z: 1
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
             clip:true
             width: parent.width * control.value/100.0
             height: parent.height
@@ -65,16 +63,14 @@ Slider {
         // Info box
         Rectangle {
             id: info
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: parent.horizontalCenter
-            radius: 10
+            anchors.centerIn: parent
+            radius: 4
             color: "#2b7fba"
             z: 100
             Text {
                 id: text
                 z: 101
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.centerIn: parent
                 property real len: api.playing_length * control.value / 100.0
                 property int hour: len/3600
                 property int min: (len-hour*3600)/60
@@ -84,8 +80,8 @@ Slider {
                 font.bold: true
                 font.pointSize: 14
             }
-            width: text.width + 10
-            height: text.height
+            width: text.width + 20
+            height: text.height - 2
 
             state: control.pressed ? "pressed" : "default"
             states: [
