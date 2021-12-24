@@ -24,8 +24,7 @@ Slider {
         id: base
         width: control.width - control.leftPadding - control.rightPadding
         height: control.height - control.topPadding - control.bottomPadding
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.centerIn: parent
 
         // Bars properties
         property int minHeight: 3
@@ -77,56 +76,57 @@ Slider {
             visible: control.value == 0
         }
         // Volume text info
-        Rectangle {
+        ToolTip {
             id: info
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: parent.horizontalCenter
-            color: "white"
-            border.color: "black"
-            border.width: 1
-            z: 100
-            Text {
-                id: text
-                z: 101
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: value + "dB"
-                color: "black"
+            visible: control.hovered || control.pressed
+            delay: Qt.styleHints.mousePressAndHoldInterval
+            Connections {
+                target: control
+                function onMoved() {
+                    info.delay = 0
+                    info.show(control.value + "dB")
+                    info.delay = Qt.styleHints.mousePressAndHoldInterval
+                }
             }
-            width: text.width + 5
-            height: text.height
 
-            state: control.pressed ? "pressed" : "default"
-            states: [
-                State {
-                    name: "default"
-                },
-                State {
-                    name: "pressed"
+            padding: 2
+            z: 10
+            text: control.value + "dB"
+            MouseArea {
+                anchors.fill: parent
+                onPressed: (event)=> {
+                           info.close()
+                           var p = mapToItem(control,event.x, event.y)
+                           api.volume = control.valueAt((p.x-control.leftPadding)/control.availableWidth)
                 }
-            ]
+                onWheel: (event)=> event.angleDelta.y < 0 ?
+                             api.volume = api.volume - 1 :
+                             api.volume = api.volume + 1
+            }
             opacity: 0
-            transitions: [
-                Transition {
-                    from: "default"; to: "pressed"
-                    OpacityAnimator {
-                        target: info
-                        from: 0; to: 1;
-                        duration: 10
+            enter: Transition {
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0.0
+                    to: 1.0
+                }
+            }
+            exit: Transition {
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: 200
                     }
-                },
-                Transition {
-                    from: "pressed"; to: "default"
-                    OpacityAnimator {
-                        target: info
-                        from: 1; to: 0;
+                    NumberAnimation {
+                        property: "opacity"
+                        from: 1.0
+                        to: 0.0
                         easing.type: Easing.InCubic
-                        duration: 1000
                     }
                 }
-            ]
+            }
         }
     }
+
     // Dummy handle
     handle: Item {
         implicitWidth: 1
