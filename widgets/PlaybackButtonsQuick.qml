@@ -4,6 +4,7 @@ import QtQuick.Controls 2.12
 Row {
     id: button_row
 
+    spacing: 2
     property var names: ["Stop", "Play", "Pause", "Previous", "Next"]
     property var icons: ["media-playback-stop", "media-playback-start", "media-playback-pause", "media-skip-backward", "media-skip-forward"]
     property var actions: [api.stop, api.play, api.togglePause, api.playPrev, api.playNext]
@@ -23,7 +24,7 @@ Row {
             height: width
         }
     }
-    width: reap.count * 32
+    width: reap.count * (32 + spacing)
 
 }
 
