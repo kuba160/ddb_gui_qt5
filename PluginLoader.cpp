@@ -76,12 +76,17 @@ LoadedWidget::LoadedWidget(DBWidgetInfo &info, PluginLoader *pl) : header(info) 
     if (info.isQuickWidget) {
         DBQuickWidget * nquick = new DBQuickWidget(true_parent, api, info.sourceUrl);
         widget = nquick;
-        if (nquick->rootObject()) {
-            nquick->rootObject()->setProperty("friendlyName", friendlyName);
-            nquick->rootObject()->setProperty("internalName", internalName);
-            widget->setSizePolicy(nquick->rootObject()->property("expandable").toBool() ?
-                                      QSizePolicy::Expanding : QSizePolicy::Minimum, QSizePolicy::Minimum);
-            //widget->setMinimumHeight(nquick->rootObject()->property("implicitHeight").toFloat());
+        while (nquick->status() == QQuickWidget::Loading) {
+            // probably there is a better way to do this
+            QThread::msleep(10);
+        }
+        if (nquick->status() == QQuickWidget::Error) {
+            qDebug() << "qt5: PluginLoader: Loading" << info.internalName << "failed!";
+        }
+        else if (nquick->rootObject()) {
+            //nquick->rootObject()->setProperty("friendlyName", friendlyName);
+            //nquick->rootObject()->setProperty("internalName", internalName);
+            nquick->rootObject()->setProperty("instance",instance);
         }
     }
     else {
@@ -151,7 +156,14 @@ void LoadedWidget::setMain(bool state) {
 
 DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQuickWidget(parent), DBWidget(parent, api) {
     // Allow resize
-    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    // TODO allow specifying size policy (and size) through properties
+    if (source == "qrc:/widgets/VolumeSliderQuick.qml") {
+        setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    }
+    else if (source == "qrc:/widgets/SeekSliderQuick.qml") {
+        setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Expanding);
+    }
 
     // 17 bars default (TODO hardcoded)
     setMinimumWidth(76);
@@ -202,6 +214,12 @@ PluginLoader::PluginLoader() : QObject(nullptr) {
             i++;
         }
     }
+    // Load local Qt Quick widgets (TODO load from deadbeef dir)
+    {
+        foreach( const QString str, QDir(":/widgets").entryList() ) {
+            widgetLibraryAppend(QString("qrc:/widgets/").append(str));
+        }
+    }
     // External widgets will be appended to widgetLibrary in pluginConnect
 }
 
@@ -230,6 +248,52 @@ void PluginLoader::widgetLibraryAppend(DBWidgetInfo *wi) {
         widgetLibrary.append(clone);
         emit widgetLibraryAdded(*clone);
     }
+}
+
+void PluginLoader::widgetLibraryAppend(QString url) {
+    QQmlEngine *engine = new QQmlEngine;
+    // set api to avoid undefined references (if widget is written poorly)
+    //engine->rootContext()->setContextProperty("api", api);
+    QQmlComponent component(engine, url);
+
+    while (component.isLoading()) {
+        // probably there is a better way to do this
+        QThread::msleep(10);
+    }
+    if (component.isError()) {
+        qDebug() << "qt5: PluginLoader:" << url << "is not valid quick widget!";
+        delete engine;
+        return;
+    }
+    QObject *widget = component.create();
+    if (widget) {
+        DBWidgetInfo *info = new DBWidgetInfo();
+        info->friendlyName = widget->property("friendlyName").toString().append(" (Quick)");
+        info->internalName = widget->property("internalName").toString();
+        info->isQuickWidget = true;
+        info->constructor = nullptr;
+        info->type = DBWidgetInfo::TypeToolbar; // TODO
+        info->sourceUrl = url;
+
+        delete widget;
+
+        // TODO check if same widget exists (but different type TODO)
+
+        // basic validation
+        if (info->friendlyName.length() && info->internalName.length()) {
+            qDebug() << "qt5: PluginLoader:" << info->internalName << "added to widgetLibrary (QUICK)";
+            widgetLibrary.append(info);
+            // this emit is needed for subsequent widget loading (not needed when load on startup)
+            //emit widgetLibraryAdded(*info);
+        }
+        else {
+            qDebug() << "qt5: PluginLoader:" << url << "is not valid quick widget!";
+        }
+    }
+    else {
+        qDebug() << "qt5: PluginLoader:" << url << "is not valid quick widget!";
+    }
+    delete engine;
 }
 
 DBWidgetInfo* PluginLoader::widgetLibraryGet(const QString name) {

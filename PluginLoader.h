@@ -64,6 +64,8 @@ public:
     // Add new widget to database
     // Called by every external plugin (registerWidget function)
     void widgetLibraryAppend(DBWidgetInfo *);
+    // Add new quick widget to database
+    void widgetLibraryAppend(QString url);
 protected:
     // get widget info from database
     DBWidgetInfo *widgetLibraryGet(int num);

@@ -15,8 +15,7 @@ private:
     std::vector<DBWidgetInfo> *widgetLibrary;
     DBWidgetInfo volumeSlider,seekSlider, playbackButtons, artworkWidget,
                  playlistWidget, tabBar, tabBarD, dummy, medialib, logviewer,
-                 queueManager, statusBar, volumeSliderQuick, seekSliderQuick,
-                 tabBarQuick, playbackButtonsQuick;
+                 queueManager, statusBar;
     DBWidgetInfo playlistBrowser;
 };
 

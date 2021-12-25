@@ -143,34 +143,6 @@ DefaultPlugins::DefaultPlugins(QObject *parent) : QObject(parent) {
     statusBar.isQuickWidget = false;
     widgetLibrary->push_back(statusBar);
 
-    volumeSliderQuick.internalName = QString("volumeSliderQuick");
-    volumeSliderQuick.friendlyName = QString(tr("Volume bar")).append(" (QtQuick)");
-    volumeSliderQuick.type = DBWidgetInfo::TypeToolbar;
-    volumeSliderQuick.isQuickWidget = true;
-    volumeSliderQuick.sourceUrl = "qrc:/widgets/VolumeSliderQuick.qml";
-    widgetLibrary->push_back(volumeSliderQuick);
-
-    seekSliderQuick.internalName = QString("seekSliderQuick");
-    seekSliderQuick.friendlyName = QString(tr("Seekbar")).append(" (QtQuick)");
-    seekSliderQuick.type = DBWidgetInfo::TypeToolbar;
-    seekSliderQuick.isQuickWidget = true;
-    seekSliderQuick.sourceUrl = "qrc:/widgets/SeekSliderQuick.qml";
-    widgetLibrary->push_back(seekSliderQuick);
-
-    tabBarQuick.internalName = QString("tabBarQuick");
-    tabBarQuick.friendlyName = QString(tr("Tab strip")).append(" (QtQuick)");
-    tabBarQuick.type = DBWidgetInfo::TypeToolbar;
-    tabBarQuick.isQuickWidget = true;
-    tabBarQuick.sourceUrl = "qrc:/widgets/TabBarQuick.qml";
-    widgetLibrary->push_back(tabBarQuick);
-
-    playbackButtonsQuick.internalName = QString("playbackButtonsQuick");
-    playbackButtonsQuick.friendlyName = QString(tr("Playback controls")).append(" (QtQuick)");
-    playbackButtonsQuick.type = DBWidgetInfo::TypeToolbar;
-    playbackButtonsQuick.isQuickWidget = true;
-    playbackButtonsQuick.sourceUrl = "qrc:/widgets/PlaybackButtonsQuick.qml";
-    widgetLibrary->push_back(playbackButtonsQuick);
-
 }
 
 DefaultPlugins::~DefaultPlugins() {
