@@ -72,9 +72,15 @@ CoverArtCache::~CoverArtCache() {
 }
 
 bool CoverArtCache::isCoverArtAvailable(DB_playItem_t *it, QSize size) {
+    cmut_path.lock();
     if (cache_path.contains(it)) {
-        return cache.contains(coverSearchValue(cache_path.value(it),size));
+        cmut_cache.lock();
+        bool ret = cache.contains(coverSearchValue(cache_path.value(it),size));
+        cmut_path.unlock();
+        cmut_cache.unlock();
+        return ret;
     }
+    cmut_path.unlock();
     return false;
 }
 
