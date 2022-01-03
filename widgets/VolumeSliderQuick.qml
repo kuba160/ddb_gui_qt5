@@ -5,8 +5,8 @@ Item {
     readonly property string friendlyName: qsTr("Volume bar")
     readonly property string internalName: "volumeSliderQuick"
     readonly property string widgetStyle: "DeaDBeeF"
+    readonly property string widgetType: "toolbar"
     property int instance: -1
-    property bool expandable: true
 
     Loader {
         id: loader

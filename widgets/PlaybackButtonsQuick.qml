@@ -5,6 +5,7 @@ Item {
     readonly property string friendlyName: qsTr("Playback controls")
     readonly property string internalName: "playbackButtonsQuick"
     readonly property string widgetStyle: "DeaDBeeF"
+    readonly property string widgetType: "toolbar"
     property int instance: -1
 
     // size determined by playbackControls size

@@ -272,7 +272,12 @@ void PluginLoader::widgetLibraryAppend(QString url) {
         info->internalName = widget->property("internalName").toString();
         info->isQuickWidget = true;
         info->constructor = nullptr;
-        info->type = DBWidgetInfo::TypeToolbar; // TODO
+        if (widget->property("widgetType").toString() == "main") {
+            info->type = DBWidgetInfo::TypeMainWidget;
+        }
+        else /*if (widget->property("widgetType").toString() == "toolbar")*/ {
+            info->type = DBWidgetInfo::TypeToolbar; // TODO
+        }
         info->sourceUrl = url;
 
         delete widget;
