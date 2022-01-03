@@ -179,6 +179,8 @@ private:
 
     int queue_count = 0;
 
+    ddb_dsp_context_t *get_supereq();
+
     /// Qt quick section
 
     // internal volume
@@ -208,6 +210,14 @@ public:
     Q_PROPERTY(float playing_length READ getPlayingLength NOTIFY playingLengthChanged)
     virtual float getPlayingLength();
 
+    // Equalizer
+    Q_PROPERTY(bool eq_available READ isEqAvailable NOTIFY eqAvailableChanged)
+    virtual bool isEqAvailable();
+    Q_PROPERTY(bool eq_enabled READ isEqEnabled WRITE setEqEnabled NOTIFY eqEnabledChanged)
+    virtual bool isEqEnabled();
+
+    Q_PROPERTY(QList<float> eq READ getEq WRITE setEq NOTIFY eqChanged)
+    virtual QList<float> getEq();
 
 public slots:
     // Volume
@@ -220,6 +230,9 @@ public slots:
     virtual void setPaused(bool);
     virtual void setPlaying(bool);
     virtual void setStopped(bool);
+    // Equalizer
+    virtual void setEqEnabled(bool);
+    virtual void setEq(QList<float>);
 
 signals:
     // Volume
@@ -236,6 +249,11 @@ signals:
     void stateStoppedChanged();
     // Current playing length
     void playingLengthChanged();
+
+    // Equalizer
+    void eqAvailableChanged();
+    void eqEnabledChanged();
+    void eqChanged();
 };
 
 class DBWidgetInfo {

@@ -135,6 +135,12 @@ int DBApi::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
             emit playbackStopped();
             emit queueChanged();
             break;
+        case DB_EV_DSPCHAINCHANGED:
+            // update eq state
+            // TODO detect change
+            emit eqAvailableChanged();
+            emit eqEnabledChanged();
+            break;
         case DB_EV_PLAYLISTCHANGED:
         case DB_EV_TRACKINFOCHANGED:
             // detect queue
@@ -429,6 +435,85 @@ void DBApi::setStopped(bool stopped) {
     }
     else if (internal_state == DDB_PLAYBACK_STATE_STOPPED && !stopped) {
         play();
+    }
+}
+
+ddb_dsp_context_t * DBApi::get_supereq() {
+    ddb_dsp_context_t *eq_ctx = DBAPI->streamer_get_dsp_chain();
+    ddb_dsp_context_t *dsp = eq_ctx;
+    while (dsp) {
+        if (strcmp(dsp->plugin->plugin.id, "supereq") == 0) {
+            return dsp;
+        }
+        dsp = dsp->next;
+    }
+    return nullptr;
+}
+
+bool DBApi::isEqAvailable() {
+    return get_supereq() ? true : false;
+}
+
+bool DBApi::isEqEnabled() {
+    ddb_dsp_context_t *supereq = get_supereq();
+    return supereq->enabled;
+}
+
+QList<float> DBApi::getEq() {
+    QList<float> l;
+    ddb_dsp_context_t *supereq = get_supereq();
+    if (supereq) {
+        char buf[255];
+        int param_count = supereq->plugin->num_params();
+        for (int i = 0; i < param_count; i++) {
+            supereq->plugin->get_param(supereq, i, buf, 255);
+            l.append(atof(buf));
+        }
+    }
+    else {
+        qDebug() << "getEq(): supereq unavailable!";
+    }
+    return l;
+}
+
+void DBApi::setEqEnabled(bool enable) {
+    ddb_dsp_context_t *supereq = get_supereq();
+    if (supereq) {
+        if (supereq->enabled != enable) {
+            supereq->enabled = enable;
+            DBAPI->streamer_dsp_refresh ();
+            DBAPI->streamer_dsp_chain_save ();
+            emit eqEnabledChanged();
+        }
+    }
+    else {
+        qDebug() << "setEqEnabled(): supereq unavailable!";
+    }
+}
+
+void DBApi::setEq(QList<float> eq) {
+    ddb_dsp_context_t *supereq = get_supereq();
+    if (supereq) {
+        QList<float> eq_curr = getEq();
+        bool changed = false;
+        int param_count = supereq->plugin->num_params();
+        for (int i = 0; i < param_count; i++) {
+            if (eq[i] != eq_curr[i]) {
+                qDebug() << "eq[" << i << "]" << eq[i] << "(new)," << eq_curr[i];
+                char buf[255];
+                snprintf(buf, 255, "%f", eq[i]);
+                supereq->plugin->set_param(supereq, i, buf);
+                changed = true;
+            }
+        }
+        if (changed) {
+            DBAPI->streamer_dsp_refresh();
+            DBAPI->streamer_dsp_chain_save();
+            emit eqChanged();
+        }
+    }
+    else {
+        qDebug() << "setEq(): supereq unavailable!";
     }
 }
 
