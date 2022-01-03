@@ -90,6 +90,7 @@ Item {
                         id: amp_text
                         text: qsTr("preamp")
                         font.pixelSize: 10
+                        color: palette.text
                         bottomPadding: 8
                         anchors.top: amp.bottom
                     }
@@ -102,6 +103,7 @@ Item {
                         id: text_high
                         text: amp.value == -20.0 ? Math.round((amp.value+20) * 10)/10 + "dB" : "+" + Math.round((amp.value+20) * 10)/10 + "dB"
                         font.pixelSize: 10
+                        color: palette.text
                         anchors.top: parent.top
                         anchors.left: parent.left
                     }
@@ -112,6 +114,7 @@ Item {
                         anchors.left: parent.left
                         bottomPadding: 20
                         font.pixelSize: 10
+                        color: palette.text
                     }
                 }
                 Repeater {
@@ -136,7 +139,7 @@ Item {
                             width: parent.width
                             orientation: Qt.Vertical
                             value: api.eq[index+1]
-                            anchors.verticalCenter: column_eq.horizontalCenter
+                            anchors.horizontalCenter: column_eq.horizontalCenter
                             onMoved: {
                                 var eq = api.eq
                                 eq[index+1] = value
@@ -153,10 +156,12 @@ Item {
                             anchors.top: slider_band.bottom
                             anchors.horizontalCenter: column_eq.horizontalCenter
                             bottomPadding: 8
+                            color: palette.text
                         }
                     }
                 }
             }
+            SystemPalette { id: palette; colorGroup: SystemPalette.Active }
         }
     }
 }
