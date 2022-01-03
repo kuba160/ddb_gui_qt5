@@ -74,7 +74,9 @@ LoadedWidget::LoadedWidget(DBWidgetInfo &info, PluginLoader *pl) : header(info) 
 
     bool locked = api->confGetValue("PluginLoader", "designMode", false).toBool();
     if (info.isQuickWidget) {
-        DBQuickWidget * nquick = new DBQuickWidget(true_parent, api, info.sourceUrl);
+        // if quickwidget parent is qdockwidget, it is somehow breaking, having null fixes is
+        QWidget *nquick_parent = info.type == DBWidgetInfo::TypeMainWidget ? nullptr : true_parent;
+        DBQuickWidget * nquick = new DBQuickWidget(nquick_parent, api, info.sourceUrl);
         widget = nquick;
         while (nquick->status() == QQuickWidget::Loading) {
             // probably there is a better way to do this
