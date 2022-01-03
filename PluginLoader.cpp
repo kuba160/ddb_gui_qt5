@@ -185,12 +185,17 @@ DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQui
     setClearColor(Qt::transparent);
 #endif
 
+    // Prefer native font rendering
+    #if (QT_VERSION >= QT_VERSION_CHECK(5,10,0))
+    quickWindow()->setTextRenderType(QQuickWindow::NativeTextRendering);
+    #endif
+
     // Set API and load widget
     rootContext()->setContextProperty("api", api);
 
     QUrl url(source);
     setSource(url);
-    quickWindow()->setTextRenderType(QQuickWindow::NativeTextRendering);
+
 }
 
 void DBQuickWidget::resizeEvent(QResizeEvent *event) {
