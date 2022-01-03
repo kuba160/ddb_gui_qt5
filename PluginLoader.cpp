@@ -263,6 +263,9 @@ void PluginLoader::widgetLibraryAppend(QString url) {
     }
     if (component.isError()) {
         qDebug() << "qt5: PluginLoader:" << url << "is not valid quick widget!";
+        foreach(QQmlError err, component.errors()) {
+            qDebug() << err.toString();
+        }
         delete engine;
         return;
     }
