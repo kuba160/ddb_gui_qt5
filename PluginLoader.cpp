@@ -188,6 +188,7 @@ DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQui
 
     QUrl url(source);
     setSource(url);
+    quickWindow()->setTextRenderType(QQuickWindow::NativeTextRendering);
 }
 
 void DBQuickWidget::resizeEvent(QResizeEvent *event) {

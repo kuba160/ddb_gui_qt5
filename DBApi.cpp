@@ -499,7 +499,6 @@ void DBApi::setEq(QList<float> eq) {
         int param_count = supereq->plugin->num_params();
         for (int i = 0; i < param_count; i++) {
             if (eq[i] != eq_curr[i]) {
-                qDebug() << "eq[" << i << "]" << eq[i] << "(new)," << eq_curr[i];
                 char buf[255];
                 snprintf(buf, 255, "%f", eq[i]);
                 supereq->plugin->set_param(supereq, i, buf);
