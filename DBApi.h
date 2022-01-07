@@ -20,6 +20,7 @@
 #include <QMimeData>
 #include <QMenuBar>
 #include <QClipboard>
+#include <QAbstractListModel>
 
 // DBApi version
 #define DBAPI_VMAJOR 0
@@ -186,6 +187,8 @@ private:
     // internal volume
     float m_volume;
 
+    QAbstractListModel *pbm;
+
 public:
     // Volume (in dB)
     Q_PROPERTY(float volume READ getVolume WRITE setVolume NOTIFY volumeChanged)
@@ -218,6 +221,9 @@ public:
 
     Q_PROPERTY(QList<float> eq READ getEq WRITE setEq NOTIFY eqChanged)
     virtual QList<float> getEq();
+
+    // PlaylistBrowserModel
+    QAbstractListModel* getPlaylistBrowserModel();
 
 public slots:
     // Volume

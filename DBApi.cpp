@@ -7,6 +7,8 @@
 #include "QtGuiSettings.h"
 #include "ActionManager.h"
 #include "DeadbeefTranslator.h"
+#include "PlaylistBrowserModel.h"
+
 #undef _
 #undef DBAPI
 #define DBAPI this->deadbeef
@@ -60,6 +62,9 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
 
     // volume
     m_volume = DBAPI->volume_get_db();
+
+    // Playlist browser model
+    pbm = new PlaylistBrowserModel(nullptr, this);
 }
 
 DBApi::~DBApi() {
@@ -67,6 +72,7 @@ DBApi::~DBApi() {
     plugin.plugin.message = nullptr;
     delete CAC;
     delete CSET;
+    delete pbm;
 }
 
 const char * DBApi::_(const char *str) {
@@ -474,6 +480,10 @@ QList<float> DBApi::getEq() {
         qDebug() << "getEq(): supereq unavailable!";
     }
     return l;
+}
+
+QAbstractListModel* DBApi::getPlaylistBrowserModel() {
+    return pbm;
 }
 
 void DBApi::setEqEnabled(bool enable) {
