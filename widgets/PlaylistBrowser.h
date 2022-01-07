@@ -16,8 +16,6 @@ public:
 
     static QWidget *constructor(QWidget *parent = nullptr, DBApi *Api = nullptr);
 
-    PlaylistBrowserModel *pbm;
-
 protected slots:
     void mousePressEvent(QMouseEvent *ev);
     void onCurrentChanged(const QModelIndex &to, const QModelIndex &from);

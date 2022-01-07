@@ -6,8 +6,7 @@
 
 PlaylistBrowser::PlaylistBrowser(QWidget * parent, DBApi *Api) : QListView(parent), DBWidget(parent, Api) {
     // Fill list
-    pbm = new PlaylistBrowserModel(nullptr, Api);
-    setModel(pbm);
+    setModel(api->getPlaylistBrowserModel());
 
     // Connections
     connect (selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(onCurrentChanged(QModelIndex,QModelIndex)));
@@ -23,7 +22,6 @@ PlaylistBrowser::PlaylistBrowser(QWidget * parent, DBApi *Api) : QListView(paren
 }
 
 PlaylistBrowser::~PlaylistBrowser() {
-    delete pbm;
 }
 
 void PlaylistBrowser::mousePressEvent(QMouseEvent *event) {
