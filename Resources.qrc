@@ -11,5 +11,6 @@
         <file>widgets/TabBarQuick.qml</file>
         <file>widgets/PlaybackButtonsQuick.qml</file>
         <file>widgets/EqualizerQuick.qml</file>
+        <file>widgets/PlaylistBrowserQuick.qml</file>
     </qresource>
 </RCC>
