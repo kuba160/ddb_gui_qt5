@@ -19,7 +19,7 @@ int PlaylistBrowserModel::rowCount(const QModelIndex &parent) const {
 
 QVariant PlaylistBrowserModel::data(const QModelIndex &index, int role) const {
     if (index.isValid()) {
-        if (role == Qt::DisplayRole) {
+        if (role == Qt::DisplayRole || role == PlaylistNameRole) {
             if (index.row() <= rowCount(index)) {
                 ddb_playlist_t *plt = DBAPI->plt_get_for_idx(index.row());
                 if (plt) {
@@ -29,6 +29,9 @@ QVariant PlaylistBrowserModel::data(const QModelIndex &index, int role) const {
                     return QVariant(QString(buf));
                 }
             }
+        }
+        else {
+            // TODO implement other roles (playlistItems, playlistLength)
         }
     }
     return QVariant();
@@ -96,3 +99,10 @@ bool PlaylistBrowserModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
     return true;
 }
 
+QHash<int, QByteArray> PlaylistBrowserModel::roleNames() const {
+    QHash<int, QByteArray> roles;
+    roles[PlaylistNameRole] = "playlistName";
+    roles[PlaylistItemsRole] = "playlistItems";
+    roles[PlaylistLengthRole] = "playlistLength";
+    return roles;
+}

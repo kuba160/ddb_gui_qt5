@@ -8,6 +8,11 @@
 class PlaylistBrowserModel : public QAbstractListModel, public DBWidget {
     Q_OBJECT
 public:
+    enum PlaylistsRoles {
+        PlaylistNameRole = Qt::UserRole + 1,
+        PlaylistItemsRole,
+        PlaylistLengthRole
+    };
     PlaylistBrowserModel(QObject *parent = nullptr, DBApi *Api = nullptr);
     ~PlaylistBrowserModel();
 
@@ -17,6 +22,8 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const;
     Qt::DropActions supportedDropActions() const;
     bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+
+    QHash<int, QByteArray> roleNames() const;
 private slots:
     void onPlaylistMoved(int, int);
     void onPlaylistCreated();
