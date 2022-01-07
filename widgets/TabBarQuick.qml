@@ -39,10 +39,10 @@ Item {
 
                 Repeater {
                     id: reap
-                    model: api.playlists
+                    model: api_playlists
 
                     TabButton {
-                        text: api.playlists[index]
+                        text: playlistName
                         width: implicitWidth
                         padding: 5
                         horizontalPadding: 2*padding
