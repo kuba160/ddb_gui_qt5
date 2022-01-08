@@ -200,8 +200,8 @@ public:
     Q_PROPERTY(int current_playlist READ getCurrentPlaylist WRITE setCurrentPlaylist NOTIFY currentPlaylistChanged)
     virtual int getCurrentPlaylist();
     // Playlists
-    Q_PROPERTY(QStringList playlists READ getPlaylists NOTIFY playlistNamesChanged)
-    virtual QStringList getPlaylists();
+    Q_PROPERTY(QAbstractListModel* playlists READ getPlaylistBrowserModel CONSTANT)
+    QAbstractListModel* getPlaylistBrowserModel();
     // Playback States
     Q_PROPERTY(bool paused READ isPaused WRITE setPaused NOTIFY statePausedChanged)
     // virtual bool isPaused();
@@ -221,9 +221,6 @@ public:
 
     Q_PROPERTY(QList<float> eq READ getEq WRITE setEq NOTIFY eqChanged)
     virtual QList<float> getEq();
-
-    // PlaylistBrowserModel
-    QAbstractListModel* getPlaylistBrowserModel();
 
 public slots:
     // Volume

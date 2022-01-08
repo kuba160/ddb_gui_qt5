@@ -193,9 +193,6 @@ DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQui
     // Set API and load widget
     rootContext()->setContextProperty("api", api);
 
-    // Playlists
-    rootContext()->setContextProperty("api_playlists", api->getPlaylistBrowserModel());
-
     QUrl url(source);
     setSource(url);
 

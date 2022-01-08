@@ -19,7 +19,7 @@ Item {
         id: playlistBrowser
         ListView {
             id: view
-            model: api_playlists
+            model: api.playlists
             delegate: ItemDelegate {
                 text: playlistName
                 width: loader.width

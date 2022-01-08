@@ -39,7 +39,7 @@ Item {
 
                 Repeater {
                     id: reap
-                    model: api_playlists
+                    model: api.playlists
 
                     TabButton {
                         text: playlistName

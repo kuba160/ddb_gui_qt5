@@ -337,21 +337,6 @@ int DBApi::getCurrentPlaylist() {
     return DBAPI->plt_get_curr_idx();
 }
 
-QStringList DBApi::getPlaylists() {
-    QStringList l;
-    int count = DBAPI->plt_get_count();
-    for (int i = 0; i < count; i++) {
-        char buf[512];
-        ddb_playlist_t *plt = DBAPI->plt_get_for_idx(i);
-        if (plt) {
-            DBAPI->plt_get_title(plt, buf, 512);
-            l.append(QString(buf));
-        }
-        DBAPI->plt_unref(plt);
-    }
-    return l;
-}
-
 // isPaused goes here...
 
 bool DBApi::isPlaying() {
@@ -573,7 +558,6 @@ void DBApi::movePlaylist(int plt, int before) {
            playlist_internal = before;
        }
        emit playlistMoved(plt, before);
-       emit playlistNamesChanged();
     }
 }
 
@@ -594,7 +578,6 @@ void DBApi::newPlaylist(QString name) {
     DBAPI->plt_add (DBAPI->plt_get_count(), name.toUtf8());
     playlistNames.append(name);
     emit playlistCreated();
-    emit playlistNamesChanged();
 }
 
 void DBApi::renamePlaylist(int plt, const QString *name) {
@@ -607,7 +590,6 @@ void DBApi::renamePlaylist(int plt, const QString *name) {
         playlistNames.insert(plt, *name);
         playlistNames.removeAt(plt+1);
         emit playlistRenamed(plt);
-        emit playlistNamesChanged();
     }
 }
 
@@ -636,7 +618,6 @@ void DBApi::removePlaylist(int plt) {
             }
             DBAPI->plt_remove(plt);
             emit playlistRemoved(plt);
-            emit playlistNamesChanged();
         }
     }
 }
