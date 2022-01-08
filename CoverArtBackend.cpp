@@ -101,13 +101,10 @@ QFuture<char*> CoverArtLegacy::loadCoverArt(DB_playItem_t *it) {
     }
     // unable to find cover by item in artwork-legacy, find artist, album and fname
     ddb_tf_context_t context;
+    memset(&context, 0, sizeof(ddb_tf_context_t));
     context._size = sizeof(ddb_tf_context_t);
     context.it = it;
     context.iter = PL_MAIN;
-    context.flags = 0;
-    context.update = 0;
-    context.plt = nullptr;
-
 
     // TODO adjust length maybe
 #define ENTRY_LEN 256
@@ -158,4 +155,3 @@ void CoverArtLegacy::unloadCoverArt(const char*) {
 CoverArtBackend::CoverArtBackend(QObject *parent, DB_functions_t *funcs) : QObject(parent) {
     db = funcs;
 }
-
