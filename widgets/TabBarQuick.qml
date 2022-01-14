@@ -44,6 +44,7 @@ Item {
                     TabButton {
                         text: playlistName
                         width: implicitWidth
+                        height: parent.height
                         padding: 5
                         horizontalPadding: 2*padding
                         anchors.bottom: parent.bottom
