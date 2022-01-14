@@ -31,23 +31,23 @@ public:
     /// FUNCTIONS TO BE IMPLEMENTED
     /// (playItem provider)
 
+    // rowCount(&QModelIndex): return row count for given index
+    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const = 0;
+
     // tracks(QList<int>): return playItemList for given indices
     // NOTE: tracks have to be unref'd by receiver after use
     virtual playItemList tracks(const QList<int> &tracks) const = 0;
 
     // insertTracks(playItemList, int): insert playItems after given index
-    virtual void insertTracks(playItemList *l, int after) = 0;
+    virtual void insertTracks(playItemList *l, int after);
 
     // moveIndexes(QList<int> indices, int): move given indices to be after given index
     // TODO: this can be implemented with Qt function overrides
-    virtual void moveIndexes(QList<int> indices, int after) = 0;
+    virtual void moveIndexes(QList<int> indices, int after);
 
     // removeIndexes(QList<int>): remove given indices
     // TODO: this can be implemented with Qt function overrides
-    virtual void removeIndexes(QList<int> indices) = 0;
-
-    // rowCount(&QModelIndex): return row count for given index
-    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const = 0;
+    virtual void removeIndexes(QList<int> indices);
 
     // sort(int, Qt::SortOrder): optional
     //void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);

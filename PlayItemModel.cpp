@@ -68,6 +68,23 @@ PlayItemModel::~PlayItemModel() {
     format_map.clear();
 }
 
+void PlayItemModel::insertTracks(playItemList *l, int after) {
+    Q_UNUSED(l)
+    Q_UNUSED(after)
+    qDebug() << "PlayItemModel::insertTracks unimplemented!";
+}
+
+void PlayItemModel::moveIndexes(QList<int> indices, int after) {
+    Q_UNUSED(indices)
+    Q_UNUSED(after)
+    qDebug() << "PlayItemModel::moveIndexes unimplemented!";
+}
+
+void PlayItemModel::removeIndexes(QList<int> indices) {
+    Q_UNUSED(indices)
+    qDebug() << "PlayItemModel::removeIndexes unimplemented!";
+}
+
 int PlayItemModel::addFormat(QString str) {
     if (format_role_map.contains(str)) {
         return format_role_map.value(str);
