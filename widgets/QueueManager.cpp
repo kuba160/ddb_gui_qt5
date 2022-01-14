@@ -1,10 +1,12 @@
 #include "QueueManager.h"
 
-QueueManager::QueueManager(QWidget *parent, DBApi *Api) : PlaylistView(parent,Api, new PlayqueueModel(Api,Api)) {
+QueueManager::QueueManager(QWidget *parent, DBApi *Api, PlayItemTableModel *ptm_arr) : PlaylistView(parent,Api,ptm_arr) {
     // properties ... not the most elegant way
     pi_model->setProperty("queue_remove_always_enabled",true);
     setProperty("pluginActionsDisabled", true);
     pi_model->setProperty("queueManager", true);
+
+    setModel(ptm_arr);
 }
 
 void QueueManager::dropEvent(QDropEvent *event) {
@@ -43,6 +45,7 @@ void QueueManager::dropEvent(QDropEvent *event) {
 }
 
 QWidget * QueueManager::constructor(QWidget *parent,DBApi *Api) {
-    return new QueueManager(parent,Api);
+    PlayqueueModel *ptm = new PlayqueueModel(parent, Api);
+    return new QueueManager(parent,Api, ptm);
 }
 

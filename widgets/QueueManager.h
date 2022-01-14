@@ -8,7 +8,7 @@
 class QueueManager : public PlaylistView {
     Q_OBJECT
 public:
-    QueueManager(QWidget *parent = nullptr, DBApi *Api = nullptr);
+    QueueManager(QWidget *parent = nullptr, DBApi *Api = nullptr, PlayItemTableModel *ptm_arr = nullptr);
     static QWidget *constructor(QWidget *parent, DBApi *Api);
 protected:
     void dropEvent(QDropEvent *event);

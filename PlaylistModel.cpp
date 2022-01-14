@@ -1,15 +1,18 @@
 #include "PlaylistModel.h"
 
-#include "QtGui.h"
 #include "MainWindow.h"
 #include "DeadbeefTranslator.h"
+#include "QtGui.h"
 
-PlaylistModel::PlaylistModel(QObject *parent, DBApi *Api) : PlayItemModel(parent,Api) {
+#undef DBAPI
+#define DBAPI api->deadbeef
+
+PlaylistModel::PlaylistModel(QObject *parent, DBApi *Api) : PlayItemTableModel(parent, Api) {
     connect(api, SIGNAL(playlistContentChanged(ddb_playlist_t*)),
             this, SLOT(onPlaylistContentChanged(ddb_playlist_t*)));
 }
 
-PlaylistModel::PlaylistModel(ddb_playlist_t *plt, QObject *parent, DBApi *Api) : PlaylistModel(parent,Api) {
+PlaylistModel::PlaylistModel(ddb_playlist_t *plt, QObject *parent, DBApi *Api) : PlayItemTableModel(parent, Api) {
     setPlaylist(plt);
 }
 
@@ -24,7 +27,7 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
     if (plt) {
         DBAPI->plt_unref(plt);
     }
-    plt = plt_new;
+    this->plt = plt_new;
     if (plt) {
         DBAPI->plt_ref(plt);
     }
@@ -39,40 +42,22 @@ void PlaylistModel::onPlaylistContentChanged(ddb_playlist_t *plt_changed) {
 }
 
 int PlaylistModel::rowCount(const QModelIndex &parent) const {
-    Q_UNUSED(parent);
+    if (parent.isValid()) {
+        qDebug() << "PlaylistModel: rowCount (err)";
+        return 0;
+    }
     if (plt) {
         DBAPI->pl_lock ();
         int rowCount = DBAPI->plt_get_item_count(plt, m_iter);
         DBAPI->pl_unlock ();
         return rowCount;
     }
+    qDebug() << (void *)this << "PlaylistModel: rowCount (err2)";
     return 0;
 }
 
-int PlaylistModel::trackCount() const {
-    return rowCount(QModelIndex());
-}
-
-playItemList PlaylistModel::tracks(const QModelIndexList &tracks) const {
-    if (tracks.length() == 0 || playlistLock())
-        return playItemList();
-
-    playItemList list;
-    QList<int> rowused;
-    foreach(QModelIndex t, tracks) {
-        if (!rowused.contains(t.row())) {
-            DB_playItem_t *it = DBAPI->plt_get_item_for_idx(plt, t.row(), m_iter);
-            if (it) {
-                list.append(it);
-            }
-            rowused.append(t.row());
-        }
-    }
-    return list;
-}
-
 playItemList PlaylistModel::tracks(const QList<int> &tracks) const {
-    if (tracks.length() == 0 || playlistLock())
+    if (tracks.length() == 0 || m_playlistLock)
         return playItemList();
 
     playItemList list;
@@ -82,18 +67,15 @@ playItemList PlaylistModel::tracks(const QList<int> &tracks) const {
     return list;
 }
 
-DB_playItem_t * PlaylistModel::track(const QModelIndex &track) const {
-    return DBAPI->plt_get_item_for_idx(plt, track.row(), m_iter);
-}
-
 void PlaylistModel::sort(int n, Qt::SortOrder order) {
-    if (!plt || n == -1 || n >= columns.length() ||
-            columns[n]->type == HT_playing || columns[n]->format.isEmpty() || playlistLock()) {
+    if (m_playlistLock) {
         return;
     }
-    beginResetModel();
-    DBAPI->plt_sort_v2(plt, m_iter, -1, columns[n]->format.toUtf8(), order);
-    endResetModel();
+    if (plt) {
+        beginResetModel();
+        DBAPI->plt_sort_v2(plt, m_iter, -1, getHeaderFormat(n).toUtf8(), order);
+        endResetModel();
+    }
 }
 
 void PlaylistModel::insertTracks(playItemList *l, int after) {
@@ -124,14 +106,16 @@ void PlaylistModel::insertTracks(playItemList *l, int after) {
 }
 
 void PlaylistModel::moveIndexes(QList<int> ind, int after) {
-    qDebug() << "moveItems:" << ind.length() << "items to be put after" << after;
-    // TODO FIX THIS
+    // qDebug() << "moveItems:" << ind.length() << "items to be put after" << after;
+
+    // DeaDBeeF requires uint32_t array
     uint32_t inds[ind.length()];
-    //uint32_t inds[indices.length()];
-    int i;
-    for (i = 0; i < ind.length(); i++) {
-        inds[i] = ind[i];
+    int i = 0;
+    foreach(int d, ind) {
+        inds[i] = d;
+        i++;
     }
+
     int lastItem = DBAPI->plt_get_item_count(plt, m_iter) - 1;
     if (after == -2) {
         after = lastItem;
@@ -146,6 +130,8 @@ void PlaylistModel::moveIndexes(QList<int> ind, int after) {
         }
         bef = DBAPI->plt_get_item_for_idx(plt, after+1, m_iter);
     }
+
+    // TODO: use beginMoveRows?
     beginResetModel();
     DBAPI->pl_lock();
     DBAPI->plt_move_items(plt, m_iter, plt, bef, inds, ind.length());
@@ -154,16 +140,14 @@ void PlaylistModel::moveIndexes(QList<int> ind, int after) {
     }
     DBAPI->pl_unlock();
     endResetModel();
-    emit rowsChanged();
 }
 
 void PlaylistModel::removeIndexes(QList<int> ind) {
     playItemList l = tracks(ind);
+    // TODO: use beginRemoveRows?
     beginResetModel();
     foreach(DB_playItem_t *it, l) {
         DBAPI->plt_remove_item(plt,it);
     }
     endResetModel();
 }
-
-

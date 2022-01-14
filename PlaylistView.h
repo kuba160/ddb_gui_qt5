@@ -31,7 +31,7 @@ class PlaylistView : public QTreeView, public DBWidget {
     Q_OBJECT
 
 public:
-    PlaylistView(QWidget *parent = nullptr, DBApi *Api = nullptr, PlayItemModel *pim = nullptr);
+    PlaylistView(QWidget *parent = nullptr, DBApi *Api = nullptr, PlayItemTableModel *ptm = nullptr);
     ~PlaylistView();
 
     // cursor
@@ -40,7 +40,7 @@ public:
 
     void goToLastSelection();
 
-    PlayItemModel *pi_model;
+    PlayItemTableModel *pi_model;
 
 protected:
     void startDrag(Qt::DropActions supportedActions);
@@ -57,8 +57,6 @@ protected:
     // Menu position
     QPoint menu_pos;
 
-    // Header to follow
-    QList<PlaylistHeader_t *> headers;
     //
     QMenu headerContextMenu;
     QList<QAction*> headerActions;
@@ -97,18 +95,16 @@ protected slots:
     void onPaste();
     void onDelete();
 
-    void headerDialogAdd(bool);
-    void headerDialogEdit(bool);
-    void headerDialogRemove(bool);
+    void onHeaderDialogAdd();
+    void onHeaderDialogEdit();
+    void onHeaderDialogRemove();
 
-    void headerAdd(int,PlaylistHeader_t *);
-    void headerEdit(int,PlaylistHeader_t *);
 };
 
 class HeaderDialog : public QDialog {
     Q_OBJECT
 public:
-    HeaderDialog(QWidget *parent = nullptr, int headernum = -1, PlaylistHeader_t *header = nullptr);
+    HeaderDialog(PlayItemTableModel *pt_model, QWidget *parent = nullptr, int headernum = -1);
 
     QFormLayout layout;
     QDialogButtonBox buttons;
@@ -119,18 +115,15 @@ public:
     QLineEdit format;
     QString format_saved;
     QLabel format_help;
-    PlaylistHeader_t *h = nullptr;
     int n;
     int editting = 0;
 
-signals:
-    void headerDialogEvent(int headernum, PlaylistHeader_t *header);
+    PlayItemTableModel *pt;
+
 private slots:
-    void titleEdited(const QString &text);
-    void typeChanged(int index);
-    void formatEdited(const QString &text);
-    void accepted();
-    void rejected();
+    void onTypeChanged(int index);
+    void onAccepted();
+    void onRejected();
 };
 
 #endif // PLAYLISTVIEW_H

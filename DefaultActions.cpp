@@ -542,7 +542,9 @@ void DefaultActions::on_actionFind_triggered() {
         QLineEdit *le = new QLineEdit(dlg);
         connect(le,SIGNAL(textEdited(QString)), this, SLOT(actionFind_searchBox_edited(QString)));
         vbox->addWidget(le);
-        pv_search = new PlaylistView(dlg,api,new PlaylistModel(plt, dlg, api));
+
+        PlaylistModel *ptm = new PlaylistModel(plt,dlg,api);
+        pv_search = new PlaylistView(dlg,api,ptm);
         pv_search->setDragEnabled(false);
         dlg->setMinimumSize(QSize(512,256));
         pv_search->pi_model->setIter(PL_SEARCH);

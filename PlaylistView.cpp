@@ -77,7 +77,7 @@ bool AutoToolTipDelegate::helpEvent(QHelpEvent* e, QAbstractItemView* view, cons
     return QStyledItemDelegate::helpEvent(e, view, option, index);
 }
 
-PlaylistView::PlaylistView(QWidget *parent, DBApi *Api, PlayItemModel *pim) : QTreeView(parent),
+PlaylistView::PlaylistView(QWidget *parent, DBApi *Api, PlayItemTableModel *ptm) : QTreeView(parent),
                                                                               DBWidget(parent, Api) {
     setAutoFillBackground(false);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -123,21 +123,18 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api, PlayItemModel *pim) : QT
     header()->setSectionResizeMode(locked ? QHeaderView::Fixed : QHeaderView::Interactive);
     header()->setSectionsMovable(!locked);
 
-    // Restore Header
-    QByteArray ar = api->confGetValue(_internalNameWidget,"HeaderData",QVariant()).toByteArray();
-    QDataStream ds(ar);
+    // Set Model
+    setModel(ptm);
+    pi_model = ptm;
 
-    setModel(pim);
-    pi_model = pim;
-    // restore header
-    while (!ds.atEnd()) {
-        PlaylistHeader_t *ptr = new PlaylistHeader_t;
-        headers.append(ptr);
-        ds >> *ptr;
+    // Restore Header
+    QVariant var = api->confGetValue(_internalNameWidget,"HeaderData",QVariant());
+    if (var.isValid() && var.canConvert<QByteArray>()) {
+        QByteArray ar = var.toByteArray();
+        ptm->setHeaderSettings(ar);
     }
-    pi_model->setColumns(&headers);
-    if (!headers.length()) {
-        headers = *PlayItemModel::defaultHeaders();
+    else {
+        ptm->setDefaultHeaderSettings();
     }
 
     QByteArray data = Api->confGetValue(_internalNameWidget,"HeaderState",QByteArray()).toByteArray();
@@ -146,12 +143,12 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api, PlayItemModel *pim) : QT
     }
 
     // Header Menu
-    headerActions.append(new QAction(tr("Add column"),&headerContextMenu));
-    headerActions.append(new QAction(tr("Edit column"),&headerContextMenu));
-    headerActions.append(new QAction(tr("Remove column"),&headerContextMenu));
-    connect(headerActions[0], SIGNAL(triggered(bool)), this, SLOT(headerDialogAdd(bool)));
-    connect(headerActions[1], SIGNAL(triggered(bool)), this, SLOT(headerDialogEdit(bool)));
-    connect(headerActions[2], SIGNAL(triggered(bool)), this, SLOT(headerDialogRemove(bool)));
+    headerActions.append(new QAction(QIcon::fromTheme("list-add"),tr("Add column"),&headerContextMenu));
+    headerActions.append(new QAction(QIcon::fromTheme("edit-entry"),tr("Edit column"),&headerContextMenu));
+    headerActions.append(new QAction(QIcon::fromTheme("list-remove"),tr("Remove column"),&headerContextMenu));
+    connect(headerActions[0], SIGNAL(triggered(bool)), this, SLOT(onHeaderDialogAdd()));
+    connect(headerActions[1], SIGNAL(triggered(bool)), this, SLOT(onHeaderDialogEdit()));
+    connect(headerActions[2], SIGNAL(triggered(bool)), this, SLOT(onHeaderDialogRemove()));
     headerContextMenu.addActions(headerActions);
     headerContextMenu.addSeparator();
     headerActions.append(new QAction(tr("Lock header bar"),&headerContextMenu));
@@ -431,50 +428,8 @@ void PlaylistView::saveHeaderState() {
     QByteArray headerState = header()->saveState();
     api->confSetValue(_internalNameWidget, "HeaderState",headerState);
     // HeaderData
-    int i;
-    QByteArray ar;
-    QDataStream ds(&ar, QIODevice::WriteOnly);
-    for (i = 0; i < headers.length(); i++) {
-        ds << *headers.at(i);
-    }
+    QByteArray ar = pi_model->getHeaderSettings();
     api->confSetValue(_internalNameWidget,"HeaderData",ar);
-}
-
-void PlaylistView::headerDialogAdd(bool) {
-    HeaderDialog a(this,headerMenu_pos,nullptr);
-    connect(&a,SIGNAL(headerDialogEvent(int, PlaylistHeader_t *)),this,SLOT(headerAdd(int, PlaylistHeader_t *)));
-    a.exec();
-}
-
-void PlaylistView::headerDialogEdit(bool) {
-    HeaderDialog a(this,headerMenu_pos,headers.at(headerMenu_pos));
-    connect(&a,SIGNAL(headerDialogEvent(int, PlaylistHeader_t *)),this,SLOT(headerEdit(int, PlaylistHeader_t *)));
-    a.exec();
-}
-void PlaylistView::headerDialogRemove(bool) {
-    headers.removeAt(headerMenu_pos);
-    pi_model->removeColumn(headerMenu_pos);
-    saveHeaderState();
-}
-
-void PlaylistView::headerAdd(int before,PlaylistHeader_t *ph) {
-    if (before == -1) {
-        headers.append(ph);
-    }
-    else {
-        headers.insert(before+1,ph);
-    }
-    pi_model->addColumn(ph, before);
-    saveHeaderState();
-}
-void PlaylistView::headerEdit(int n,PlaylistHeader_t *ph) {
-    PlaylistHeader_t *old_ph = headers.at(n);
-    if (old_ph->format != ph->format || old_ph->title != ph->title) {
-        // update format if changed
-        headers.replace(n,ph);
-        pi_model->replaceColumn(n,ph);
-    }
-    saveHeaderState();
 }
 
 void PlaylistView::onAddToPlaybackQueue() {
@@ -493,23 +448,36 @@ void PlaylistView::onRemoveFromPlaybackQueue() {
     }
 }
 
-HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *header) : QDialog(parent) {
+void PlaylistView::onHeaderDialogAdd() {
+    HeaderDialog *dialog = new HeaderDialog(pi_model, this,-1);
+    connect(dialog, SIGNAL(finished(int)), this, SLOT(saveHeaderState()));
+    dialog->open();
+}
+
+void PlaylistView::onHeaderDialogEdit() {
+    HeaderDialog *dialog = new HeaderDialog(pi_model, this,headerMenu_pos);
+    connect(dialog, SIGNAL(finished(int)), this, SLOT(saveHeaderState()));
+    dialog->open();
+}
+
+void PlaylistView::onHeaderDialogRemove() {
+    pi_model->removeHeader(headerMenu_pos);
+    saveHeaderState();
+}
+
+HeaderDialog::HeaderDialog(PlayItemTableModel *pi_model, QWidget *parent, int headernum) : QDialog(parent) {
     // headernum - column to insert (to be passed in signal)
     // header - pointer if modifying, otherwise null
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
     setMinimumWidth(405);
+    setAttribute(Qt::WA_DeleteOnClose);
 
-    if (header) {
-        h = new PlaylistHeader_t;
-        h->title = header->title.isEmpty() ? PlayItemModel::titleFromHeaderType((headerType) header->type)
-                                           : QString(header->title);
-        h->type = header->type;
-        editting = 1;
+    pt = pi_model;
+
+    if (headernum  != -1) {
         setWindowTitle(tr("Edit column"));
     }
     else {
-        h = new PlaylistHeader_t;
-        // check if correct
         setWindowTitle(tr("Add column"));
     }
     n = headernum;
@@ -519,17 +487,12 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
     layout.addRow(tr("Title:"), &title);
     layout.addRow(tr("Type:"), &type);
     QStringList items;
-    {
-        int t = headerType::HT_itemIndex;
-        while (t < HT_END){
-            if (t == HT_playing) {
-                // hack, different title/type text
-                items.append(tr("Playing"));
-            }
-            else {
-                items.append(PlayItemModel::titleFromHeaderType((headerType) t));
-            }
-            t++;
+    for (int i = PlayItemModel::ItemIndex; i <= PlayItemModel::LastRoleUnused; i++) {
+        if (i == PlayItemModel::ItemPlaying) {
+            items.append(tr("Playing"));
+        }
+        else {
+            items.append(pt->defaultTitle(i));
         }
     }
     type.addItems(items);
@@ -545,81 +508,71 @@ HeaderDialog::HeaderDialog(QWidget *parent, int headernum, PlaylistHeader_t *hea
 
     // Missing sort formatting, alignment, color
 
-    // For edit
-    if (editting) {
-        if (header->title.isEmpty() && header->type != HT_custom) {
-            title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(header->type)));
+    if (n == -1) {
+        // Add
+        type.setCurrentIndex(0);
+        title.setPlaceholderText(PlayItemModel::defaultTitle(PlayItemModel::ItemIndex));
+    }
+    else {
+        // Edit
+
+        // Trim for removing custom roles
+        int role = qMin(pt->getHeaderRole(n),(int) PlayItemModel::LastRoleUnused);
+        type.setCurrentIndex(role - PlayItemModel::ItemIndex);
+        title.setText(pt->getHeaderTitle(n));
+        title.setPlaceholderText(pt->defaultTitle(role));
+        format.setText(pt->getHeaderFormat(n));
+
+        if (role == PlayItemModel::LastRoleUnused) {
+            format.setEnabled(true);
         }
         else {
-            title.setText(header->title);
+            format.setEnabled(false);
         }
-        type.setCurrentIndex(header->type-1);
-        if (type.currentIndex() + 1 != HT_custom) {
-            format.setReadOnly(true);
-        }
-        format.setText(header->format);
-    }
-    else {
-        title.setText(items[0]);
-        type.setCurrentIndex(0);
-        h->title = items[0];
-        h->type = HT_itemIndex;
     }
 
-    if (type.currentIndex() <= 2) {
-        format.setEnabled(false);
-    }
-    else {
-        format.setEnabled(true);
-    }
-    //QDialogButtonBox *buttons = new QDialogButtonBox();
     buttons.addButton(QDialogButtonBox::Ok);
     buttons.addButton(QDialogButtonBox::Cancel);
     layout.addRow("",&buttons);
 
-    connect (&title, SIGNAL(textEdited(QString)), this, SLOT(titleEdited(QString)));
-    connect (&format, SIGNAL(textEdited(QString)), this, SLOT(formatEdited(QString)));
-    connect (&type, SIGNAL(currentIndexChanged(int)), this, SLOT(typeChanged(int)));
-    connect(&buttons, SIGNAL(accepted()), this, SLOT(accepted()));
-    connect(&buttons, SIGNAL(rejected()), this, SLOT(rejected()));
+    connect (&type, SIGNAL(currentIndexChanged(int)), this, SLOT(onTypeChanged(int)));
+    connect(&buttons, SIGNAL(accepted()), this, SLOT(onAccepted()));
+    connect(&buttons, SIGNAL(rejected()), this, SLOT(onRejected()));
 }
 
-void HeaderDialog::titleEdited(const QString &text) {
-    h->title = text;
-}
-void HeaderDialog::typeChanged(int index) {
-    if (index + 1 == HT_custom) {
-        format.setReadOnly(false);
-        format.setText(format_saved);
+void HeaderDialog::onTypeChanged(int idx_new) {
+    if (idx_new + PlayItemModel::ItemIndex == PlayItemModel:: LastRoleUnused) {
+        format.setEnabled(true);
     }
     else {
-        format_saved = format.text();
-        format.setReadOnly(true);
-        format.setText(PlaylistModel::formatFromHeaderType(static_cast<headerType>(index + 1)));
-        if (type.itemText(h->type - 1) == title.text() || !title.text().length() ||
-           (h->type == HT_playing && title.text() == "♫")) {
-            title.setText(PlaylistModel::titleFromHeaderType(static_cast<headerType>(index + 1)));
-            h->title = title.text();
-        }
-        if (index <= 2) {
-            format.setEnabled(false);
-        }
-        else {
-            format.setEnabled(true);
-        }
+        format.setEnabled(false);
+        format.setText(pt->defaultFormat(idx_new + PlayItemModel::ItemIndex));
     }
-    h->type = static_cast<headerType>(index + 1);
-}
-void HeaderDialog::formatEdited(const QString &text) {
-    h->format = text;
+    title.setPlaceholderText(pt->defaultTitle(idx_new + PlayItemModel::ItemIndex));
 }
 
-void HeaderDialog::accepted() {
-    emit headerDialogEvent(n,h);
+void HeaderDialog::onAccepted() {
+    if (n == -1) {
+        // Add
+        if(type.currentIndex() + PlayItemModel::ItemIndex == PlayItemModel::LastRoleUnused) {
+            pt->addHeader(title.text(), format.text());
+        }
+        else {
+            pt->addHeader(type.currentIndex() + PlayItemModel::ItemIndex, title.text());
+        }
+    }
+    else {
+        // Edit
+        if(type.currentIndex() + PlayItemModel::ItemIndex == PlayItemModel::LastRoleUnused) {
+            pt->modifyHeader(n, PlayItemModel::LastRoleUnused, title.text(), format.text());
+        }
+        else {
+            pt->modifyHeader(n, type.currentIndex() + PlayItemModel::ItemIndex, title.text());
+        }
+    }
     close();
 }
 
-void HeaderDialog::rejected() {
-    delete h;
+void HeaderDialog::onRejected() {
     close();
 }

@@ -10,10 +10,11 @@
 
 #include "MainWindow.h"
 
-Playlist::Playlist(QWidget *parent, DBApi *Api) : PlaylistView(parent,Api,new PlaylistModel(Api,Api)) {
+Playlist::Playlist(QWidget *parent, DBApi *Api, PlaylistModel *ptm_arr) : PlaylistView(parent,Api,ptm_arr) {
     // Set current playlist
+    ptm = ptm_arr;
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
-    qobject_cast<PlaylistModel *>(model())->setPlaylist(plt);
+    ptm->setPlaylist(plt);
     DBAPI->plt_unref(plt);
 
     // Follow current playlist
@@ -57,13 +58,14 @@ Playlist::~Playlist() {
 }
 
 QWidget * Playlist::constructor(QWidget *parent, DBApi *Api) {
-    return new Playlist(parent, Api);
+    PlaylistModel *ptm = new PlaylistModel(parent,Api);
+    return new Playlist(parent, Api, ptm);
 }
 
 void Playlist::onSelectionChanged() {
     // update selection to represent deadbeef selection status
     QItemSelection sel;
-    int count = pi_model->trackCount();
+    int count = pi_model->rowCount();
     for (int i = 0; i < count ; i++) {
         DB_playItem_t *it = DBAPI->pl_get_for_idx(i);
         if (it) {
@@ -119,7 +121,7 @@ void Playlist::onSelectionChanged(const QItemSelection &selected, const QItemSel
 void Playlist::onPlaylistChanged() {
     DBAPI->pl_lock();
     ddb_playlist_t *plt_new = DBAPI->plt_get_curr();
-    qobject_cast<PlaylistModel *>(pi_model)->setPlaylist(plt_new);
+    ptm->setPlaylist(plt_new);
     DBAPI->plt_unref(plt_new);
 
     // restore cursor
@@ -183,7 +185,7 @@ void Playlist::onTrackChanged() {
             if (it_curr) {
                 int idx = DBAPI->pl_get_idx_of(it_curr);
                 QItemSelection sel;
-                int count = pi_model->trackCount();
+                int count = pi_model->rowCount();
                 for (int i = 0; i < count ; i++) {
                     DB_playItem_t *it = DBAPI->pl_get_for_idx(i);
                     if (it) {

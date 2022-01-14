@@ -7,24 +7,19 @@
 #include "DBApi.h"
 #include "PlayItemModel.h"
 
-class PlayqueueModel : public PlayItemModel {
-    Q_OBJECT
 
+class PlayqueueModel : public PlayItemTableModel {
+    Q_OBJECT
 public:
-    PlayqueueModel(QObject *parent = nullptr, DBApi *Api = nullptr);
+    PlayqueueModel(QObject *parent = nullptr, DBApi *api = nullptr);
     ~PlayqueueModel();
 
-    // playlist manipulation
-    void insertTracks(playItemList *l, int after);
-    void moveIndexes(QList<int> indices, int after);
-    void removeIndexes(QList<int> indices);
-
-    playItemList tracks(const QModelIndexList &tracks) const;
-    playItemList tracks(const QList<int> &tracks) const;
-    DB_playItem_t *track(const QModelIndex &track) const;
-protected:
-    int rowCount(const QModelIndex &parent) const;
-    void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
+    // PlayItem implementation
+    playItemList tracks(const QList<int> &tracks) const override;
+    void insertTracks(playItemList *l, int after) override;
+    void moveIndexes(QList<int> indices, int after) override;
+    void removeIndexes(QList<int> indices) override;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
     ddb_playlist_t *plt;
 protected slots:
