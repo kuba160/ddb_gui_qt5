@@ -188,6 +188,11 @@ private:
     float m_volume;
 
     QAbstractListModel *pbm;
+    QAbstractItemModel *cpl;
+    QAbstractItemModel *qm;
+
+private slots:
+    void onCurrentPlaylistChanged();
 
 public:
     // Volume (in dB)
@@ -221,6 +226,14 @@ public:
 
     Q_PROPERTY(QList<float> eq READ getEq WRITE setEq NOTIFY eqChanged)
     virtual QList<float> getEq();
+
+    // Current playlist
+    Q_PROPERTY(QAbstractItemModel* current_playlist_model READ getCurrentPlaylistModel CONSTANT)
+    virtual QAbstractItemModel* getCurrentPlaylistModel();
+
+    // Queue model
+    Q_PROPERTY(QAbstractItemModel* queue_model READ getQueueModel CONSTANT)
+    virtual QAbstractItemModel* getQueueModel();
 
 public slots:
     // Volume

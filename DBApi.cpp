@@ -8,6 +8,8 @@
 #include "ActionManager.h"
 #include "DeadbeefTranslator.h"
 #include "PlaylistBrowserModel.h"
+#include "PlaylistModel.h"
+#include "PlayqueueModel.h"
 
 #undef _
 #undef DBAPI
@@ -16,6 +18,7 @@
 #define CAC (COVERARTCACHE_P(coverart_cache))
 #define CSET (static_cast<QtGuiSettings *>(qt_settings))
 #define AM (static_cast<ActionManager *>(action_manager))
+#define PM (static_cast<PlaylistModel *>(cpl))
 
 
 DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
@@ -65,6 +68,18 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
 
     // Playlist browser model
     pbm = new PlaylistBrowserModel(nullptr, this);
+
+    // Current playlist model
+    cpl = new PlaylistModel(nullptr, this);
+    ddb_playlist_t *plt_new = DBAPI->plt_get_curr();
+    PM->setPlaylist(plt_new);
+    DBAPI->plt_unref(plt_new);
+    connect(this, SIGNAL(currentPlaylistChanged()), this, SLOT(onCurrentPlaylistChanged()));
+    PM->setDefaultHeaderSettings();
+
+    // Queue
+    qm = new PlayqueueModel(nullptr, this);
+
 }
 
 DBApi::~DBApi() {
@@ -73,6 +88,8 @@ DBApi::~DBApi() {
     delete CAC;
     delete CSET;
     delete pbm;
+    delete cpl;
+    delete qm;
 }
 
 const char * DBApi::_(const char *str) {
@@ -471,6 +488,14 @@ QAbstractListModel* DBApi::getPlaylistBrowserModel() {
     return pbm;
 }
 
+QAbstractItemModel* DBApi::getCurrentPlaylistModel() {
+    return cpl;
+}
+
+QAbstractItemModel* DBApi::getQueueModel() {
+    return qm;
+}
+
 void DBApi::setEqEnabled(bool enable) {
     ddb_dsp_context_t *supereq = get_supereq();
     if (supereq) {
@@ -649,6 +674,12 @@ void DBApi::loadPlaylist(const QString &fname) {
         }
         DBAPI->plt_unref(plt);
     }
+}
+
+void DBApi::onCurrentPlaylistChanged() {
+    ddb_playlist_t *plt_new = DBAPI->plt_get_curr();
+    static_cast<PlaylistModel *>(cpl)->setPlaylist(plt_new);
+    DBAPI->plt_unref(plt_new);
 }
 
 void DBApi::removeTracks(playItemList list) {
