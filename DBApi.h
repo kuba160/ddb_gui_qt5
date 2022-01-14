@@ -147,7 +147,7 @@ public slots:
     virtual void play();
     virtual void playNext();
     virtual void playPrev();
-    virtual void playTrackByIndex(uint32_t);
+    virtual void playTrackByIndex(quint32);
     virtual void stop();
     // Playlist
     virtual void changePlaylist(int);

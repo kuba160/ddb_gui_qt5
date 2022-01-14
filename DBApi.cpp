@@ -517,7 +517,7 @@ void DBApi::setEq(QList<float> eq) {
     }
 }
 
-void DBApi::playTrackByIndex(uint32_t index) {
+void DBApi::playTrackByIndex(quint32 index) {
     DBAPI->sendmessage(DB_EV_PLAY_NUM, 0, index, 0);
 }
 
