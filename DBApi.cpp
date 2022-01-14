@@ -80,6 +80,9 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
     // Queue
     qm = new PlayqueueModel(nullptr, this);
 
+    // Current playing model
+    cpm = new CurrentPlayItemModel(nullptr, this);
+
 }
 
 DBApi::~DBApi() {
@@ -90,6 +93,7 @@ DBApi::~DBApi() {
     delete pbm;
     delete cpl;
     delete qm;
+    delete cpm;
 }
 
 const char * DBApi::_(const char *str) {
@@ -494,6 +498,10 @@ QAbstractItemModel* DBApi::getCurrentPlaylistModel() {
 
 QAbstractItemModel* DBApi::getQueueModel() {
     return qm;
+}
+
+QAbstractItemModel* DBApi::getCurrentPlayingModel() {
+    return cpm;
 }
 
 void DBApi::setEqEnabled(bool enable) {

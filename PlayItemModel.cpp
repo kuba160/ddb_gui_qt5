@@ -537,3 +537,21 @@ QString PlayItemTableModel::getHeaderFormat(int num) {
     }
     return QString();
 }
+
+CurrentPlayItemModel::CurrentPlayItemModel(QObject *parent, DBApi *api) : PlayItemModel(parent,api) {
+    connect(api, SIGNAL(trackChanged()), this, SLOT(onPlaybackChanged()));
+}
+
+int CurrentPlayItemModel::rowCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent)
+    return 1;
+}
+
+playItemList CurrentPlayItemModel::tracks(const QList<int> &tracks) const {
+    Q_UNUSED(tracks)
+    return playItemList{DBAPI->streamer_get_playing_track()};
+}
+
+void CurrentPlayItemModel::onPlaybackChanged() {
+    emit dataChanged(createIndex(0,0),createIndex(0,0));
+}

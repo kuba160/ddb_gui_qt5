@@ -207,4 +207,14 @@ private:
     QIcon *pauseIcon;
 };
 
+class CurrentPlayItemModel : public PlayItemModel {
+    Q_OBJECT
+public:
+    CurrentPlayItemModel(QObject *parent = nullptr, DBApi *api = nullptr);
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    playItemList tracks(const QList<int> &tracks) const override;
+private slots:
+    void onPlaybackChanged();
+};
+
 #endif // PLAYITEMMODEL_H

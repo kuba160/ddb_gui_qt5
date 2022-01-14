@@ -190,6 +190,7 @@ private:
     QAbstractListModel *pbm;
     QAbstractItemModel *cpl;
     QAbstractItemModel *qm;
+    QAbstractItemModel *cpm;
 
 private slots:
     void onCurrentPlaylistChanged();
@@ -234,6 +235,10 @@ public:
     // Queue model
     Q_PROPERTY(QAbstractItemModel* queue_model READ getQueueModel CONSTANT)
     virtual QAbstractItemModel* getQueueModel();
+
+    // Current track model
+    Q_PROPERTY(QAbstractItemModel* current_playing_model READ getCurrentPlayingModel CONSTANT)
+    virtual QAbstractItemModel* getCurrentPlayingModel();
 
 public slots:
     // Volume
