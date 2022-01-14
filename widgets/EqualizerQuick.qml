@@ -25,7 +25,6 @@ Item {
             Row {
                 id: row_buttons
                 width: parent.width
-                height: 32
                 spacing: 4
                 padding: 2
                 CheckBox {
@@ -86,7 +85,7 @@ Item {
                             api.eq = eq
                         }
                     }
-                    Text {
+                    Label {
                         id: amp_text
                         text: qsTr("preamp")
                         font.pixelSize: 10
@@ -99,15 +98,15 @@ Item {
                     id: item1
                     width: 32
                     height: parent.height
-                    Text {
+                    Label {
                         id: text_high
                         text: amp.value == -20.0 ? Math.round((amp.value+20) * 10)/10 + "dB" : "+" + Math.round((amp.value+20) * 10)/10 + "dB"
                         font.pixelSize: 10
-                        color: palette.text
                         anchors.top: parent.top
                         anchors.left: parent.left
+                        color: palette.text
                     }
-                    Text {
+                    Label {
                         id: text_low
                         text: Math.round((amp.value-20) * 10)/10 + "dB"
                         anchors.bottom: parent.bottom
@@ -116,7 +115,7 @@ Item {
                         font.pixelSize: 10
                         color: palette.text
                     }
-                    Text {
+                    Label {
                         id: text_curr
                         y: marea.mouseY - height/2
                         visible: marea.pressed
@@ -159,7 +158,7 @@ Item {
                                         api.eq = eq
                                     }
                                 }
-                                Text {
+                                Label {
                                     id: text_band
                                     width: slider_band.width
                                     text: repeater.freq_list[index]
@@ -191,11 +190,10 @@ Item {
                                 }
                             }
                         }
-
+                    SystemPalette { id: palette; colorGroup: SystemPalette.Active }
                     }
                 }
             }
-            SystemPalette { id: palette; colorGroup: SystemPalette.Active }
         }
     }
 }
