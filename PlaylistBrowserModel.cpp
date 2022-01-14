@@ -101,6 +101,7 @@ bool PlaylistBrowserModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
 
 QHash<int, QByteArray> PlaylistBrowserModel::roleNames() const {
     QHash<int, QByteArray> roles;
+    roles[Qt::DisplayRole] = "display";
     roles[PlaylistNameRole] = "playlistName";
     roles[PlaylistItemsRole] = "playlistItems";
     roles[PlaylistLengthRole] = "playlistLength";
