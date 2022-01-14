@@ -397,7 +397,7 @@ void PlaylistView::showContextMenu(QPoint point) {
         DBAPI->pl_item_unref(it);
     }
     menu_pos = point;
-    api->playItemContextMenu(this, viewport()->mapTo(this,point));
+    api->playItemContextMenu(this, viewport()->mapToGlobal(point));
 }
 
 void PlaylistView::headerContextMenuRequested(QPoint pos) {

@@ -310,7 +310,7 @@ void ActionManager::playItemContextMenu(QWidget *parent, QPoint p) {
             track_properties->setEnabled(false);
         }
     }
-    ctxMenu->popup(parent->mapToGlobal(QPoint(0,0)) + p);
+    ctxMenu->popup(p);
 
     // Add to queue
     // Delete from queue

@@ -115,7 +115,7 @@ void MedialibTreeView::showContextMenu(QPoint p) {
             ac->setEnabled(sel.length());
         }
     }
-    api->playItemContextMenu(this,p);
+    api->playItemContextMenu(this,mapToGlobal(p));
 }
 
 void MedialibTreeView::onAddToPlaybackQueue() {
