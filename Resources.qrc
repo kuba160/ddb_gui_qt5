@@ -12,5 +12,7 @@
         <file>widgets/PlaybackButtonsQuick.qml</file>
         <file>widgets/EqualizerQuick.qml</file>
         <file>widgets/PlaylistBrowserQuick.qml</file>
+        <file>widgets/PlaylistView.qml</file>
+        <file>widgets/PlaylistQuick.qml</file>
     </qresource>
 </RCC>
