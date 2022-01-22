@@ -205,6 +205,7 @@ QString const& DBApi::playlistNameByIdx(int idx) {
     ddb_playlist_t *plt = DBAPI->plt_get_for_idx(idx);
     if (plt) {
         DBAPI->plt_get_title(plt, buf, 512);
+        DBAPI->plt_unref(plt);
         return str = buf;
     }
     // old method
