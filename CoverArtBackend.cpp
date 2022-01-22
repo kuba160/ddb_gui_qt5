@@ -19,26 +19,42 @@ QFuture<char *> CoverArtNew::loadCoverArt(DB_playItem_t *it) {
     return QtConcurrent::run(getArtwork,it,this);
 }
 
-char * CoverArtNew::getArtwork(DB_playItem_t *it, CoverArtNew *can) {
-    ddb_cover_query_t *query = new ddb_cover_query_t;
-    ddb_cover_info_t *cover_info = nullptr;
-    query->_size = sizeof(ddb_cover_query_t);
-    query->user_data = &cover_info;
-    query->track = it;
+struct user_data_wrapper {
+    ddb_cover_info_t *info;
+    QSemaphore *semaphore;
+};
 
-    can->plug->cover_get(query,artwork_callback);
-    while (!cover_info) {
-        // hope we don't get stuck in endless loop...
-        QThread::msleep(100);
+char * CoverArtNew::getArtwork(DB_playItem_t *it, CoverArtNew *can) {
+    ddb_cover_info_t *cover_empty = new ddb_cover_info_t;
+    QSemaphore *s = new QSemaphore();
+
+    struct user_data_wrapper *wrap = new struct user_data_wrapper;
+    wrap->info = cover_empty;
+    wrap->semaphore = s;
+
+    ddb_cover_query_t query;
+    memset(&query, 0, sizeof(ddb_cover_query_t));
+    query._size = sizeof(ddb_cover_query_t);
+    query.user_data = wrap;
+    query.track = it;
+
+    can->plug->cover_get(&query,artwork_callback);
+
+    bool success = s->tryAcquire(1, 15000);
+    wrap->semaphore = nullptr;
+    delete s;
+    delete cover_empty;
+    if (!success) {
+        qDebug() << "CoverArtNew: failed to receive artwork within time limit, aborting!";
+        return nullptr;
     }
 
+    ddb_cover_info_t *cover_info = wrap->info;
+    if (!cover_info) {
+        return nullptr;
+    }
     if (!cover_info->cover_found) {
-        if (!cover_info->refc) {
-            delete cover_info;
-        }
-        else {
-            can->plug->cover_info_free(cover_info);
-        }
+        can->plug->cover_info_release(cover_info);
         return nullptr;
     }
     can->ht.insert(cover_info->image_filename,cover_info);
@@ -46,29 +62,27 @@ char * CoverArtNew::getArtwork(DB_playItem_t *it, CoverArtNew *can) {
 }
 
 void CoverArtNew::artwork_callback(int error, ddb_cover_query_t *query, ddb_cover_info_t *cover) {
-    if (error) {
-        // failed, create dummy ddb_cover_info_t and return
-        cover = (ddb_cover_info_t *) malloc(sizeof(ddb_cover_info_t));
-        cover->type = nullptr;
-        cover->image_filename = nullptr;
-        cover->blob = nullptr;
-        cover->refc = 0;
+    Q_UNUSED(error)
+    user_data_wrapper *udw = static_cast<user_data_wrapper *>(query->user_data);
+    udw->info = cover;
+    if (udw->semaphore) {
+        udw->semaphore->release(1);
     }
-    *(static_cast<ddb_cover_info_t **>(query->user_data)) = cover;
-    delete query;
+    delete udw;
     return;
 }
 
 void CoverArtNew::unloadCoverArt(const char *path) {
     if (ht.contains(path)) {
         ddb_cover_info_t *ci = ht.take(path);
-        plug->cover_info_free(ci);
+        plug->cover_info_release(ci);
     }
 }
 
 const char *CoverArtNew::getDefaultCoverArt() {
-    // todo
-    return nullptr;
+    static char buf[256];
+    plug->default_image_path(buf, 256);
+    return buf;
 }
 
 // CoverArtLegacy

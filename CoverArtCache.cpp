@@ -23,14 +23,17 @@ uint qHash(const coverSearch &c, uint seed) noexcept {
 
 CoverArtCache::CoverArtCache(QObject *parent, DB_functions_t *dbapi) : QObject(parent) {
     if (dbapi->plug_get_for_id ("artwork2")) {
+            qDebug() << "CoverArtCache: using new backend";
             backend = new CoverArtNew(parent, dbapi);
     }
     else if (dbapi->plug_get_for_id("artwork")) {
         DB_plugin_t *p = dbapi->plug_get_for_id("artwork");
         if (p->api_vmajor == 1) {
+            qDebug() << "CoverArtCache: using legacy backend";
             backend = new CoverArtLegacy(parent, dbapi);
         }
         else if (p->api_vmajor == 2) {
+            qDebug() << "CoverArtCache: using new backend";
             backend = new CoverArtNew(parent,dbapi);
         }
     }
@@ -143,6 +146,11 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it, QS
             }
             ret = n;
         }
+    }
+
+    if (!ret) {
+        //qDebug() << "CoverArtCache: cover art not found, using default";
+        ret = cac->default_image;
     }
     return ret;
 }
