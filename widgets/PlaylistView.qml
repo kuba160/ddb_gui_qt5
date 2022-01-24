@@ -116,6 +116,7 @@ ListView {
                 anchors.right: parent.right
                 anchors.rightMargin: scrollbar.width
                 width: height
+                anchors.verticalCenter: parent.verticalCenter
                 //anchors.verticalCenter: parent.verticalCenter
                 flat: true
             }
