@@ -39,7 +39,9 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
         char title[100];
         for (int i = 0; i < playlistCount; i++) {
             DBAPI->pl_lock();
-            DBAPI->plt_get_title(DBAPI->plt_get_for_idx(i), title, sizeof(title));
+            ddb_playlist_t *plt = DBAPI->plt_get_for_idx(i);
+            DBAPI->plt_get_title(plt, title, sizeof(title));
+            DBAPI->plt_unref(plt);
             DBAPI->pl_unlock();
             playlistNames.push_back(QString::fromUtf8(title));
             strcpy(title, "");
