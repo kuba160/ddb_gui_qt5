@@ -15,7 +15,6 @@ public:
 
 protected:
     void mousePressEvent(QMouseEvent *event);
-    QSize tabSizeHint(int index) const;
     
 
 private slots:

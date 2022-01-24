@@ -37,10 +37,6 @@ void TabBar::mousePressEvent(QMouseEvent *event) {
     QTabBar::mousePressEvent(event);
 }
 
-QSize TabBar::tabSizeHint(int index) const {
-    return QTabBar::tabSizeHint(index);
-}
-
 void TabBar::showTabContextMenu(int index, QPoint pos) {
     api->playlistContextMenu(this,mapToGlobal(pos),index);
 }
