@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api) :
 
 
     setWindowIcon(QIcon(":/root/images/deadbeef.png"));
+    setDockNestingEnabled(true);
 
     connect(&title_updater, SIGNAL(timeout()), this, SLOT(updateTitle()));
     title_updater.start(1000);
