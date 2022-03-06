@@ -21,6 +21,7 @@
 #include <QMenuBar>
 #include <QClipboard>
 #include <QAbstractListModel>
+#include <QLineSeries>
 
 // DBApi version
 #define DBAPI_VMAJOR 0
@@ -192,6 +193,12 @@ private:
     QAbstractItemModel *qm;
     QAbstractItemModel *cpm;
 
+    // OSCILLOSCOPE TODO
+    QList<QtCharts::QXYSeries *> series_list;
+    QList<void*> scope_list;
+    QVector<QPointF> *waveform_data = nullptr;
+    static void waveform_callback (void * ctx, const ddb_audio_data_t *data);
+
 private slots:
     void onCurrentPlaylistChanged();
 
@@ -255,6 +262,11 @@ public slots:
     virtual void setEqEnabled(bool);
     virtual void setEq(QList<float>);
 
+    // OSCILLOSCOPE TODO
+
+    // returns scope object
+    QObject* waveform_listen(QtCharts::QAbstractSeries *s);
+    void waveform_unlisten(QtCharts::QAbstractSeries *s);
 signals:
     // Volume
     void volumeChanged();
@@ -275,6 +287,9 @@ signals:
     void eqAvailableChanged();
     void eqEnabledChanged();
     void eqChanged();
+
+    // OSCILLOSCOPE TODO
+    void waveformLengthChanged();
 };
 
 class DBWidgetInfo {

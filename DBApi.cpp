@@ -10,6 +10,7 @@
 #include "PlaylistBrowserModel.h"
 #include "PlaylistModel.h"
 #include "PlayqueueModel.h"
+#include "ScopeWrapper.h"
 
 #undef _
 #undef DBAPI
@@ -505,6 +506,65 @@ QAbstractItemModel* DBApi::getQueueModel() {
 
 QAbstractItemModel* DBApi::getCurrentPlayingModel() {
     return cpm;
+}
+
+QObject* DBApi::waveform_listen(QtCharts::QAbstractSeries *s) {
+    if (!series_list.length()) {
+         deadbeef->vis_waveform_listen(this,waveform_callback);
+    }
+    ScopeWrapper *wr = nullptr;
+    if (!series_list.contains(static_cast<QtCharts::QXYSeries *>(s))) {
+        series_list.append(static_cast<QtCharts::QXYSeries *>(s));
+        wr = new ScopeWrapper(s);
+        scope_list.append(wr);
+
+    }
+    return wr;
+}
+
+void DBApi::waveform_unlisten(QtCharts::QAbstractSeries *s) {
+    QtCharts::QXYSeries *s_xy = static_cast<QtCharts::QXYSeries *>(s);
+    if (series_list.contains(s_xy)) {
+        int i;
+        for (i = 0; i < series_list.length(); i++) {
+            if (series_list.at(i) == s_xy) {
+                break;
+            }
+            // maybe use mutex??
+            scope_list.takeAt(i);
+            series_list.takeAt(i);
+        }
+    }
+    if (!series_list.length()) {
+        deadbeef->vis_waveform_unlisten(this);
+    }
+}
+
+void DBApi::waveform_callback (void * ctx, const ddb_audio_data_t *data) {
+    DBApi *api = static_cast<DBApi *>(ctx);
+
+    if (!api->waveform_data) {
+        // TODO dynamically allocate depending on samplerate/fragment duration
+        api->waveform_data = new QVector<QPointF>(32768);
+        api->waveform_data->data()->ry();
+        for (int i = 0; i < 32768; i++) {
+            api->waveform_data->data()[i].setX(i);
+        }
+    }
+
+    int i;
+    for(i = 0; i < api->series_list.length(); i++) {
+        ScopeWrapper *sw = static_cast<ScopeWrapper*>(api->scope_list.at(i));
+        float *frames = sw->process(data->fmt->samplerate,data->fmt->channels,data->data,data->nframes);
+        QPointF *ptr = api->waveform_data->data();
+
+        for (int j = 0; j < ((float) sw->getFragmentDuration())/1000.0*sw->getSamplerate(); j++) {
+            float offset = data->fmt->channels == 1 ? 0 : j%2 ? -0.5 : 0.5;
+            float value = offset ? frames[j]*0.5 +offset : frames[j];
+            ptr[j].setY(value);
+        }
+        api->series_list.at(i)->replace(*api->waveform_data);
+    }
 }
 
 void DBApi::setEqEnabled(bool enable) {

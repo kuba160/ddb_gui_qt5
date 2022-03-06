@@ -4,6 +4,7 @@ CONFIG += no_plugin_name_prefix plugin qt shared c++11
 INCLUDEPATH += "./include"
 
 SOURCES  =  \
+            scope/scope.c \
             widgets/CoverArt.cpp \
             widgets/LogViewer.cpp \
             widgets/Medialib.cpp \
@@ -34,9 +35,11 @@ SOURCES  =  \
             PluginLoader.cpp \
             QtGui.cpp \
             QtGuiSettings.cpp \
+            ScopeWrapper.cpp \
             SystemTrayIcon.cpp \
 
-HEADERS =   widgets/CoverArt.h \
+HEADERS =   \
+            scope/scope.c \
             widgets/LogViewer.h \
             widgets/Medialib.h \
             widgets/PlaybackButtons.h \
@@ -66,6 +69,7 @@ HEADERS =   widgets/CoverArt.h \
             PluginLoader.h \
             QtGui.h \
             QtGuiSettings.h \
+            ScopeWrapper.h \
             SystemTrayIcon.h \
 
 FORMS =     AboutDialog.ui \
@@ -73,7 +77,7 @@ FORMS =     AboutDialog.ui \
 
 RESOURCES = Resources.qrc
 
-QT += gui widgets concurrent svg quickwidgets
+QT += gui widgets concurrent svg quickwidgets charts
 DEFINES += ARTWORK_ENABLED HOTKEYS_ENABLED "DEADBEEF_PREFIX=\\\"donotuse\\\""
 
 # link with gettext?
