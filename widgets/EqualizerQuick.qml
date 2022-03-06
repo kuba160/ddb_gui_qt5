@@ -64,6 +64,7 @@ Item {
                 id: row_sliders
                 width: parent.width
                 height: parent.height - row_buttons.height
+                padding: 2
                 layer.enabled: false
                 Item {
                     id: column_amp
