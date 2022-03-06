@@ -45,7 +45,7 @@ void QueueManager::dropEvent(QDropEvent *event) {
 }
 
 QWidget * QueueManager::constructor(QWidget *parent,DBApi *Api) {
-    PlayqueueModel *ptm = new PlayqueueModel(parent, Api);
+    PlayqueueModel *ptm = qobject_cast<PlayqueueModel *>(Api->getQueueModel());
     return new QueueManager(parent,Api, ptm);
 }
 
