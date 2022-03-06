@@ -19,7 +19,6 @@ public:
     virtual const char * getDefaultCoverArt() = 0;
     virtual void unloadCoverArt(const char*) = 0;
 
-protected:
     DB_functions_t *db;
 };
 

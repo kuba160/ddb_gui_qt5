@@ -20,55 +20,46 @@ QFuture<char *> CoverArtNew::loadCoverArt(DB_playItem_t *it) {
 }
 
 struct user_data_wrapper {
+    DB_functions_t *deadbeef;
     ddb_cover_info_t *info;
     QSemaphore *semaphore;
 };
 
 char * CoverArtNew::getArtwork(DB_playItem_t *it, CoverArtNew *can) {
-    ddb_cover_info_t *cover_empty = new ddb_cover_info_t;
-    QSemaphore *s = new QSemaphore();
+    static ddb_cover_info_t cover_dummy; // dummy
+    ddb_cover_info_t *cover = &cover_dummy;
 
-    struct user_data_wrapper *wrap = new struct user_data_wrapper;
-    wrap->info = cover_empty;
-    wrap->semaphore = s;
 
-    ddb_cover_query_t query;
-    memset(&query, 0, sizeof(ddb_cover_query_t));
-    query._size = sizeof(ddb_cover_query_t);
-    query.user_data = wrap;
-    query.track = it;
+    ddb_cover_query_t *query = new ddb_cover_query_t;
+    memset(query, 0, sizeof(ddb_cover_query_t));
+    query->_size = sizeof(ddb_cover_query_t);
+    query->user_data = &cover;
+    query->track = it;
 
-    can->plug->cover_get(&query,artwork_callback);
+    can->plug->cover_get(query,artwork_callback);
 
-    bool success = s->tryAcquire(1, 15000);
-    wrap->semaphore = nullptr;
-    delete s;
-    delete cover_empty;
-    if (!success) {
-        qDebug() << "CoverArtNew: failed to receive artwork within time limit, aborting!";
+    while (cover == &cover_dummy) {
+        QThread::usleep(1000);
+    }
+
+    if (!cover) {
         return nullptr;
     }
 
-    ddb_cover_info_t *cover_info = wrap->info;
-    if (!cover_info) {
+    if (!cover->cover_found) {
+        can->plug->cover_info_release(cover);
         return nullptr;
     }
-    if (!cover_info->cover_found) {
-        can->plug->cover_info_release(cover_info);
-        return nullptr;
-    }
-    can->ht.insert(cover_info->image_filename,cover_info);
-    return cover_info->image_filename;
+    can->ht.insert(cover->image_filename,cover);
+
+    return cover->image_filename;
 }
 
 void CoverArtNew::artwork_callback(int error, ddb_cover_query_t *query, ddb_cover_info_t *cover) {
     Q_UNUSED(error)
-    user_data_wrapper *udw = static_cast<user_data_wrapper *>(query->user_data);
-    udw->info = cover;
-    if (udw->semaphore) {
-        udw->semaphore->release(1);
-    }
-    delete udw;
+    ddb_cover_info_t **cover_out = static_cast<ddb_cover_info_t **>(query->user_data);
+    *cover_out = cover;
+    delete query;
     return;
 }
 
