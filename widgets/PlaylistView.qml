@@ -109,6 +109,8 @@ ListView {
                 anchors.right: toolbtn.left
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.rightMargin: 2
+                opacity: ItemPlaying ? 1 : 0
+                Behavior on opacity { SmoothedAnimation { velocity: 2 } }
             }
             ToolButton {
                 id: toolbtn
