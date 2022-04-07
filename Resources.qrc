@@ -13,7 +13,6 @@
         <file>widgets/EqualizerQuick.qml</file>
         <file>widgets/PlaylistBrowserQuick.qml</file>
         <file>widgets/PlaylistQuick.qml</file>
-        <file>widgets/ArtworkQuick.qml</file>
         <file>widgets/PlaylistView.qml</file>
         <file>widgets/QueueManagerQuick.qml</file>
         <file>widgets/InfoQuick.qml</file>
