@@ -192,6 +192,7 @@ DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQui
 
     // Set API and load widget
     rootContext()->setContextProperty("api", api);
+    rootContext()->setContextProperty("settings", settings);
 
     QUrl url(source);
     setSource(url);

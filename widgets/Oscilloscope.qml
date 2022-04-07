@@ -10,6 +10,10 @@ Item {
     readonly property string widgetType: "main"
     property int instance: -1
 
+    function name_i() {
+        return instance ? internalName + "_" + instance : internalName
+    }
+
     Loader {
         id: loader
         sourceComponent: instance != -1 ? oscilloscope : undefined
@@ -58,8 +62,11 @@ Item {
 
             Component.onCompleted: {
                 scope = api.scope_create(this);
-                scope.setSeries(0, series(0))
-                scope.setSeries(1, series(1))
+
+                // settings
+                changeStyle(settings.getValue(name_i(), "style", 1))
+                scope.mode = settings.getValue(name_i(), "mode", 1)
+                scope.fragment_duration = settings.getValue(name_i(), "fragment_duration", 100)
             }
 
             ScatterSeries {
@@ -67,26 +74,16 @@ Item {
                 axisX: axisX
                 axisY: axisY
                 useOpenGL: true
-                // LineSeries
-                //width: 1
-                //capStyle: Qt.FlatCap
-                // ScatterSeries
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
-
             }
             ScatterSeries {
                 id: waveform2
                 axisX: axisX
                 axisY: axisY
                 useOpenGL: true
-                // LineSeries
-                //width: 1
-                //capStyle: Qt.FlatCap
-                // ScatterSeries
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
-
             }
 
             LineSeries {
@@ -94,7 +91,6 @@ Item {
                 axisX: axisX
                 axisY: axisY
                 useOpenGL: true
-                // LineSeries
                 width: 1
                 //capStyle: Qt.FlatCap
             }
@@ -103,11 +99,49 @@ Item {
                 axisX: axisX
                 axisY: axisY
                 useOpenGL: true
-                // LineSeries
                 width: 1
                 //capStyle: Qt.FlatCap
             }
 
+            property int style: -1 // Scatter/Line
+
+            function changeStyle(new_style) {
+                if (style !== new_style) {
+                    style = new_style
+                    if (style === 0) {
+                        scope.setSeries(0, series(0))
+                        scope.setSeries(1, series(1))
+                        waveform.visible = true
+                        waveform2.visible = true
+                        waveform3.visible = false
+                        waveform4.visible = false
+                        settings.setValue(name_i(), "style", new_style)
+                    }
+                    else {
+                        scope.setSeries(0, series(2))
+                        scope.setSeries(1, series(3))
+                        waveform.visible = false
+                        waveform2.visible = false
+                        waveform3.visible = true
+                        waveform4.visible = true
+                        settings.setValue(name_i(), "style", new_style)
+                    }
+                }
+            }
+
+            function changeMode(new_mode) { // Mono / Multichannel
+                if (scope.scope_mode !== new_mode) {
+                    scope.scope_mode = new_mode
+                    settings.setValue(name_i(), "mode", new_mode)
+                }
+            }
+
+            function changeFragmentDuration(new_dur) { // [ms]
+                if (scope.fragment_duration !== new_dur) {
+                    scope.fragment_duration = new_dur
+                    settings.setValue(name_i(), "fragment_duration", new_dur)
+                }
+            }
 
             MouseArea {
                 anchors.fill: parent
@@ -116,7 +150,7 @@ Item {
                     if (mouse.button === Qt.RightButton)
                         contextMenu.popup()
                     else if (mouse.button === Qt.LeftButton) {
-                        console.log(scope.series_width)
+                        //console.log(name_i())
                         contextMenu.dismiss()
                     }
                 }
@@ -128,107 +162,68 @@ Item {
                 ActionGroup { id: styleGroup }
                 ActionGroup { id: channelGroup }
                 ActionGroup { id: fragmentGroup }
-                property int style_select: 0
                 Menu {
                     id: contextMenu
                     Menu {
+                        id: style_menu
                         title: qsTr("Style")
-                        Action {
-                            text: "Scatter"
-                            checkable: true
-                            checked: chartView.style_select === 0
-                            onTriggered: {
-                                scope.setSeries(0, series(0))
-                                scope.setSeries(1, series(1))
-                                waveform.visible = true
-                                waveform2.visible = true
-                                waveform3.visible = false
-                                waveform4.visible = false
-                                chartView.style_select = 0
-                            }
-                            ActionGroup.group: styleGroup
-                        }
-                        Action {
-                            text: "Line"
-                            checkable: true
-                            checked: chartView.style_select === 1
-                            onTriggered: {
-                                scope.setSeries(0, series(2))
-                                scope.setSeries(1, series(3))
-                                waveform.visible = false
-                                waveform2.visible = false
-                                waveform3.visible = true
-                                waveform4.visible = true
-                                chartView.style_select = 1
-                            }
-                            ActionGroup.group: styleGroup
-                        }
-                    }
 
-                    Menu {
-                        title: qsTr("Rendering Mode")
-                            Action {
-                                text: qsTr("Mono")
-                                checkable: true
-                                checked: scope.scope_mode === 0
-                                onTriggered: {
-                                    scope.scope_mode = 0
+                        Instantiator {
+                            model: ["Scatter", "Line"]
+                            MenuItem {
+                                action: Action {
+                                    text: qsTr(modelData)
+                                    checkable: true
+                                    checked: chartView.style === index
+                                    onTriggered: {
+                                        changeStyle(index)
+                                    }
+                                    ActionGroup.group: styleGroup
                                 }
-                                ActionGroup.group: channelGroup
                             }
-                            Action {
-                                text: qsTr("Multichannel")
-                                checkable: true
-                                checked: scope.scope_mode === 1
-                                onTriggered: {
-                                    scope.scope_mode = 1
-                                }
-                                ActionGroup.group: channelGroup
-                            }
+                            onObjectAdded: style_menu.insertItem(index, object)
+                            onObjectRemoved: style_menu.removeItem(object)
+                        }
                     }
                     Menu {
+                        id: rend_menu
+                        title: qsTr("Rendering Mode")
+                        Instantiator {
+                            model: ["Mono", "Multichannel"]
+                            MenuItem {
+                                action: Action {
+                                    text: qsTr(modelData)
+                                    checkable: true
+                                    checked: scope.scope_mode === index
+                                    onTriggered: {
+                                        changeMode(index)
+                                    }
+                                    ActionGroup.group: channelGroup
+                                }
+                            }
+                            onObjectAdded: rend_menu.insertItem(index, object)
+                            onObjectRemoved: rend_menu.removeItem(object)
+                        }
+                    }
+                    Menu {
+                        id: frag_menu
                         title: qsTr("Fragment Duration")
-                            Action {
-                                text: qsTr("50 ms")
-                                checkable: true
-                                checked: true
-                                onTriggered: {
-                                    scope.fragment_duration = 50
+                        Instantiator {
+                            model: [50,100,200,300,500]
+                            MenuItem {
+                                action: Action {
+                                    text: qsTr(modelData + " ms")
+                                    checkable: true
+                                    checked: scope.fragment_duration === modelData
+                                    onTriggered: {
+                                        changeFragmentDuration(modelData)
+                                    }
+                                    ActionGroup.group: fragmentGroup
                                 }
-                                ActionGroup.group: fragmentGroup
                             }
-                            Action {
-                                text: qsTr("100 ms")
-                                checkable: true
-                                onTriggered: {
-                                    scope.fragment_duration = 100
-                                }
-                                ActionGroup.group: fragmentGroup
-                            }
-                            Action {
-                                text: qsTr("200 ms")
-                                checkable: true
-                                onTriggered: {
-                                    scope.fragment_duration = 200
-                                }
-                                ActionGroup.group: fragmentGroup
-                            }
-                            Action {
-                                text: qsTr("300 ms")
-                                checkable: true
-                                onTriggered: {
-                                    scope.fragment_duration = 300
-                                }
-                                ActionGroup.group: fragmentGroup
-                            }
-                            Action {
-                                text: qsTr("500 ms")
-                                checkable: true
-                                onTriggered: {
-                                    scope.fragment_duration = 500
-                                }
-                                ActionGroup.group: fragmentGroup
-                            }
+                            onObjectAdded: frag_menu.insertItem(index, object)
+                            onObjectRemoved: frag_menu.removeItem(object)
+                        }
                     }
                 }
             }

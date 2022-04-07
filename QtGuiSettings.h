@@ -18,6 +18,7 @@ public:
     //QtGuiSettings(const QString &fileName, QSettings::Format format, QObject *parent = nullptr);
     //~QtGuiSettings();
 
+public slots:
     QVariant getValue(const QString &group, const QString &key, const QVariant &defaultValue);
     void setValue(const QString &group, const QString &key, const QVariant &value);
 
