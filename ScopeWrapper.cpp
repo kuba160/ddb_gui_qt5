@@ -22,9 +22,9 @@ ScopeWrapper::~ScopeWrapper() {
     ddb_scope_free(SCOPE);
 }
 
-void ScopeWrapper::setSeries(int pos, QtCharts::QAbstractSeries *s) {
+void ScopeWrapper::setSeries(int pos, QAbstractSeries *s) {
     if (pos >= 0 && pos <=1) {
-        series.replace(pos,static_cast<QtCharts::QXYSeries*>(s));
+        series.replace(pos,static_cast<QXYSeries*>(s));
     }
 }
 

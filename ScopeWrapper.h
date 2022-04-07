@@ -5,6 +5,10 @@
 #include <QWidget>
 #include <QXYSeries>
 
+#if (QT_VERSION < QT_VERSION_CHECK(6,0,0))
+using namespace QtCharts;
+#endif
+
 class ScopeWrapper : public QObject {
     Q_OBJECT
 
@@ -30,7 +34,7 @@ public:
     void process(const ddb_audio_data_t *data);
 
 public slots:
-    void setSeries(int num, QtCharts::QAbstractSeries *s);
+    void setSeries(int num, QAbstractSeries *s);
     void setPaused(bool pause);
 
 signals:
@@ -40,7 +44,7 @@ signals:
     void pausedChanged();
 private:
     void *scope;
-    QList<QtCharts::QXYSeries *> series;
+    QList<QXYSeries *> series;
 
     QVector<QPointF> *waveform_data = nullptr;
     size_t waveform_data_size;
