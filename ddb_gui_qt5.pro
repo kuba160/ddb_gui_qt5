@@ -40,6 +40,7 @@ SOURCES  =  \
 
 HEADERS =   \
             scope/scope.c \
+            widgets/CoverArt.h \
             widgets/LogViewer.h \
             widgets/Medialib.h \
             widgets/PlaybackButtons.h \

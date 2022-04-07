@@ -193,13 +193,12 @@ private:
     QAbstractItemModel *qm;
     QAbstractItemModel *cpm;
 
-    // OSCILLOSCOPE TODO
-    QList<QtCharts::QXYSeries *> series_list;
+    // Oscilloscope
     QList<void*> scope_list;
-    QVector<QPointF> *waveform_data = nullptr;
     static void waveform_callback (void * ctx, const ddb_audio_data_t *data);
 
 private slots:
+    void onScopeDestroyed(QObject *obj);
     void onCurrentPlaylistChanged();
 
 public:
@@ -262,11 +261,12 @@ public slots:
     virtual void setEqEnabled(bool);
     virtual void setEq(QList<float>);
 
-    // OSCILLOSCOPE TODO
+    // Oscilloscope
 
     // returns scope object
-    QObject* waveform_listen(QtCharts::QAbstractSeries *s);
-    void waveform_unlisten(QtCharts::QAbstractSeries *s);
+    // interraction through qt properties
+    QObject* scope_create(QObject *parent);
+
 signals:
     // Volume
     void volumeChanged();

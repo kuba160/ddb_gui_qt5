@@ -4,8 +4,8 @@ import QtCharts 2.1
 
 Item {
     id: main
-    readonly property string friendlyName: qsTr("Oscilloscope")
-    readonly property string internalName: "oscilloscope"
+    readonly property string friendlyName: qsTr("Oscilloscope Polar")
+    readonly property string internalName: "oscilloscopePolar"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "main"
     property int instance: -1
@@ -21,10 +21,11 @@ Item {
 
     Component {
         id: oscilloscope
-        ChartView {
+        PolarChartView {
             id: chartView
             animationOptions: ChartView.NoAnimation
             legend.visible: false
+            anchors.fill: parent
 
             plotArea: Qt.rect(0,0,width,height)
             plotAreaColor: "black"
@@ -35,12 +36,11 @@ Item {
                 color: "black"
                 z: -5
             }
-
            // oscilloscope settings
            property variant scope;
 
             ValueAxis {
-                id: axisY
+                id: axisRadial
                 min: -1
                 max: 1
                 labelsVisible: false
@@ -48,7 +48,7 @@ Item {
                 lineVisible: false
             }
             ValueAxis {
-                id: axisX
+                id: axisAngular
                 min: 0
                 max: scope.series_width
                 labelsVisible: false
@@ -56,16 +56,18 @@ Item {
                 lineVisible: false
             }
 
+
             Component.onCompleted: {
                 scope = api.scope_create(this);
                 scope.setSeries(0, series(0))
                 scope.setSeries(1, series(1))
+                scope.paused = Qt.binding(function() { return !main.visible})
             }
 
             ScatterSeries {
                 id: waveform
-                axisX: axisX
-                axisY: axisY
+                axisAngular: axisAngular
+                axisRadial: axisRadial
                 useOpenGL: true
                 // LineSeries
                 //width: 1
@@ -77,8 +79,8 @@ Item {
             }
             ScatterSeries {
                 id: waveform2
-                axisX: axisX
-                axisY: axisY
+                axisAngular: axisAngular
+                axisRadial: axisRadial
                 useOpenGL: true
                 // LineSeries
                 //width: 1
@@ -91,8 +93,8 @@ Item {
 
             LineSeries {
                 id: waveform3
-                axisX: axisX
-                axisY: axisY
+                axisAngular: axisAngular
+                axisRadial: axisRadial
                 useOpenGL: true
                 // LineSeries
                 width: 1
@@ -100,8 +102,8 @@ Item {
             }
             LineSeries {
                 id: waveform4
-                axisX: axisX
-                axisY: axisY
+                axisAngular: axisAngular
+                axisRadial: axisRadial
                 useOpenGL: true
                 // LineSeries
                 width: 1
@@ -110,6 +112,7 @@ Item {
 
 
             MouseArea {
+                id: mouse_area
                 anchors.fill: parent
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: {
@@ -144,7 +147,7 @@ Item {
                                 waveform2.visible = true
                                 waveform3.visible = false
                                 waveform4.visible = false
-                                chartView.style_select = 0
+                                mouse_area.style_select = 0
                             }
                             ActionGroup.group: styleGroup
                         }
@@ -159,7 +162,7 @@ Item {
                                 waveform2.visible = false
                                 waveform3.visible = true
                                 waveform4.visible = true
-                                chartView.style_select = 1
+                                mouse_area.style_select = 1
                             }
                             ActionGroup.group: styleGroup
                         }

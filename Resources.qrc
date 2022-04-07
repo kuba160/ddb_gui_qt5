@@ -15,5 +15,6 @@
         <file>widgets/PlaylistView.qml</file>
         <file>widgets/PlaylistQuick.qml</file>
         <file>widgets/Oscilloscope.qml</file>
+        <file>widgets/OscilloscopePolar.qml</file>
     </qresource>
 </RCC>
