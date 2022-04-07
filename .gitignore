@@ -30,3 +30,7 @@ config.log
 config.tests/libintl/libintl
 release/
 debug/
+build/
+CMakeFiles/
+CMakeLists.txt.user
+
