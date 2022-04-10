@@ -23,6 +23,7 @@ public slots:
     void setValue(const QString &group, const QString &key, const QVariant &value);
 
     void removeValue(const QString &group, const QString &key);
+    void removeGroup(const QString &group);
 
 private:
     //static QtGuiSettings *instance;

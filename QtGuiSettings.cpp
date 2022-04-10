@@ -35,3 +35,9 @@ void QtGuiSettings::removeValue(const QString &group, const QString &key) {
     QSettings::remove(key);
     endGroup();
 }
+
+void QtGuiSettings::removeGroup(const QString &group) {
+    if (group.length() >= 2) {
+        QSettings::remove(group);
+    }
+}
