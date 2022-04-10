@@ -14,7 +14,8 @@ ScopeWrapper::ScopeWrapper(QObject *parent) : QObject(parent) {
     SCOPE->mode = DDB_SCOPE_MULTICHANNEL;
     channels_last = 2;
     m_paused = false;
-    emit seriesWidthChanged();
+    scale = 1;
+    //emit seriesWidthChanged();
     //qRegisterMetaType<ScopeWrapper>("ScopeWrapper");
 }
 
@@ -58,7 +59,7 @@ void ScopeWrapper::setScopeMode(int scope_mode) {
 }
 
 int ScopeWrapper::getSeriesWidth() {
-    return ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate / channels_last;
+    return ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate / channels_last / scale;
 }
 
 bool ScopeWrapper::isPaused() {
@@ -69,6 +70,18 @@ void ScopeWrapper::setPaused(bool pause) {
     if (m_paused != pause) {
         m_paused = pause;
         emit pausedChanged();
+    }
+}
+
+int ScopeWrapper::getScale() {
+    return scale;
+}
+
+void ScopeWrapper::setScale(int s) {
+    if (s != scale) {
+        scale = s;
+        emit scaleChanged();
+        emit seriesWidthChanged();
     }
 }
 
@@ -87,38 +100,82 @@ void ScopeWrapper::process(const ddb_audio_data_t *data) {
         emit seriesWidthChanged();
     }
 
-    size_t size = ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate;
+    size_t size = ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate / scale;
+    bool is_stereo = !(SCOPE->mode == DDB_SCOPE_MONO || data->fmt->channels == 1);
     if (!waveform_data) {
-        waveform_data = new QVector<QPointF>(size);
+        waveform_data = new QVector<QPointF>(size*scale/2);
+        waveform_data->reserve(size*scale);
         reformat_x = true;
     }
-    else if (size != waveform_data_size) {
-        delete waveform_data;
-        waveform_data = new QVector<QPointF>(size);
+    if (!waveform_data2) {
+        waveform_data2 = new QVector<QPointF>(size*scale/2);
+        waveform_data2->reserve(size*scale/2);
         reformat_x = true;
     }
+
+
+    if (size != waveform_data_size/2) {
+        if (is_stereo) {
+            waveform_data->resize(size/2);
+            waveform_data2->resize(size/2);
+        }
+        else {
+            waveform_data->resize(size);
+        }
+        reformat_x = true;
+    }
+
+    QPointF *ptr = waveform_data->data();
+    QPointF *ptr2 = waveform_data2->data();
+
     if (reformat_x) {
-        QPointF *ptr = waveform_data->data();
-        if (SCOPE->mode == DDB_SCOPE_MONO || data->fmt->channels == 1) {
-            for (size_t i = 0; i < size; i++) {
+        if (is_stereo) {
+            for (size_t i = 0; i < size/2; i++) {
                 ptr[i].setX(i);
+                ptr2[i].setX(i);
             }
         }
         else {
             for (size_t i = 0; i < size; i++) {
-                ptr[i].setX(i%(size/2));
+                ptr[i].setX(i);
             }
         }
         reformat_x = false;
     }
 
     ddb_scope_process(SCOPE, data->fmt->samplerate, data->fmt->channels, data->data, data->nframes);
-    QPointF *ptr = waveform_data->data();
 
-    if (SCOPE->mode == DDB_SCOPE_MONO || data->fmt->channels == 1) {
+    if (is_stereo) {
+        bool second_chn = 0;
+        for (size_t i = 0; i < size*scale; i++) {
+            second_chn = i%2;
+            float offset = second_chn ? -0.5 : 0.5;
+            float value = SCOPE->samples[i]*0.5 + offset;
+            second_chn ? ptr2[i/2/scale].setY(value) : ptr[i/2/scale].setY(value);
+
+            if (second_chn && scale != 1) {
+                i += scale;
+            }
+        }
+
+        if (series.at(0)) {
+            series.at(0)->replace(*waveform_data);
+        }
+        if (series.at(1)) {
+            series.at(1)->setVisible();
+            series.at(1)->replace(*waveform_data2);
+        }
+    }
+    else {
         if (data->fmt->channels == 1) {
-            for (size_t i = 0; i < size; i++) {
-                ptr[i].setY(SCOPE->samples[i]);
+            for (size_t i = 0; i < size*scale; i+=scale) {
+                ptr[i/scale].setY(SCOPE->samples[i]);
+            }
+        }
+        else {
+            // merge
+            for (size_t i = 0; i < size*scale; i+=2*scale) {
+                ptr[i/scale].setY((SCOPE->samples[i] + SCOPE->samples[i+1])/2);
             }
         }
 
@@ -128,26 +185,5 @@ void ScopeWrapper::process(const ddb_audio_data_t *data) {
         if (series.at(1)) {
             series.at(1)->setVisible(false);
         }
-        // merge
-        //TODO
     }
-    else {
-        for (size_t i = 0; i < size; i++) {
-            float offset = data->fmt->channels == 1 ? 0 : i%2 ? -0.5 : 0.5;
-            int shift = i%2 ? 0 : size/2;
-            float value = offset ? SCOPE->samples[i]*0.5 +offset : SCOPE->samples[i];
-            ptr[i/2+shift].setY(value);
-        }
-
-        if (series.at(0)) {
-            series.at(0)->replace(waveform_data->mid(0,size/2));
-        }
-        if (series.at(1)) {
-            series.at(1)->setVisible();
-            series.at(1)->replace(waveform_data->mid(size/2,size/2));
-        }
-    }
-
-    //api->series_list.at(i)->replace(*api->waveform_data);
-
 }
