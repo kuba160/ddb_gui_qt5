@@ -246,6 +246,11 @@ public:
     Q_PROPERTY(QAbstractItemModel* current_playing_model READ getCurrentPlayingModel CONSTANT)
     virtual QAbstractItemModel* getCurrentPlayingModel();
 
+    // Global accent color
+    Q_PROPERTY(QColor accent_color READ getAccentColor WRITE setAccentColor NOTIFY accentColorChanged)
+    virtual QColor getAccentColor();
+    virtual void setAccentColor(QColor);
+
 public slots:
     // Volume
     virtual void setVolume(float);
@@ -290,6 +295,8 @@ signals:
 
     // OSCILLOSCOPE TODO
     void waveformLengthChanged();
+
+    void accentColorChanged();
 };
 
 class DBWidgetInfo {

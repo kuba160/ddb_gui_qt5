@@ -508,6 +508,16 @@ QAbstractItemModel* DBApi::getCurrentPlayingModel() {
     return cpm;
 }
 
+QColor DBApi::getAccentColor() {
+    QVariant c = SETTINGS->getValue("MainWindow","accent_color",QColor(0x2b,0x7f,0xba));
+    return c.value<QColor>();
+}
+
+void DBApi::setAccentColor(QColor c) {
+    SETTINGS->setValue("MainWindow", "accent_color", c);
+    emit accentColorChanged();
+}
+
 QObject* DBApi::scope_create(QObject *parent) {
     if (!scope_list.length()) {
          deadbeef->vis_waveform_listen(this,waveform_callback);
