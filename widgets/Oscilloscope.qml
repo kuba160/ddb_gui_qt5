@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtCharts 2.1
+import QtQuick.Dialogs 1.0
 
 Item {
     id: main
@@ -67,12 +68,40 @@ Item {
                 changeStyle(settings.getValue(name_i(), "style", 1))
                 scope.mode = settings.getValue(name_i(), "mode", 1)
                 scope.fragment_duration = settings.getValue(name_i(), "fragment_duration", 100)
+                scope.scale = settings.getValue(name_i(), "scale", 1)
+
+                wave1_color = settings.getValue(name_i(), "wave1_color", "#2b7fba")
+                wave2_color = settings.getValue(name_i(), "wave2_color", "#2b7fba")
+
+                use_global_accent = settings.getValue(name_i(), "use_global_accent", 1)
+            }
+
+            property color wave1_color: "#2b7fba"
+            property color wave2_color: "#2b7fba"
+            property int use_global_accent
+
+
+            ColorDialog {
+                id: colorDialog
+                title: "Please choose a color"
+                property int wave: 0
+                onAccepted: {
+                    if (wave === 1 | wave !== 0) {
+                        wave1_color = colorDialog.color
+                        settings.setValue(name_i(), "wave2_color", colorDialog.color)
+                    }
+                    if (wave === 0 | wave !== 1) {
+                        wave2_color = colorDialog.color
+                        settings.setValue(name_i(), "wave1_color", colorDialog.color)
+                    }
+                }
             }
 
             ScatterSeries {
                 id: waveform
                 axisX: axisX
                 axisY: axisY
+                color: use_global_accent ? api.accent_color : wave2_color
                 useOpenGL: true
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
@@ -81,6 +110,7 @@ Item {
                 id: waveform2
                 axisX: axisX
                 axisY: axisY
+                color: use_global_accent ? api.accent_color : wave1_color
                 useOpenGL: true
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
@@ -90,6 +120,7 @@ Item {
                 id: waveform3
                 axisX: axisX
                 axisY: axisY
+                color: use_global_accent ? api.accent_color : wave2_color
                 useOpenGL: true
                 width: 1
                 //capStyle: Qt.FlatCap
@@ -98,6 +129,7 @@ Item {
                 id: waveform4
                 axisX: axisX
                 axisY: axisY
+                color: use_global_accent ? api.accent_color : wave1_color
                 useOpenGL: true
                 width: 1
                 //capStyle: Qt.FlatCap
@@ -162,6 +194,7 @@ Item {
                 ActionGroup { id: styleGroup }
                 ActionGroup { id: channelGroup }
                 ActionGroup { id: fragmentGroup }
+                ActionGroup { id: scaleGroup }
                 Menu {
                     id: contextMenu
                     Menu {
@@ -223,6 +256,51 @@ Item {
                             }
                             onObjectAdded: frag_menu.insertItem(index, object)
                             onObjectRemoved: frag_menu.removeItem(object)
+                        }
+                    }
+                    Menu {
+                        id: color_menu
+                        title: "Color"
+                        MenuItem {
+                            text: "Use global accent color"
+                            checkable: true
+                            checked: use_global_accent
+                            onTriggered: {
+                                use_global_accent = use_global_accent ? 0 : 1
+                                settings.setValue(name_i(), "use_global_accent", use_global_accent)
+                            }
+                        }
+
+                        Repeater {
+                            model: ["Left channel", "Right channel", "Both"]
+                            MenuItem {
+                                text: modelData
+                                onTriggered: {
+                                    colorDialog.wave = index
+                                    colorDialog.open()
+                                }
+                            }
+                        }
+                    }
+                    Menu {
+                        id: scale_menu
+                        title: qsTr("Scale")
+                        Instantiator {
+                            model: [1,2,4,8,16,32]
+                            MenuItem {
+                                action: Action {
+                                    text: qsTr(modelData + ".0x")
+                                    checkable: true
+                                    checked: scope.scale === modelData
+                                    onTriggered: {
+                                        scope.scale = modelData
+                                        settings.setValue(name_i(), "scale", modelData)
+                                    }
+                                    ActionGroup.group: scaleGroup
+                                }
+                            }
+                            onObjectAdded: scale_menu.insertItem(index, object)
+                            onObjectRemoved: scale_menu.removeItem(object)
                         }
                     }
                 }
