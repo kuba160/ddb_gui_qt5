@@ -77,8 +77,7 @@ FORMS =     AboutDialog.ui \
             DefaultActions.ui
 
 RESOURCES = Resources.qrc
-
-QT += gui widgets concurrent svg quickwidgets charts
+QT += core gui quick widgets quickwidgets concurrent svg charts
 DEFINES += ARTWORK_ENABLED HOTKEYS_ENABLED "DEADBEEF_PREFIX=\\\"donotuse\\\""
 
 # link with gettext?
