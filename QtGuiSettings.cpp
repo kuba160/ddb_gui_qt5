@@ -24,6 +24,13 @@ QVariant QtGuiSettings::getValue(const QString &group, const QString &key, const
     return result;
 }
 
+QVariant QtGuiSettings::getValue(const QString &group, const QString &key) {
+    beginGroup(group);
+    QVariant result = value(key);
+    endGroup();
+    return result;
+}
+
 void QtGuiSettings::setValue(const QString &group, const QString &key, const QVariant &value) {
     beginGroup(group);
     QSettings::setValue(key, value);

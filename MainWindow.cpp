@@ -53,6 +53,14 @@ DBApi* MainWindow::Api() {
     return api;
 }
 
+bool MainWindow::event(QEvent *ev) {
+    //qDebug() <<"evvm";
+    if (ev->type() == QEvent::ApplicationPaletteChange || ev->type() == QEvent::PaletteChange) {
+        emit api->accentColorChanged();
+    }
+    return QMainWindow::event(ev);
+
+}
 
 void MainWindow::createTray() {
     trayIcon = new SystemTrayIcon(this);

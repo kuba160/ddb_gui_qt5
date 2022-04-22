@@ -27,8 +27,10 @@ public:
     DBApi *Api();
 
     void loadConfig();
+
+    bool event(QEvent* ev) override;
 protected:
-    void closeEvent(QCloseEvent *);
+    void closeEvent(QCloseEvent *) override;
 
 private:
     QMenuBar *mainMenu;

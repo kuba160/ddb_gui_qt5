@@ -20,6 +20,7 @@ public:
 
 public slots:
     QVariant getValue(const QString &group, const QString &key, const QVariant &defaultValue);
+    QVariant getValue(const QString &group, const QString &key);
     void setValue(const QString &group, const QString &key, const QVariant &value);
 
     void removeValue(const QString &group, const QString &key);

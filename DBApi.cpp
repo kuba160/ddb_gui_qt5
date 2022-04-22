@@ -509,8 +509,17 @@ QAbstractItemModel* DBApi::getCurrentPlayingModel() {
 }
 
 QColor DBApi::getAccentColor() {
-    QVariant c = SETTINGS->getValue("MainWindow","accent_color",QColor(0x2b,0x7f,0xba));
-    return c.value<QColor>();
+    QVariant c = SETTINGS->getValue("MainWindow","accent_color");
+    if (c.isValid()) {
+        return c.value<QColor>();
+    }
+    else {
+        QColor c = QGuiApplication::palette().color(QPalette::Active, QPalette::Highlight);
+        // TODO dirty hack to get color closer to accent color (on KDE) by lighting it up a bit
+        // does not perform if color is light enough
+        c.setHsv(c.hue(),c.saturation(),c.value() < 133 ? c.value()+64 : c.value());
+        return c;
+    }
 }
 
 void DBApi::setAccentColor(QColor c) {
