@@ -1,6 +1,7 @@
 #ifndef SCOPEWRAPPER_H
 #define SCOPEWRAPPER_H
 
+#include "scope/scope.h"
 #include <deadbeef/deadbeef.h>
 #include <QWidget>
 #include <QXYSeries>
@@ -37,7 +38,7 @@ public:
     void process(const ddb_audio_data_t *data);
 
 public slots:
-    void setSeries(int num, QAbstractSeries *s);
+    void setSeries(int num, QtCharts::QAbstractSeries *s);
     void setPaused(bool pause);
     void setScale(int s);
 
@@ -51,14 +52,16 @@ private:
     void *scope;
     QList<QXYSeries *> series;
 
-    QVector<QPointF> *waveform_data = nullptr;
-    bool waveform_mono_set = false;
-    QVector<QPointF> *waveform_data2 = nullptr;
-    size_t waveform_data_size;
-    bool reformat_x = false;
-    int channels_last = 0;
     int m_paused;
-    int scale;
+    int m_scale;
+    bool m_scale_changed;
+    bool m_mode_changed;
+    bool m_fragment_duration_changed;
+
+    QVector<QPointF> *data_left = nullptr;
+    bool waveform_mono_set = false;
+    QVector<QPointF> *data_right = nullptr;
+    int channels_last = 0;
 
 };
 

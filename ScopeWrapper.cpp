@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "ScopeWrapper.h"
 #include "scope/scope.h"
 
@@ -14,7 +15,9 @@ ScopeWrapper::ScopeWrapper(QObject *parent) : QObject(parent) {
     SCOPE->mode = DDB_SCOPE_MULTICHANNEL;
     channels_last = 2;
     m_paused = false;
-    scale = 1;
+    m_scale = 1;
+    m_scale_changed = false;
+    m_mode_changed = false;
     //emit seriesWidthChanged();
     //qRegisterMetaType<ScopeWrapper>("ScopeWrapper");
 }
@@ -35,6 +38,7 @@ int ScopeWrapper::getFragmentDuration() {
 
 void ScopeWrapper::setFragmentDuration(int dur) {
     if (dur != SCOPE->fragment_duration) {
+        m_fragment_duration_changed = true;
         SCOPE->fragment_duration = dur;
         emit fragmentDurationChanged();
         emit seriesWidthChanged();
@@ -52,14 +56,14 @@ void ScopeWrapper::setScopeMode(int scope_mode) {
             case DDB_SCOPE_MONO:
             case DDB_SCOPE_MULTICHANNEL:
                 SCOPE->mode = static_cast<ddb_scope_mode_t>(scope_mode);
-                reformat_x = true;
+                m_mode_changed = true;
                 emit scopeModeChanged();
         }
     }
 }
 
 int ScopeWrapper::getSeriesWidth() {
-    return ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate / channels_last / scale;
+    return ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate / channels_last / m_scale-1;
 }
 
 bool ScopeWrapper::isPaused() {
@@ -74,12 +78,13 @@ void ScopeWrapper::setPaused(bool pause) {
 }
 
 int ScopeWrapper::getScale() {
-    return scale;
+    return m_scale;
 }
 
 void ScopeWrapper::setScale(int s) {
-    if (s != scale) {
-        scale = s;
+    if (s != m_scale) {
+        m_scale = s;
+        m_scale_changed = true;
         emit scaleChanged();
         emit seriesWidthChanged();
     }
@@ -90,99 +95,123 @@ void ScopeWrapper::process(const ddb_audio_data_t *data) {
         return;
     }
 
+    int reformat_x = false;
     if (SCOPE->samplerate != data->fmt->samplerate) {
         emit seriesWidthChanged();
         SCOPE->samplerate = data->fmt->samplerate;
+        reformat_x = true;
     }
     if (channels_last != data->fmt->channels) {
+        if (!reformat_x) {
+            emit seriesWidthChanged();
+            reformat_x = true;
+        }
+        channels_last =  data->fmt->channels;
+    }
+    if (!data_left || m_scale_changed || m_mode_changed || m_fragment_duration_changed) {
         reformat_x = true;
-        channels_last= data->fmt->channels;
-        emit seriesWidthChanged();
     }
 
-    size_t size = ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate / scale;
+    size_t total_samples = ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate;
     bool is_stereo = !(SCOPE->mode == DDB_SCOPE_MONO || data->fmt->channels == 1);
-    if (!waveform_data) {
-        waveform_data = new QVector<QPointF>(size*scale/2);
-        waveform_data->reserve(size*scale);
-        reformat_x = true;
-    }
-    if (!waveform_data2) {
-        waveform_data2 = new QVector<QPointF>(size*scale/2);
-        waveform_data2->reserve(size*scale/2);
-        reformat_x = true;
-    }
-
-
-    if (size != waveform_data_size/2) {
-        if (is_stereo) {
-            waveform_data->resize(size/2);
-            waveform_data2->resize(size/2);
-        }
-        else {
-            waveform_data->resize(size);
-        }
-        reformat_x = true;
-    }
-
-    QPointF *ptr = waveform_data->data();
-    QPointF *ptr2 = waveform_data2->data();
 
     if (reformat_x) {
+        if (!data_left) {
+            data_left = new QVector<QPointF>();
+        }
+        size_t left_size = total_samples/m_scale;
         if (is_stereo) {
-            for (size_t i = 0; i < size/2; i++) {
-                ptr[i].setX(i);
-                ptr2[i].setX(i);
+            left_size /=2;
+        }
+        data_left->resize(left_size);
+        data_left->squeeze();
+        if (!data_right) {
+            data_right = new QVector<QPointF>();
+        }
+        data_right->resize(total_samples/m_scale/2);
+        data_right->squeeze();
+    }
+
+    QPointF *ptr_l = data_left->data();
+    QPointF *ptr_r = data_right->data();
+
+    if (reformat_x) {
+        qDebug() << "reformat_x";
+        if (is_stereo) {
+            for (size_t i = 0; i < total_samples/2/m_scale; i++) {
+                ptr_l[i].setX(i);
+                ptr_r[i].setX(i);
             }
         }
         else {
-            for (size_t i = 0; i < size; i++) {
-                ptr[i].setX(i);
+            for (size_t i = 0; i < total_samples/m_scale; i++) {
+                ptr_l[i].setX(i);
             }
         }
-        reformat_x = false;
+        m_scale_changed = false;
+        m_mode_changed = false;
+        m_fragment_duration_changed = false;
     }
 
     ddb_scope_process(SCOPE, data->fmt->samplerate, data->fmt->channels, data->data, data->nframes);
 
     if (is_stereo) {
-        bool second_chn = 0;
-        for (size_t i = 0; i < size*scale; i++) {
-            second_chn = i%2;
-            float offset = second_chn ? -0.5 : 0.5;
-            float value = SCOPE->samples[i]*0.5 + offset;
-            second_chn ? ptr2[i/2/scale].setY(value) : ptr[i/2/scale].setY(value);
-
-            if (second_chn && scale != 1) {
-                i += scale;
+        size_t i_out = 0;
+        for (size_t i = 0; i < total_samples; i+=2*m_scale) {
+            if (i_out >= total_samples/2/m_scale) {
+                // bail out at i= 4352 , total_samples: 4410
+                qDebug() << "bail out at i=" << i << ", total_samples:" << total_samples;
+                break;
             }
+            for (size_t right_chn = 0; right_chn < 2; right_chn++) {
+                float offset = right_chn ? -0.5 : 0.5;
+                float value = SCOPE->samples[i+right_chn]*0.5 + offset;
+                if (!right_chn) {
+                    data_left->replace(i_out,QPointF(i_out,value));
+                    //ptr_l[i_out].setY(value);
+                }
+                else {
+                    data_right->replace(i_out,QPointF(i_out,value));
+                    //ptr_r[i_out].setY(value);
+                }
+            }
+            i_out++;
         }
-
         if (series.at(0)) {
-            series.at(0)->replace(*waveform_data);
+            QVector<QPointF> vec(*data_left);
+            vec.detach();
+            series.at(0)->replace(vec.toList());
         }
         if (series.at(1)) {
-            series.at(1)->setVisible();
-            series.at(1)->replace(*waveform_data2);
+            if (!series.at(1)->isVisible()) {
+                series.at(1)->setVisible();
+            }
+            QVector<QPointF> vec(*data_right);
+            vec.detach();
+            series.at(1)->replace(vec.toList());
         }
     }
     else {
         if (data->fmt->channels == 1) {
-            for (size_t i = 0; i < size*scale; i+=scale) {
-                ptr[i/scale].setY(SCOPE->samples[i]);
+            int i_out = 0;
+            for (size_t i = 0; i < total_samples; i+=m_scale) {
+                ptr_l[i_out].setY(SCOPE->samples[i]);
+                i_out++;
             }
         }
         else {
             // merge
-            for (size_t i = 0; i < size*scale; i+=2*scale) {
-                ptr[i/scale].setY((SCOPE->samples[i] + SCOPE->samples[i+1])/2);
+            int i_out = 0;
+            for (size_t i = 0; i < total_samples; i+=2*m_scale) {
+                ptr_l[i_out].setY((SCOPE->samples[i] + SCOPE->samples[i+1])/2);
+                i_out++;
             }
         }
 
         if (series.at(0)) {
-            series.at(0)->replace(*waveform_data);
+            series.at(0)->replace(*data_left);
         }
-        if (series.at(1)) {
+        if (series.at(1) && series.at(1)->isVisible()) {
             series.at(1)->setVisible(false);
         }
     }
