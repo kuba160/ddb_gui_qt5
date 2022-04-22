@@ -18,5 +18,7 @@
         <file>widgets/InfoQuick.qml</file>
         <file>widgets/Oscilloscope.qml</file>
         <file>widgets/OscilloscopePolar.qml</file>
+        <file>widgets/Oscilloscope_qt6.qml</file>
+        <file>widgets/OscilloscopePolar_qt6.qml</file>
     </qresource>
 </RCC>
