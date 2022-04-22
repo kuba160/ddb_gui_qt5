@@ -7,11 +7,20 @@ Item {
     readonly property string internalName: "equalizerQuick"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "main"
-    property int instance: -1
+    property int instance
 
+    Text {
+        id: bg
+        anchors.fill: parent
+        Rectangle {
+            visible: overrideBg
+            color: overrideBg ? bg.palette.window : "black"
+            anchors.fill: parent
+        }
+    }
     Loader {
         id: loader
-        sourceComponent: instance != -1 ? equalizer : undefined
+        sourceComponent: api === null ? undefined : equalizer
         // size determined by rootItem (corresponding to QWidget size)
         width: parent.width
         height: parent.height

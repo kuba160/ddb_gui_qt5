@@ -62,17 +62,18 @@ void VolumeSlider::paintEvent(QPaintEvent *e) {
     qp.setRenderHint(QPainter::Antialiasing);
 
     // TODO color hardcoded
-    QColor blue(43,127,186);
+    QColor color = api->getAccentColor();
     QPen pen(Qt::transparent);
     pen.setWidth(0);
     qp.setPen(pen);
-    qp.setBrush(blue);
+    qp.setBrush(color);
 
     int i;
     for (i = 0; i < bar_amount; i++) {
         if (abs(bar_amount*percentage) < (static_cast<float>(i)+0.5) || percentage == 0) {
-            qp.setBrush(Qt::white);
-            qp.setBrush(QColor(192,217,235));
+            //qp.setBrush(Qt::white);
+            //qp.setBrush(palette().color(QPalette::Inactive,QPalette::Highlight));
+            qp.setBrush(palette().color(QPalette::Disabled,QPalette::WindowText));
         }
         qreal bar_height;
         (bar_amount == 17) ? bar_height = height_min + i // 1px increase on default (no smoothing)

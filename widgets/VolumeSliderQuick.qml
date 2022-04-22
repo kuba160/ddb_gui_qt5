@@ -6,11 +6,20 @@ Item {
     readonly property string internalName: "volumeSliderQuick"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "toolbar"
-    property int instance: -1
+    property int instance
 
+    Text {
+        id: bg
+        anchors.fill: parent
+        Rectangle {
+            visible: overrideBg
+            color: overrideBg ? bg.palette.window : "black"
+            anchors.fill: parent
+        }
+    }
     Loader {
         id: loader
-        sourceComponent: instance >= 0 ? volumeSlider : undefined
+        sourceComponent: api === null ? undefined : volumeSlider
         // size determined by rootItem (corresponding to QWidget size)
         width: parent.width
         height: parent.height
@@ -19,11 +28,12 @@ Item {
         id: volumeSlider
         Slider {
             id: control
-            padding: 4
-            bottomPadding: 6
-            topPadding: 6
-            height: 28
-            implicitWidth: 76
+            padding: 6
+            //bottomPadding:
+            //topPadding: 6
+            //height: 25
+            implicitWidth: 80
+            anchors.fill: parent
             // volume range / step size
             from: -50
             to: 0
@@ -54,7 +64,7 @@ Item {
                 property real valueNormalized: -(control.value - (control.from - control.to)) / (control.from-control.to)
                 property int selectedBarAmount: Math.round(valueNormalized * barAmount)
                 function barHeight(bar, total, minheight, maxheight) {
-                    return (minheight) + (bar/total)*(maxheight-minheight)
+                    return Math.floor((minheight) + (bar/total)*(maxheight-minheight))
                 }
 
                 // Bars
@@ -67,10 +77,11 @@ Item {
                         // blank bars
                         model: base.barAmount
                         Rectangle {
-                            anchors.bottom: parent.bottom
+                            //anchors.bottom: parent.bottom
+                            y: parent.height - height
                             width: base.barWidth
                             height: base.barHeight(index, base.barAmount, base.minHeight, base.maxHeight)
-                            color: index < base.selectedBarAmount ? "#2b7fba" : "#c0d9eb"
+                            color: index < base.selectedBarAmount ? api.accent_color : palette.light
                         }
                     }
                 }

@@ -6,11 +6,11 @@ Item {
     readonly property string internalName: "playlistBrowserQuick"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "main"
-    property int instance: -1
+    property int instance
 
     Loader {
         id: loader
-        sourceComponent: instance >= 0 ? playlistBrowser : undefined
+        sourceComponent: api === null ? undefined : playlistBrowser
         // size determined by rootItem (corresponding to QWidget size)
         width: parent.width
         height: parent.height

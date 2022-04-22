@@ -6,11 +6,20 @@ Item {
     readonly property string internalName: "seekSliderQuick"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "toolbar"
-    property int instance: -1
+    property int instance
 
+    Text {
+        id: bg
+        anchors.fill: parent
+        Rectangle {
+            visible: overrideBg
+            color: overrideBg ? bg.palette.window : "black"
+            anchors.fill: parent
+        }
+    }
     Loader {
         id: loader
-        sourceComponent: instance >= 0 ? seekSlider : undefined
+        sourceComponent: api === null ? undefined : seekSlider
         // size determined by rootItem (corresponding to QWidget size)
         width: parent.width
         height: parent.height
@@ -53,7 +62,7 @@ Item {
                 property int h: 10
                 property int rad: 10
                 property int bw: 2
-                property color c: "#2b7fba"
+                property color c: api.accent_color
                 Rectangle {
                     z: 0
                     width: parent.width
@@ -84,7 +93,7 @@ Item {
                     id: info
                     anchors.centerIn: parent
                     radius: 4
-                    color: "#2b7fba"
+                    color: api.accent_color
                     z: 100
                     Text {
                         id: text

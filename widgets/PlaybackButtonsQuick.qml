@@ -6,13 +6,13 @@ Item {
     readonly property string internalName: "playbackButtonsQuick"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "toolbar"
-    property int instance: -1
+    property int instance
 
     // size determined by playbackControls size
     width: loader.width; height: loader.height
     Loader {
         id: loader
-        sourceComponent: instance >= 0 ? playbackControls : undefined
+        sourceComponent: api === null ? undefined : playbackControls
     }
 
     Component {

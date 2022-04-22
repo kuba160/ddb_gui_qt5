@@ -8,9 +8,18 @@ Item {
     readonly property string widgetType: "toolbar"
     property int instance: -1
 
+    Text {
+        id: bg
+        anchors.fill: parent
+        Rectangle {
+            visible: overrideBg
+            color: overrideBg ? bg.palette.window : "black"
+            anchors.fill: parent
+        }
+    }
     Loader {
         id: loader
-        sourceComponent: instance >= 0 ? tabBar : undefined
+        sourceComponent: api === null ? undefined : tabBar
         // size determined by rootItem (corresponding to QWidget size)
         width: parent.width
         height: parent.height

@@ -9,7 +9,7 @@ Item {
     readonly property string internalName: "oscilloscopePolar"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "main"
-    property int instance: -1
+    property int instance
 
     function name_i() {
         return instance ? internalName + "_" + instance : internalName
@@ -17,7 +17,7 @@ Item {
 
     Loader {
         id: loader
-        sourceComponent: instance != -1 ? oscilloscope : undefined
+        sourceComponent: api === null ? undefined : oscilloscope
         // size determined by rootItem (corresponding to QWidget size)
         width: parent.width
         height: parent.height
@@ -197,15 +197,15 @@ Item {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: {
                     if (mouse.button === Qt.RightButton)
-                        contextMenu.popup()
+                        contextMenu.open()
                     else if (mouse.button === Qt.LeftButton) {
                         //console.log(name_i())
-                        contextMenu.dismiss()
+                        contextMenu.close()
                     }
                 }
                 onPressAndHold: {
                     if (mouse.source === Qt.MouseEventNotSynthesized)
-                        contextMenu.popup()
+                        contextMenu.open()
                 }
 
                 ActionGroup { id: styleGroup }
@@ -221,15 +221,13 @@ Item {
                         Instantiator {
                             model: ["Scatter", "Line"]
                             MenuItem {
-                                action: Action {
-                                    text: qsTr(modelData)
-                                    checkable: true
-                                    checked: chartView.style === index
-                                    onTriggered: {
-                                        changeStyle(index)
-                                    }
-                                    ActionGroup.group: styleGroup
+                                text: qsTr(modelData)
+                                checkable: true
+                                checked: chartView.style === index
+                                onTriggered: {
+                                    changeStyle(index)
                                 }
+                                ActionGroup.group: styleGroup
                             }
                             onObjectAdded: style_menu.insertItem(index, object)
                             onObjectRemoved: style_menu.removeItem(object)
@@ -241,15 +239,13 @@ Item {
                         Instantiator {
                             model: ["Mono", "Multichannel"]
                             MenuItem {
-                                action: Action {
-                                    text: qsTr(modelData)
-                                    checkable: true
-                                    checked: scope.scope_mode === index
-                                    onTriggered: {
-                                        changeMode(index)
-                                    }
-                                    ActionGroup.group: channelGroup
+                                text: qsTr(modelData)
+                                checkable: true
+                                checked: scope.scope_mode === index
+                                onTriggered: {
+                                    changeMode(index)
                                 }
+                                ActionGroup.group: channelGroup
                             }
                             onObjectAdded: rend_menu.insertItem(index, object)
                             onObjectRemoved: rend_menu.removeItem(object)
@@ -261,15 +257,13 @@ Item {
                         Instantiator {
                             model: [50,100,200,300,500]
                             MenuItem {
-                                action: Action {
-                                    text: qsTr(modelData + " ms")
-                                    checkable: true
-                                    checked: scope.fragment_duration === modelData
-                                    onTriggered: {
-                                        changeFragmentDuration(modelData)
-                                    }
-                                    ActionGroup.group: fragmentGroup
+                                text: qsTr(modelData + " ms")
+                                checkable: true
+                                checked: scope.fragment_duration === modelData
+                                onTriggered: {
+                                    changeFragmentDuration(modelData)
                                 }
+                                ActionGroup.group: fragmentGroup
                             }
                             onObjectAdded: frag_menu.insertItem(index, object)
                             onObjectRemoved: frag_menu.removeItem(object)
@@ -305,16 +299,14 @@ Item {
                         Instantiator {
                             model: [1,2,4,8,16,32]
                             MenuItem {
-                                action: Action {
-                                    text: qsTr(modelData + ".0x")
-                                    checkable: true
-                                    checked: scope.scale === modelData
-                                    onTriggered: {
-                                        scope.scale = modelData
-                                        settings.setValue(name_i(), "scale", modelData)
-                                    }
-                                    ActionGroup.group: scaleGroup
+                                text: qsTr(modelData + ".0x")
+                                checkable: true
+                                checked: scope.scale === modelData
+                                onTriggered: {
+                                    scope.scale = modelData
+                                    settings.setValue(name_i(), "scale", modelData)
                                 }
+                                ActionGroup.group: scaleGroup
                             }
                             onObjectAdded: scale_menu.insertItem(index, object)
                             onObjectRemoved: scale_menu.removeItem(object)

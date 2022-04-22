@@ -177,7 +177,9 @@ DBQuickWidget::DBQuickWidget(QWidget *parent, DBApi *api, QString source) : QQui
     setAttribute(Qt::WA_AlwaysStackOnTop);
     setAttribute(Qt::WA_TranslucentBackground);
     setClearColor(Qt::transparent);
+    rootContext()->setContextProperty("overrideBg", false);
 #else
+    rootContext()->setContextProperty("overrideBg", true);
     // TODO fix transparency for qt 6
     setWindowFlags(Qt::SplashScreen);
     setAttribute(Qt::WA_AlwaysStackOnTop);
@@ -262,7 +264,8 @@ void PluginLoader::widgetLibraryAppend(DBWidgetInfo *wi) {
 void PluginLoader::widgetLibraryAppend(QString url) {
     QQmlEngine *engine = new QQmlEngine;
     // set api to avoid undefined references (if widget is written poorly)
-    //engine->rootContext()->setContextProperty("api", api);
+    engine->rootContext()->setContextProperty("api", nullptr);
+    engine->rootContext()->setContextProperty("overrideBg", false);
     QQmlComponent component(engine, url);
 
     while (component.isLoading()) {

@@ -91,6 +91,11 @@ static int initializeApi() {
         #endif
     #endif
 
+        #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+        //QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
+        #endif
+
         // setup settings
         QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG), "qt5");
         QtGuiSettings::setDefaultFormat(QSettings::IniFormat);

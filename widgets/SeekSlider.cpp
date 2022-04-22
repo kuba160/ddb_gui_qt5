@@ -63,10 +63,10 @@ void SeekSlider::paintEvent(QPaintEvent *e) {
     float percentage = DBAPI->playback_get_pos()/100.0;
 
     // TODO: Set colors from theme
-    QColor blue(43,127,186);
-    QPen pen(blue);
+    QColor color = api->getAccentColor();
+    QPen pen(color);
     pen.setWidth(2);
-    pen.setBrush(blue);
+    pen.setBrush(color);
 
     QRectF rectangle(slider_xpos, slider_ypos, slider_width, slider_height);
     QRectF progress_mask(slider_xpos, 0.0, qFloor(slider_width * percentage), this->height());
@@ -77,7 +77,7 @@ void SeekSlider::paintEvent(QPaintEvent *e) {
     QPainter qp(this);
     qp.setRenderHint(QPainter::Antialiasing);
     qp.setPen(pen);
-    qp.setBrush(blue);
+    qp.setBrush(color);
 
     // draw a full slider, but clip it according to progress
     qp.setClipping(true);
@@ -95,7 +95,9 @@ void SeekSlider::paintEvent(QPaintEvent *e) {
         qreal line_xpos = qCeil(slider_width * percentage + 1.0);
         qreal pixel_edge_fade = (slider_width * percentage) - qFloor(slider_width * percentage); // 0..1
         int line_color = qFloor(255*pixel_edge_fade);
-        QPen pen2(QColor(43,127,186,line_color));
+        QColor color_fade(color);
+        color_fade.setAlpha(line_color);
+        QPen pen2(color_fade);
         pen2.setWidthF(1.5);
         qp.setPen(pen2);
         qp.drawLine(line_xpos, slider_ypos, line_xpos, slider_ypos + slider_height);

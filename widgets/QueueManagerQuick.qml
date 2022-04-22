@@ -8,11 +8,11 @@ Item {
     readonly property string internalName: "queueManagerQuick"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "main"
-    property int instance: -1
+    property int instance
 
     Loader {
         id: loader
-        sourceComponent: instance >= 0 ? playlist : undefined
+        sourceComponent: api === null ? undefined : playlist
         // size determined by rootItem (corresponding to QWidget size)
         width: Math.max(parent.width, 200)
         height: parent.height
