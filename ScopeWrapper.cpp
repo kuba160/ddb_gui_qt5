@@ -157,12 +157,8 @@ void ScopeWrapper::process(const ddb_audio_data_t *data) {
 
     if (is_stereo) {
         size_t i_out = 0;
-        for (size_t i = 0; i < total_samples; i+=2*m_scale) {
-            if (i_out >= total_samples/2/m_scale) {
-                // bail out at i= 4352 , total_samples: 4410
-                qDebug() << "bail out at i=" << i << ", total_samples:" << total_samples;
-                break;
-            }
+        size_t bail_out_at = ((int) total_samples/m_scale/2)*2*m_scale;
+        for (size_t i = 0; i < bail_out_at; i+=2*m_scale) {
             for (size_t right_chn = 0; right_chn < 2; right_chn++) {
                 float offset = right_chn ? -0.5 : 0.5;
                 float value = SCOPE->samples[i+right_chn]*0.5 + offset;
