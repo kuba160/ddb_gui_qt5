@@ -7,17 +7,22 @@
 class DBFileDialog : public QFileDialog {
     Q_OBJECT
 public:
-    DBFileDialog(QWidget *parent,
-                 const QString &caption = QString(),
-                 const QStringList &filters = QStringList(),
-                 FileMode mode = QFileDialog::AnyFile,
-                 QFileDialog::Options options = QFileDialog::DontUseNativeDialog);
 
-    QStringList exec2();
-    //virtual int exec();
+    enum DialogType {
+        OPEN_FILES = 0,
+        ADD_FILES,
+        ADD_FOLDERS,
+        LOAD_PLAYLIST,
+        SAVE_PLAYLIST
+    };
+
+    DBFileDialog(QWidget *parent, DialogType type);
+
+private:
+    DialogType m_type;
 
 public slots:
-    //void on_actionAddFiles_triggered();
+    void onAccepted();
     //void on_actionAddFolder_triggered();
 };
 

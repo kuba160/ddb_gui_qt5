@@ -2,6 +2,8 @@
 
 #include <QDebug>
 #include <QWidget>
+#include <QDialog>
+#include <QtConcurrent>
 #include "QtGui.h"
 #include "CoverArtCache.h"
 #include "QtGuiSettings.h"
@@ -352,6 +354,162 @@ void DBApi::addTracksByUrl(const QUrl &url, int position) {
         DBAPI->pl_item_unref(track);
     }
     DBAPI->plt_unref(plt);
+}
+
+struct ApiBtn {
+    DB_functions_t *func;
+    QPushButton *pb;
+};
+
+void DBApi::addTracks(QStringList list, bool directories) {
+    add_abort = 0;
+    int track_last = DBAPI->pl_getcount(PL_MAIN) - 1;
+    DB_playItem_t *track = track_last > 0 ? DBAPI->pl_get_for_idx(track_last) : nullptr;
+    ddb_playlist_t *plt = DBAPI->plt_get_curr();
+
+    // Dialog
+    QDialog *d = new QDialog(w, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
+    d->setWindowTitle(tr("Adding files..."));
+    d->setAttribute(Qt::WA_DeleteOnClose);
+    if (d->layout()) {
+        //delete d->layout(); // ?
+    }
+    QVBoxLayout *lay = new QVBoxLayout;
+    QLineEdit *le = new QLineEdit;
+    le->setReadOnly(true);
+    //lay.insertWidget(-1, &le);
+    lay->addWidget(le);
+    QPushButton *pb = new QPushButton;
+    pb->setText(tr("Cancel"));
+    lay->addWidget(pb);
+    //lay.insertWidget(-1,&pb,0,Qt::AlignRight);
+    connect (pb, SIGNAL(clicked()), this, SLOT(onBtnCancelAdd()));
+    d->setLayout(lay);
+    le->setVisible(true);
+    pb->setVisible(true);
+
+    le->setText("aaaa");
+
+    d->open();
+
+
+    struct ApiBtn ab = {api->deadbeef, pb};
+
+    QFuture<DB_playItem_t *> f;
+    DB_playItem_t *it = nullptr;
+    if (directories) {
+        foreach (QString s, list) {
+            f = QtConcurrent::run(add_files,s, &add_abort, &ab);
+            //it = DBAPI->plt_insert_dir(plt, track, s.toUtf8().data(), &add_abort, add_file_callback, &ab);
+        }
+    }
+    else {
+        foreach (QString s, list) {
+            it = DBAPI->plt_insert_file(plt, track, s.toUtf8().data(), &add_abort, add_file_callback, &ab);
+        }
+    }
+
+    f.waitForFinished();
+
+    if (it) {
+        emit playlistContentChanged(plt);
+    }
+    else {
+        // failure
+    }
+    if (track) {
+        DBAPI->pl_item_unref(track);
+    }
+    DBAPI->plt_unref(plt);
+    d->close();
+}
+
+DB_playItem_t* DBApi::add_files(QStringList l, bool directories, DBApi *api, int *pabort) {
+    int add_abort = 0;
+    int track_last = api->deadbeef->pl_getcount(PL_MAIN) - 1;
+    DB_playItem_t *track = track_last > 0 ? api->deadbeef->pl_get_for_idx(track_last) : nullptr;
+    ddb_playlist_t *plt = api->deadbeef->plt_get_curr();
+
+    // Dialog
+    QDialog *d = new QDialog(w, Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
+    d->setWindowTitle(tr("Adding files..."));
+    d->setAttribute(Qt::WA_DeleteOnClose);
+    if (d->layout()) {
+        //delete d->layout(); // ?
+    }
+    QVBoxLayout *lay = new QVBoxLayout;
+    QLineEdit *le = new QLineEdit;
+    le->setReadOnly(true);
+    //lay.insertWidget(-1, &le);
+    lay->addWidget(le);
+    QPushButton *pb = new QPushButton;
+    pb->setText(tr("Cancel"));
+    lay->addWidget(pb);
+    //lay.insertWidget(-1,&pb,0,Qt::AlignRight);
+    connect (pb, SIGNAL(clicked()), this, SLOT(onBtnCancelAdd()));
+    d->setLayout(lay);
+    le->setVisible(true);
+    pb->setVisible(true);
+
+    le->setText("aaaa");
+
+    d->open();
+
+
+    struct ApiBtn ab = {api->deadbeef, pb};
+
+    QFuture<DB_playItem_t *> f;
+    DB_playItem_t *it = nullptr;
+    if (directories) {
+        foreach (QString s, list) {
+            f = QtConcurrent::run(add_file,s, &add_abort, &ab);
+            //it = DBAPI->plt_insert_dir(plt, track, s.toUtf8().data(), &add_abort, add_file_callback, &ab);
+        }
+    }
+    else {
+        foreach (QString s, list) {
+            it = DBAPI->plt_insert_file(plt, track, s.toUtf8().data(), &add_abort, add_file_callback, &ab);
+        }
+    }
+
+    f.waitForFinished();
+
+    if (it) {
+        emit playlistContentChanged(plt);
+    }
+    else {
+        // failure
+    }
+    if (track) {
+        DBAPI->pl_item_unref(track);
+    }
+    DBAPI->plt_unref(plt);
+    d->close();
+
+
+
+    struct ApiBtn *ab = static_cast<struct ApiBtn*>(user_data);
+    int track_last = ab->func->pl_getcount(PL_MAIN) - 1;
+    DB_playItem_t *track = track_last > 0 ? ab->func->pl_get_for_idx(track_last) : nullptr;
+    ddb_playlist_t *plt = ab->func->plt_get_curr();
+    DB_playItem_t *it = ab->func->plt_insert_dir(plt, track, s.toUtf8().data(), pabort, add_file_callback, &ab);
+    return it;
+}
+
+int DBApi::add_file_callback (DB_playItem_t *it, void *user_data) {
+    if (user_data) {
+        struct ApiBtn *ab = static_cast<struct ApiBtn*>(user_data);
+        const char *f = ab->func->pl_find_meta_raw (it, ":URI");
+        if (f) {
+            qDebug() << f;
+            ab->pb->setText(f);
+        }
+    }
+    return 0;
+}
+
+void DBApi::onBtnCancelAdd() {
+    add_abort = 1;
 }
 
 float DBApi::getPosition() {

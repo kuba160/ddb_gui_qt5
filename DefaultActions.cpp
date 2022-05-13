@@ -302,7 +302,9 @@ void DefaultActions::on_actionJump_to_current_track_triggered() {
 }
 
 void DefaultActions::on_actionOpenFiles_triggered() {
-    DBFileDialog fileDialog(this,
+    DBFileDialog *fd = new DBFileDialog(this, DBFileDialog::OPEN_FILES);
+    fd->open();
+    /*DBFileDialog fileDialog(this,
                             tr("Open file(s)..."),
                             QStringList(),
                             QFileDialog::ExistingFiles,
@@ -313,7 +315,7 @@ void DefaultActions::on_actionOpenFiles_triggered() {
     }
     foreach (QString localFile, fileNames) {
         api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);
-    }
+    }*/
 }
 
 
@@ -323,24 +325,15 @@ void DefaultActions::on_actionNewPlaylist_triggered() {
 }
 
 void DefaultActions::on_actionLoadPlaylist_triggered() {
-    QStringList filters;
-    filters << tr("Supported playlist formats (*.dbpl)");
-    filters << tr("Other files (*)");
-    DBFileDialog fileDialog(this,
-                            tr("Load playlist"),
-                            filters,
-                            QFileDialog::ExistingFile,
-                            QFileDialog::ReadOnly);
-    QStringList fileNames = fileDialog.exec2();
-    if (fileNames.isEmpty()) {
-        return;
-    }
-    foreach (QString localFile, fileNames) {
+    DBFileDialog *fd = new DBFileDialog(this, DBFileDialog::LOAD_PLAYLIST);
+    fd->open();
+    /*foreach (QString localFile, fileNames) {
         api->loadPlaylist(localFile);
-    }
+    }*/
 }
 
 void DefaultActions::on_actionSaveAsPlaylist_triggered() {
+    /*
     QStringList filters;
     filters << tr("DeaDBeeF playlist files (*.dbpl)");
     DB_playlist_t **plug = DBAPI->plug_get_playlist_list();
@@ -351,9 +344,11 @@ void DefaultActions::on_actionSaveAsPlaylist_triggered() {
                 for (int e = 0; exts[e]; e++)
                     filters << QString("*.%1").arg(exts[e]);
         }
-    }
-    DBFileDialog fileDialog(this,
-                            tr("Save playlist as..."),
+    }*/
+    DBFileDialog *fd = new DBFileDialog(this, DBFileDialog::SAVE_PLAYLIST);
+    fd->open();
+
+                            /**
                             filters,
                             QFileDialog::AnyFile);
     fileDialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -370,24 +365,28 @@ void DefaultActions::on_actionSaveAsPlaylist_triggered() {
             msg.exec();
         }
         DBAPI->plt_unref(plt);
-    }
+    }*/
 }
 
 void DefaultActions::on_actionAddFolder_triggered() {
-    DBFileDialog fileDialog(this,
-                            tr("Add folder(s) to playlist..."),
-                            QStringList(),
-                            QFileDialog::Directory,
-                            QFileDialog::ShowDirsOnly | QFileDialog::ReadOnly);
-    QStringList fileNames = fileDialog.exec2();
-    if (fileNames.isEmpty())
-        return;
-    foreach (QString localFile, fileNames)
-        api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);
+    DBFileDialog *fd = new DBFileDialog(this, DBFileDialog::ADD_FOLDERS);
+    fd->open();
+    //QFileDialog fileDialog(this,
+    //                        tr("Add folder(s) to playlist..."));
+                            //QString(),
+                            //QFileDialog::Directory,
+                            //QFileDialog::ShowDirsOnly | QFileDialog::ReadOnly);
+    //QStringList fileNames = fileDialog.exec();
+    //if (fileNames.isEmpty())
+    //    return;
+    //foreach (QString localFile, fileNames)
+    //    api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);
 }
 
 void DefaultActions::on_actionAddFiles_triggered(){
-    DBFileDialog fileDialog(this,
+    DBFileDialog *fd = new DBFileDialog(this, DBFileDialog::ADD_FILES);
+    fd->open();
+                            /*
                             tr("Add file(s) to playlist..."),
                             QStringList(),
                             QFileDialog::ExistingFiles,
@@ -396,7 +395,7 @@ void DefaultActions::on_actionAddFiles_triggered(){
     if (fileNames.isEmpty())
         return;
     foreach (QString localFile, fileNames)
-        api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);
+        api->addTracksByUrl(localFile, DBAPI->pl_getcount(PL_MAIN) - 1);*/
 }
 
 void DefaultActions::on_actionAddAudioCD_triggered() {

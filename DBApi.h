@@ -70,6 +70,7 @@ public:
     // Misc functions
     bool isPaused();
     void addTracksByUrl(const QUrl &url, int position = -1);
+    void addTracks(QStringList files, bool directories = false);
 
     ddb_playback_state_t getOutputState();
     ddb_playback_state_t getInternalState();
@@ -183,6 +184,8 @@ private:
 
     ddb_dsp_context_t *get_supereq();
 
+    int add_abort = 0;
+
     /// Qt quick section
 
     // internal volume
@@ -196,10 +199,13 @@ private:
     // Oscilloscope
     QList<void*> scope_list;
     static void waveform_callback (void * ctx, const ddb_audio_data_t *data);
+    static int add_file_callback (DB_playItem_t *it, void *user_data);
+    static DB_playItem_t* add_files(QStringList s, bool directories, DBApi *api, int *pabort);
 
 private slots:
     void onScopeDestroyed(QObject *obj);
     void onCurrentPlaylistChanged();
+    void onBtnCancelAdd();
 
 public:
     // Volume (in dB)
