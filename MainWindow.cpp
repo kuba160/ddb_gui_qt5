@@ -166,14 +166,14 @@ void MainWindow::trackChanged(DB_playItem_t *from, DB_playItem_t *to) {
     Q_UNUSED(from);
     if (to != nullptr) {
         char str[1024];
-        const char *fmt;
+        QString fmt;
         if (api->getOutputState() == DDB_PLAYBACK_STATE_STOPPED)
-            fmt = SETTINGS->getValue("MainWindow", "TitlebarStopped", "DeaDBeeF %_deadbeef_version%").toString().toUtf8();
+            fmt = SETTINGS->getValue("MainWindow", "TitlebarStopped", "DeaDBeeF %_deadbeef_version%").toString();
         else
-            fmt = SETTINGS->getValue("MainWindow", "TitlebarPlaying", "%artist% - %title% - DeaDBeeF %_deadbeef_version%").toString().toUtf8();
+            fmt = SETTINGS->getValue("MainWindow", "TitlebarPlaying", "%artist% - %title% - DeaDBeeF %_deadbeef_version%").toString();
 
         DBAPI->pl_item_ref(to);
-        DBAPI->pl_format_title(to, 0, str, sizeof(str), -1, fmt);
+        DBAPI->pl_format_title(to, 0, str, sizeof(str), -1, fmt.toUtf8().constData());
         if (trayIcon) {
             // todo
             //trayIcon->showMessage("DeaDBeeF", QString::fromUtf8(str), QSystemTrayIcon::Information, 2000);
