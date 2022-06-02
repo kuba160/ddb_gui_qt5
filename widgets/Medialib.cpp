@@ -15,8 +15,8 @@
 
 #define GETSEL (prox_model->mapSelectionToSource(selectionModel()->selection()).indexes())
 
-MedialibSorted::MedialibSorted(QObject *parent) : QSortFilterProxyModel(parent) {
-    //
+MedialibSorted::MedialibSorted(QObject *parent, DB_mediasource_t *ms_in) : QSortFilterProxyModel(parent) {
+    ms = ms_in;
 }
 
 bool MedialibSorted::lessThan(const QModelIndex &left, const QModelIndex &right) const {
@@ -24,8 +24,8 @@ bool MedialibSorted::lessThan(const QModelIndex &left, const QModelIndex &right)
         ddb_medialib_item_t *l = static_cast<ddb_medialib_item_t *>(left.internalPointer());
         ddb_medialib_item_t *r = static_cast<ddb_medialib_item_t *>(right.internalPointer());
         //do not sort tracks
-        if (!l->track && !r->track) {
-            return QString(l->text) < QString(r->text);
+        if (!ms->tree_item_get_track(l) && !ms->tree_item_get_track(r)) {
+            return QString(ms->tree_item_get_text(l)) < QString(ms->tree_item_get_text(r));
         }
     }
     return false;
@@ -44,7 +44,7 @@ MedialibTreeView::MedialibTreeView(QWidget *parent, DBApi *Api) : QTreeView(pare
     viewport()->setAcceptDrops(true);
     // Model
     ms_model = new MediasourceModel(this,Api,"medialib");
-    prox_model = new MedialibSorted(this);
+    prox_model = new MedialibSorted(this, ms_model->getMediasourcePlugin());
     prox_model->setSourceModel(ms_model);
     setModel(prox_model);
     connect(ms_model,SIGNAL(modelReset()), this, SLOT(onModelReset()));
@@ -96,7 +96,7 @@ void MedialibTreeView::onSearchQueryChanged(QString str) {
     if (sel.length()) {
         QModelIndex i = sel[0];
         while (i.isValid()) {
-            QString n = static_cast<ddb_medialib_item_t *>(i.internalPointer())->text;
+            QString n = ms_model->getMediasourcePlugin()->tree_item_get_text((ddb_medialib_item_t*) i.internalPointer());
             curr_selection.insert(0,n);
             i = ms_model->parent(i);
         }
@@ -182,9 +182,7 @@ Medialib::Medialib(QWidget *parent, DBApi *Api) : DBWidget(parent, Api) {
     layout()->addWidget(tree);
     search_box->setPlaceholderText(QString(tr("Search")) + "...");
     connect(search_box, SIGNAL(textChanged(QString)), tree, SLOT(onSearchQueryChanged(QString)));
-    // Restore folders
-    folders = CONFGET("folders",QStringList()).toStringList();
-    tree->ms_model->setDirectories(folders);
+
     // Setup selectors
     search_query->addItems(tree->ms_model->getSelectors());
     search_query_curr = CONFGET("selectorpos",1).toInt();
@@ -246,7 +244,9 @@ void Medialib::folderSetupDialog() {
     lwidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
     d.layout()->addWidget(lwidget);
     // restore
-    foreach(QString str,CONFGET("folders",QStringList()).toStringList()) {
+
+    QStringList folders = tree->ms_model->getDirectories();
+    foreach(QString str, folders) {
         QListWidgetItem *item = new QListWidgetItem(str,lwidget);
         item->setFlags (item->flags() | Qt::ItemIsEditable);
     }
@@ -280,11 +280,10 @@ void Medialib::folderSetupDialogHandler(bool checked) {
     if (s == plus) {
         QString str = ledit->text();
         if (str.length() > 0) {
-            folders = CONFGET("folders",QStringList()).toStringList();
+            QStringList folders = tree->ms_model->getDirectories();
             QListWidgetItem *item = new QListWidgetItem(str,lwidget);
             item->setFlags (item->flags() | Qt::ItemIsEditable);
             folders.append(str);
-            CONFSET("folders",folders);
             ledit->setText("");
             tree->ms_model->setDirectories(folders);
         }
@@ -292,14 +291,16 @@ void Medialib::folderSetupDialogHandler(bool checked) {
     else if (s == minus) {
         QList<QListWidgetItem *> list = lwidget->selectedItems();
         if (list.count()) {
-            folders = CONFGET("folders",QStringList()).toStringList();
+            QStringList folders = tree->ms_model->getDirectories();
             for (int i = 0; i < list.length(); i++) {
                 int row = lwidget->row(list[i]);
                 lwidget->takeItem(row);
                 folders.takeAt(row);
             }
-            CONFSET("folders",folders);
             tree->ms_model->setDirectories(folders);
+        }
+        else {
+            //tree->ms_model->ms
         }
     }
     else if (s == browse) {
@@ -308,7 +309,7 @@ void Medialib::folderSetupDialogHandler(bool checked) {
         dialog.setOption(QFileDialog::ShowDirsOnly,true);
 
         if(dialog.exec()) {
-            folders = CONFGET("folders",QStringList()).toStringList();
+            QStringList folders = tree->ms_model->getDirectories();
             QStringList list = dialog.selectedFiles();
             QString str;
             foreach(str,list) {
@@ -332,6 +333,5 @@ void Medialib::folderSetupDialogItemHandler(QListWidgetItem *item) {
     for (int i = 0; i < lwidget->count(); i++) {
         list.append(lwidget->item(i)->text());
     }
-    CONFSET("folders",list);
     tree->ms_model->setDirectories(list);
 }

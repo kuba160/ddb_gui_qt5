@@ -2,7 +2,7 @@
   deadbeef.h -- plugin API of the DeaDBeeF audio player
   http://deadbeef.sourceforge.net
 
-  Copyright (C) 2009-2021 Alexey Yakovenko
+  Copyright (C) 2009-2022 Alexey Yakovenko
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -70,8 +70,8 @@ extern "C" {
 // NOTE: deprecation doesn't mean the API is going to be removed, it just means
 // that there's a better replacement in the newer deadbeef versions.
 
-// api version history:
-// 1.15 -- deadbeef-1.9.0 (medialib branch)
+// API version history:
+// 1.15 -- deadbeef-1.9.0
 // 1.14 -- deadbeef-1.8.8
 // 1.12 -- deadbeef-1.8.4
 // 1.11 -- deadbeef-1.8.3
@@ -654,8 +654,16 @@ typedef struct {
 
 // since 1.5
 #if (DDB_API_LEVEL >= 5)
-static const int DDB_FREQ_BANDS DEPRECATED_115 = 256; // Do not use -- instead use the nframes field
+
+/// NOTE: The @c DDB_FREQ_BANDS and the related @c vis_spectrum_listen is no longer used / supported.
+/// They do not do anything, just allowing to build old code.
+/// Use the nframes field instead. Your code should adapt to any
+/// number of bands produced by the visualization engine.
+static const int DDB_FREQ_BANDS DEPRECATED_115 = 256;
+
+/// Max number of channels allowed in the ddb_audio_data_t for frequency data
 static const int DDB_FREQ_MAX_CHANNELS = 9;
+
 typedef struct ddb_audio_data_s {
     ddb_waveformat_t *fmt;
     float *data;
@@ -776,6 +784,11 @@ typedef enum {
     DDB_INSERT_FILE_RESULT_NO_FILE_EXTENSION = 6, // File doesn't have an extension
     DDB_INSERT_FILE_RESULT_CUESHEET_ERROR = 7, // Error while loading cuesheet
 } ddb_insert_file_result_t;
+
+typedef enum {
+    DDB_INSERT_FILE_FLAG_FOLLOW_SYMLINKS = 1<<0,
+    DDB_INSERT_FILE_FLAG_ENTER_ARCHIVES = 1<<1,
+} ddb_insert_file_flags_t;
 #endif
 
 // forward decl for plugin struct
@@ -1301,24 +1314,26 @@ typedef struct {
 
     // since 1.5
 #if (DDB_API_LEVEL >= 5)
-    // register/unregister for getting continuous wave data
-    // mainly for visualization
-    // ctx must be unique
-    // the waveform data can be arbitrary size
-    // the samples are interleaved
+    /// Register for getting continuous visualization wave data.
+    /// Incoming waveform data can be arbitrary size.
+    /// Samples are stored in interleaved layout.
+    /// @param ctx Unique pointer identifying your listener.
     void (*vis_waveform_listen) (void *ctx, void (*callback)(void *ctx, const ddb_audio_data_t *data));
+
+    /// Unregister from getting visualization wave data.
+    /// @param ctx The pointer used with the matching @c vis_waveform_listen call.
     void (*vis_waveform_unlisten) (void *ctx);
 
-    // This method used to subscribe to updates of FFT size 256
-    // This is no longer available, and starting with API 1.15 does nothing.
-    // Please use vis_spectrum_listen2
+    /// This method does nothing starting with API 1.15.
+    /// Please use @c vis_spectrum_listen2 instead.
     void (*vis_spectrum_listen) (void *ctx, void (*callback)(void *ctx, const ddb_audio_data_t *data)) DEPRECATED_115;
 
     void (*vis_spectrum_unlisten) (void *ctx);
 
-    // this is useful to mute/unmute audio, and query the muted status, from
-    // plugins, without touching the volume control
+    /// Mute/unmute audio without touching volume control.
     void (*audio_set_mute) (int mute);
+
+    /// @return the value set with @c audio_set_mute
     int (*audio_is_mute) (void);
 
     // this is useful for prompting a user when he attempts to quit the player
@@ -1613,25 +1628,35 @@ typedef struct {
 #endif
 
 #if (DDB_API_LEVEL >= 15)
-    /// Register for getting continuous spectrum (frequency domain) data,
-    /// mainly for visualization
-    /// @param ctx Associated context, must be unique
-    /// @param callback The callback which will be called every time new fft data is ready
+    /// Register for getting spectrum (frequency domain) visualization data.
     ///
     /// Use the @c nframes field in the @c data to get the number of frequency samples.
     ///
-    /// Max number of channels is DDB_FREQ_MAX_CHANNELS.
+    /// Max number of channels is @c DDB_FREQ_MAX_CHANNELS.
     ///
     /// The samples are planar-ordered (non-interleaved).
     ///
-    /// Use vis_spectrum_unlisten to unregister.
+    /// Use @c vis_spectrum_unlisten to unregister.
     ///
     /// Callback will run on a background thread, so make sure to synchronize the data access.
+    /// @param ctx Associated context, must be unique
+    /// @param callback The callback which will be called every time new fft data is ready
     void (*vis_spectrum_listen2) (void *ctx, void (*callback)(void *ctx, const ddb_audio_data_t *data));
 
-
+    /// This method will inserts directory contents at the specified point in playlist.
+    /// Improvements from previous revision: flags, and callback with result parameter.
+    /// @param visibility See @c plt_load2 summary.
+    /// @param flags A combination of flags from @c ddb_insert_file_flags_t enum.
+    /// @param plt Playlist to insert files to.
+    /// @param after The item to insert new items after. Must exist in the playlist.
+    /// @param dirname Directory path.
+    /// @param pabort A pointer to an integer, which can be set to 1 to abort the execution. Can be NULL.
+    /// @param callback The callback function that will be called for each file. It must return 0 to insert the file, or -1 to skip the file. Can be NULL.
+    /// @param user_data A pointer to arbitrary data to pass to the callback.
+    /// @return the last inserted item.
     ddb_playItem_t *(*plt_insert_dir3) (
         int visibility,
+        uint32_t flags,
         ddb_playlist_t *plt,
         ddb_playItem_t *after,
         const char *dirname,
@@ -1679,7 +1704,8 @@ enum {
 #endif
 
 #if (DDB_API_LEVEL >= 5)
-    // A menu item should be added to the menu(s), if the item name contains slash symbol(s)
+    // Add item to the menus.
+    // When constructing the main menu, only add if the action name contains a slash.
     DB_ACTION_ADD_MENU = 1 << 6,
 #endif
 
@@ -1746,7 +1772,28 @@ enum {
     // Tells that the plugin implements ddb_decoder2_t interface
     DDB_PLUGIN_FLAG_IMPLEMENTS_DECODER2 = 4,
 #endif
+
+#if (DDB_API_LEVEL >= 15)
+    DDB_PLUGIN_FLAG_ASYNC_STOP = 8,
+#endif
 };
+#endif
+
+#if (DDB_API_LEVEL >= 15)
+/// Reserved command IDs, usable with @c plugin.command method.
+/// The commands with numbers 1000 and up are reserved for internal use.
+enum {
+    // Stop plugin asynchronously.
+    // The plugin is expected to handle this command, if it has the flag @c DDB_PLUGIN_FLAG_ASYNC_STOP.
+    // The command 2nd argument is a void (^completion_block)(void).
+    DDB_COMMAND_PLUGIN_ASYNC_STOP = 1000,
+};
+
+typedef struct ddb_response_s {
+    size_t _size;
+    int (*append)(struct ddb_response_s *response, char *bytes, size_t size);
+} ddb_response_t;
+
 #endif
 
 // base plugin interface
@@ -1793,15 +1840,24 @@ typedef struct DB_plugin_s {
     // in "started" state
     int (*disconnect) (void);
 
-    // exec_cmdline may be called at any moment when user sends commandline to player
-    // can be NULL if plugin doesn't support commandline processing
-    // cmdline is 0-separated list of strings, guaranteed to have 0 at the end
-    // cmdline_size is number of bytes pointed by cmdline
-    // fd is file descriptor, send command output there (f. ex. by using dprintf)
-    // returns 0 on success or error code on failure
-    int (*exec_cmdline) (const char *cmdline, int cmdline_size, int fd);
+#if (DDB_API_LEVEL >= 15)
+    /// Ask the plugin to execute an arbitrary command line
+    ///
+    /// @c exec_cmdline may be called at any moment when the user sends commandline to player.
+    /// A plugin must have api_vminor>=15 in order to use this API.
+    /// The method can be NULL if plugin doesn't support commandline processing.
+    /// @param cmdline is 0-separated list of strings, guaranteed to have 0 at the end
+    /// @param cmdline_size is number of bytes pointed by cmdline
+    /// @param response the interface to create a response for the caller
+    /// @return 0 on success or error code on failure
+    int (*exec_cmdline) (const char *cmdline, int cmdline_size, ddb_response_t *response);
+#else
+    /// Don't use this API.
+    /// It is kept here to guarantee the API-level backwards compatibility, but this method will never be called.
+    int (*exec_cmdline) (const char *cmdline, int cmdline_size);
+#endif
 
-    // @returns linked list of actions for the specified track
+    // @return linked list of actions for the specified track
     // when it is NULL -- the plugin must return list of all actions
     DB_plugin_action_t* (*get_actions) (DB_playItem_t *it);
 
@@ -2154,34 +2210,25 @@ typedef struct DB_playlist_s {
 
 // NOTE: Media source API is a work in progress, and is disabled in this version of source code.
 // This is to prevent plugin devs from releasing media source plugins, before this API is finalized.
-// Use the appropriate development branch to test media source plugins.
+// Please use the appropriate development branch to test media source plugins.
+// The media source API is a subject to change.
 #if (DDB_API_LEVEL >= 15)
 
 // Mediasource plugin
 // The purpose is to provide access to external media sources.
 // It's used for the built-in media library plugin.
 
-typedef struct ddb_medialib_item_s {
-    const char *text; // e.g. the genre
-
-    DB_playItem_t *track; // NULL in non-leaf nodes
-
-    struct ddb_medialib_item_s *next;
-    struct ddb_medialib_item_s *children;
-    int num_children;
-    // FIXME: add padding / size for extensibility -- this structure is inheritable.
-} ddb_medialib_item_t;
-
-/// Numbers from 0 to 999 are reserved to base interface, as declared in deadbeef.h
+/// Numbers from 0 to 1023 are reserved to base interface, as declared in deadbeef.h
 typedef enum {
     DDB_MEDIASOURCE_EVENT_CONTENT_DID_CHANGE = 0,
     DDB_MEDIASOURCE_EVENT_STATE_DID_CHANGE = 1,
     DDB_MEDIASOURCE_EVENT_ENABLED_DID_CHANGE = 2,
     DDB_MEDIASOURCE_EVENT_SELECTORS_DID_CHANGE = 3,
+    DDB_MEDIASOURCE_EVENT_OUT_OF_SYNC = 4, // Needs refresh -- e.g. if there are new files in music folders
 } ddb_mediasource_event_type_t;
 
-/// Numbers from 1000 and up can be used by the plugins for additional events.
-#define DDB_MEDIASOURCE_EVENT_MAX 1000
+/// Numbers from 1024 and up can be used by the plugins for additional events.
+#define DDB_MEDIASOURCE_EVENT_MAX 1023
 
 typedef enum {
     DDB_MEDIASOURCE_STATE_IDLE,
@@ -2192,15 +2239,35 @@ typedef enum {
 } ddb_mediasource_state_t;
 
 typedef void (* ddb_medialib_listener_t)(ddb_mediasource_event_type_t event, void *user_data);
-typedef void *ddb_mediasource_source_t;
-typedef void *ddb_mediasource_list_selector_t;
 
+/// Each media source plugin can create source instances for you, by calling @c create_source.
+typedef void *ddb_mediasource_source_t;
+
+/// Abstract type representing a selector for media source query (e.g. Albums, Artists, Genres)
+/// Use @c get_selectors_list method to get the list of available selectors.
+/// Use the values to specify the selector when calling @c create_item_tree.
+typedef struct ddb_mediasource_list_selector_s *ddb_mediasource_list_selector_t;
+
+/// Opaque struct representing the extended API of the underlying plugin. Use @c get_extended_api method to get it.
+typedef struct ddb_mediasource_api_s ddb_mediasource_api_t;
+
+/// Opaque struct representing the item in a tree. Use tree_item_* set of functions to access the values.
+typedef struct ddb_medialib_item_s ddb_medialib_item_t;
+
+/// NOTE: never "subclass" the DB_mediasource_t struct - this is not backwards compatible.
+/// Instead, implement the get_extended_api method to provide access to the plugin API.
 typedef struct {
     DB_plugin_t plugin;
 
+    /// Get access to the underlying plugin API.
+    /// The returned pointer would have to be cast to the plugin's API structure type.
+    ddb_mediasource_api_t *(*get_extended_api) (void);
+
+    /// The name of the source (e.g. "Media Library").
+    /// This could be used by a UI plugin to display in a list of all available sources.
     const char *(*source_name) (void);
 
-    /// Creates a media source. It must be freed after use by calling the @c free_source
+    /// Create a media source instance. It must be freed after use by calling the @c free_source
     /// @param source_path: a unique name to identify the instance, this will be used to prefix individual instance configuration files, caches, etc.
     ddb_mediasource_source_t (*create_source) (const char *source_path);
 
@@ -2211,16 +2278,17 @@ typedef struct {
     void (*set_source_enabled) (ddb_mediasource_source_t source, int enabled);
 
     /// Get the enabled state
-    int (*get_source_enabled) (ddb_mediasource_source_t source);
+    int (*is_source_enabled) (ddb_mediasource_source_t source);
 
     /// This tells the source to start operating with the current configuration.
-    /// It is supposed to cancel any current operation, and get the new state with the new settings.
-    /// For example, the medialib plugin is supposed to start the scanner (if enabled).
+    /// It may cancel any current operation, and get the new state with the new settings.
+    /// For example, the medialib plugin is supposed to start the scanner with the current / new settings.
     /// This source is not supposed to run any operations automatically, and the caller is expected to call refresh
     /// every time when the plugin configuration changes.
+    /// However, when the source is created - it's may load its initial state.
     void (*refresh) (ddb_mediasource_source_t source);
 
-    /// A selector is a token, which can be used to find out all top level items that can be queries from the library.
+    /// A selector is a token, which can be used to find out all top level items that can be queried from the library.
     /// For example - Folders, Albums, Artists, Genres.
     /// @return the list of selectors. The caller must free the list after use, by calling @c free_selectors
     ddb_mediasource_list_selector_t *(*get_selectors_list) (ddb_mediasource_source_t source);
@@ -2231,16 +2299,17 @@ typedef struct {
     /// Get selector name
     const char *(*selector_name) (ddb_mediasource_source_t source, ddb_mediasource_list_selector_t selector);
 
-    /// Add a listener
+    /// Add event listener. Your callback function will be called every time some event occurs. Such as state change, content update, and so on.
+    /// The callback funtion may be executed on background thread, so make sure to dispatch to main to update UI.
     int (*add_listener) (ddb_mediasource_source_t source, ddb_medialib_listener_t listener, void *user_data);
 
-    /// Remove a listener
+    /// Remove event listener
     void (*remove_listener) (ddb_mediasource_source_t source, int listener_id);
 
     /// Create a tree of items for the given @c selector.
     /// The tree is immutable, and can be used by the caller in any way it needs.
     /// The caller must free the returned object by calling the @c free_list
-    ddb_medialib_item_t * (*create_item_tree) (ddb_mediasource_source_t source, ddb_mediasource_source_t selector, const char *filter);
+    ddb_medialib_item_t * (*create_item_tree) (ddb_mediasource_source_t source, ddb_mediasource_list_selector_t selector, const char *filter);
 
     /// Free the tree created by the @c create_list
     void (*free_item_tree) (ddb_mediasource_source_t source, ddb_medialib_item_t *list);
@@ -2252,18 +2321,31 @@ typedef struct {
     // to preserve selected/expanded state across medialib refreshes.
 
     /// Returns 1 if the specified item is selected, 0 otherwise.
-    int (*is_tree_item_selected) (ddb_mediasource_source_t source, ddb_medialib_item_t *item);
+    int (*is_tree_item_selected) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item);
 
     /// Select/delesect the specified item
-    void (*set_tree_item_selected) (ddb_mediasource_source_t source, ddb_medialib_item_t *item, int selected);
+    void (*set_tree_item_selected) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item, int selected);
 
     /// Returns 1 if the specified item is expanded, 0 otherwise
-    int (*is_tree_item_expanded) (ddb_mediasource_source_t source, ddb_medialib_item_t *item);
+    int (*is_tree_item_expanded) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item);
 
     /// Expand/collapse the specified item
-    void (*set_tree_item_expanded) (ddb_mediasource_source_t source, ddb_medialib_item_t *item, int expanded);
+    void (*set_tree_item_expanded) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item, int expanded);
 
-    // FIXME: add padding / size for extensibility -- this structure is inheritable.
+    /// Returns the text associated with the item, e.g. a genre value, or the artist, etc.
+    const char *(*tree_item_get_text) (const ddb_medialib_item_t *item);
+
+    /// Returns the track associated with the item. Can be null - typically for non-leaf nodes.
+    ddb_playItem_t *(*tree_item_get_track) (const ddb_medialib_item_t *item);
+
+    /// Returns the next item in the list.
+    const ddb_medialib_item_t *(*tree_item_get_next) (const ddb_medialib_item_t *item);
+
+    /// Returns the first item in the list of child items.
+    const ddb_medialib_item_t *(*tree_item_get_children) (const ddb_medialib_item_t *item);
+
+    /// Returns the number of children of this item.
+    int (*tree_item_get_children_count) (const ddb_medialib_item_t *item);
 } DB_mediasource_t;
 
 #endif

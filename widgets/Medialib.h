@@ -21,8 +21,9 @@
 
 class MedialibSorted : public QSortFilterProxyModel {
     Q_OBJECT
+    DB_mediasource_t *ms;
 public:
-    MedialibSorted (QObject *parent = nullptr);
+    MedialibSorted (QObject *parent = nullptr, DB_mediasource_t *ms_in = nullptr);
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 };
 
@@ -80,7 +81,6 @@ private:
     QStringList curr_item;
 
     // Action
-    QStringList folders;
     QAction *set_up_folders= nullptr;
 
     // Dialog

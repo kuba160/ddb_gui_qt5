@@ -21,39 +21,35 @@ void MediasourceModel::source_listener(ddb_mediasource_event_type_t event, void 
         emit static_cast<MediasourceModel *>(user_data)->mediasource_selectors_changed();
     }
     else if (event == DDB_MEDIASOURCE_EVENT_STATE_DID_CHANGE) {
-        emit static_cast<MediasourceModel *>(user_data)->mediasource_content_changed();
+        //emit static_cast<MediasourceModel *>(user_data)->mediasource_content_changed();
     }
 }
 
 MediasourceModel::MediasourceModel(QObject *parent, DBApi *Api, QString plugname) : QAbstractItemModel(parent), DBWidget(nullptr,Api) {
     ms = MS_P(api->deadbeef->plug_get_for_id(plugname.toUtf8()));
     if (ms && plugname == "medialib") {
-        mlp = MLP_P(ms);
+        mlp = MLP_P(ms->get_extended_api());
     }
     if (ms->plugin.type != DB_PLUGIN_MEDIASOURCE) {
         qDebug() << "plugin " << plugname << " is not a mediasource!";
         return;
     }
-    medialib_name = parent->property("internalName").toString().append("-medialib");
-    source = ms->create_source(medialib_name.toUtf8());
+    medialib_name = "deadbeef";//parent->property("internalName").toString().append("-qt5");
+    source = ms->create_source(medialib_name.toUtf8().constData());
     connect(this, SIGNAL(mediasource_content_changed()), this, SLOT(updateCurrentState()));
-    connect(this, SIGNAL(mediasource_content_changed()), this, SLOT(updateSelectors()));
+    //connect(this, SIGNAL(mediasource_content_changed()), this, SLOT(updateSelectors()));
     listener = ms->add_listener(source,source_listener,this);
 
     updateSelectors();
 
-    size_t folsize;
-    char **fout = mlp->get_folders(source, &folsize);
-    size_t i = 0;
-    while (fout && i < folsize) {
-        folders.append(fout[i++]);
+    if (!ms->is_source_enabled(source)) {
+        ms->set_source_enabled(source, true);
     }
 
+    qDebug() << getDirectories();
 
     cover_size = QSize(24,24);
 
-    ms->set_source_enabled(source, true);
-    ms->refresh(source);
 }
 
 MediasourceModel::~MediasourceModel() {
@@ -64,6 +60,7 @@ MediasourceModel::~MediasourceModel() {
         currentStateClean(cs_old);
     }
     ms->remove_listener(source,listener);
+    ms->free_source(source);
 }
 
 void MediasourceModel::currentStateClean(CurrentState_t *curr_state) {
@@ -95,6 +92,7 @@ void MediasourceModel::currentStateClean(CurrentState_t *curr_state) {
 
 void MediasourceModel::updateCurrentState() {
     if (getMediasourceState() != DDB_MEDIASOURCE_STATE_IDLE) {
+        emit dataChanged(createIndex(0,0,nullptr),createIndex(0,0,nullptr));
         return;
     }
     beginResetModel();
@@ -107,26 +105,6 @@ void MediasourceModel::updateCurrentState() {
 
     // create new "current state", cache covers and replace the old one TODO???
     cs = new CurrentState_t;
-
-    // update folders
-    QVector<const char*> vec;
-    if (folders.length() > 0) {
-        foreach(QString str, folders) {
-            vec.append(strdup(str.toUtf8().constData()));
-            qDebug() << str;
-        }
-    }
-    else {
-        vec.append(nullptr);
-    }
-    if (mlp) {
-        mlp->set_folders(source,vec.data(),folders.length() ? folders.length() : 1);
-    }
-    if (folders.length()) {
-        for (int i = 0; i < folders.length(); i++) {
-            free((void *) vec[i]);
-        }
-    }
 
     cs->list = ms->create_item_tree(source,selectors_internal[selector], search_query.isEmpty() ? " " : search_query.toUtf8());
 
@@ -192,13 +170,15 @@ void MediasourceModel::onCoverReceived() {
         QImage *img = emitter->result();
         if (img && index.isValid() && index.internalPointer()) {
             ddb_medialib_item_t *root = static_cast<ddb_medialib_item_t *>(index.internalPointer());
-            if (root->children && root->children->track) {
-                if (state->cover_arts.contains(root->children->track)) {
+            DB_playItem_t *it = ms->tree_item_get_children_count(root) ? ms->tree_item_get_track(
+                        ms->tree_item_get_children(root)) : nullptr;
+            if (it) {
+                if (state->cover_arts.contains(it)) {
                     // fix for multiple cover art searches
                     api->coverArt_unref(img);
                 }
                 else {
-                    state->cover_arts.insert(root->children->track, img);
+                    state->cover_arts.insert(it, img);
                 }
             }
         }
@@ -219,18 +199,19 @@ QModelIndex MediasourceModel::index(int row, int column, const QModelIndex &pare
         // go into specific item and create model index
         if (parent.isValid() && parent.internalPointer()) {
             ddb_medialib_item_t *root = static_cast<ddb_medialib_item_t *>(parent.internalPointer());
-            ddb_medialib_item_t *child = root->children;
+            const ddb_medialib_item_t *child = ms->tree_item_get_children(root);
             int i = row;
             while (i) {
-                if (!child->next) {
+                const ddb_medialib_item_t *child_new = ms->tree_item_get_next(child);
+                if (!child_new) {
                     qDebug() << "too much!";
                     break;
                 }
-                child = child->next;
+                child = child_new;
                 i--;
             }
             cs->child_to_parent.insert(child,parent);
-            return createIndex(row,column,child);
+            return createIndex(row,column,(void*)child);
         }
     }
     if (row == 0 && column == 0 && !parent.isValid()) {
@@ -248,8 +229,9 @@ QModelIndex MediasourceModel::index(int row, int column, const QModelIndex &pare
 int MediasourceModel::rowCount(const QModelIndex &parent) const {
     if (parent.isValid() && parent.internalPointer()) {
         ddb_medialib_item_t *it = static_cast<ddb_medialib_item_t *>(parent.internalPointer());
-        return it->num_children;
+        return ms->tree_item_get_children_count(it);
     }
+
     return 1;
 }
 
@@ -272,14 +254,14 @@ QVariant MediasourceModel::data(const QModelIndex &index, int role) const {
         }
         if (index.isValid() && index.internalPointer()) {
             ddb_medialib_item_t *it = static_cast<ddb_medialib_item_t *>(index.internalPointer());
-            ret = it->text;
+            ret = ms->tree_item_get_text(it);
         }
         break;
     }
     case Qt::DecorationRole: {
         if (index.isValid() && index.internalPointer()) {
             ddb_medialib_item_t *it = static_cast<ddb_medialib_item_t *>(index.internalPointer());
-            DB_playItem_t *playit = it->children ? it->children->track : nullptr;
+            DB_playItem_t *playit = ms->tree_item_get_children_count(it) ? ms->tree_item_get_track(ms->tree_item_get_children(it)) : nullptr;
             if (playit && cs->cover_arts.contains(playit)) {
                 if (cs->cover_arts_pixmaps.contains(playit)) {
                     ret = cs->cover_arts_pixmaps.value(playit);
@@ -351,20 +333,20 @@ playItemList MediasourceModel::tracks(QModelIndexList &l) {
 playItemList MediasourceModel::tracks(ddb_medialib_item_t *l) {
     //list_mutex_recursive->lock();
     playItemList pil;
-    ddb_medialib_item_t *child = l->children;
+    const ddb_medialib_item_t *child = ms->tree_item_get_children(l);//l->children;
     while (child) {
-        playItemList pil_child = tracks(child);
+        playItemList pil_child = tracks((ddb_medialib_item_t *)child);
         foreach(DB_playItem_t *it, pil_child) {
             if (!pil.contains(it)) {
                 pil.append(it);
                 DBAPI->pl_item_ref(it);
             }
         }
-        child = child->next;
+        child = ms->tree_item_get_next(child);//child->next;
     }
-    if (l->track && !pil.contains(l->track)) {
-        DBAPI->pl_item_ref(l->track);
-        pil.append(l->track);
+    if (ms->tree_item_get_track(l) && !pil.contains(ms->tree_item_get_track(l))) {
+        DBAPI->pl_item_ref(ms->tree_item_get_track(l));
+        pil.append(ms->tree_item_get_track(l));
     }
     //list_mutex_recursive->unlock();
     return pil;
@@ -388,37 +370,41 @@ void MediasourceModel::setSearchQuery(const QString str) {
     //onListenerCallback();
 }
 
-void MediasourceModel::setDirectories(QStringList folders_inc) {
+QStringList MediasourceModel::getDirectories() {
+    QStringList l;
+    size_t count;
+    if (mlp) {
+        char **folders = mlp->get_folders(source, &count);
+        if (folders) {
+            for (size_t i = 0; i < count; i++) {
+                l.append(folders[i]);
+            }
+        }
+        mlp->free_folders(source, folders, count);
+    }
+    return l;
+}
+
+void MediasourceModel::setDirectories(QStringList folders) {
     if (!mlp) {
         qDebug() << "MediasourceModel: setDirectories called but not supported on this model!";
         return;
     }
-    folders = folders_inc;
 
     QVector<const char*> vec;
     if (folders.length() > 0) {
         foreach(QString str, folders) {
             vec.append(strdup(str.toUtf8().constData()));
-            qDebug() << str;
+        }
+        mlp->set_folders(source,vec.data(),folders.length());
+        foreach(const char* str, vec) {
+            free((char *) str);
         }
     }
     else {
-        vec.append(strdup(""));
-        folders_inc.append("");
+        mlp->set_folders(source, nullptr, 0);
     }
-    if (mlp) {
-        mlp->set_folders(source,vec.data(),folders.length() ? folders.length() : 1);
-    }
-    if (folders.length()) {
-        for (int i = 0; i < folders.length(); i++) {
-            qDebug() << "mediasourcemodel[" << medialib_name <<"]: added " << vec[i];
-            free((void *) vec[i]);
-        }
-    }
-    //mediasource_model_reset = true;
     ms->refresh(source);
-    //updateCurrentState();
-    //onListenerCallback();
 }
 
 QModelIndex MediasourceModel::indexByPath(QStringList &l) {
@@ -427,10 +413,10 @@ QModelIndex MediasourceModel::indexByPath(QStringList &l) {
     ddb_medialib_item_t *it = cs->list;
     int row = 0;
     while (it && i < l.length()) {
-        if (l[i] == QString(it->text)) {
+        if (l[i] == QString(ms->tree_item_get_text(it))) {
             idx = index(row,0,idx);
             if (i+1 < l.length()) {
-                it = it->children;
+                it = (ddb_medialib_item_t *) ms->tree_item_get_children(it);
                 row = 0;
                 i++;
             }
@@ -439,11 +425,11 @@ QModelIndex MediasourceModel::indexByPath(QStringList &l) {
             }
         }
         else {
-            it = it->next;
+            it = (ddb_medialib_item_t *) ms->tree_item_get_next(it);
             row++;
         }
     }
-    if (it && l.last() == QString(it->text)) {
+    if (it && l.last() == QString(ms->tree_item_get_text(it))) {
         return idx;
     }
     return QModelIndex();

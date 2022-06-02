@@ -10,7 +10,7 @@
 #include "medialib.h"
 
 #define MS_P(X) (static_cast<DB_mediasource_t *>((void *)X))
-#define MLP_P(X) (static_cast<ddb_medialib_plugin_t *>((void *)X))
+#define MLP_P(X) (static_cast<ddb_medialib_plugin_api_t *>((void *)X))
 
 typedef struct CurrentState_s {
 public:
@@ -21,7 +21,7 @@ public:
     QHash<DB_playItem_t *, QPixmap> cover_arts_pixmaps;
     //QMutex cover_arts_lock;
     QHash<QFutureWatcher<QImage *>*, QModelIndex> future_list;
-    QHash<void *,QModelIndex> child_to_parent;
+    QHash<const void *,QModelIndex> child_to_parent;
     QSet<DB_playItem_t *> cover_enqueued;
 } CurrentState_t;
 
@@ -37,6 +37,7 @@ public:
     ddb_mediasource_state_t getMediasourceState();
     QStringList getSelectors();
 
+    QStringList getDirectories();
     void setDirectories(QStringList folders);
 
     static void source_listener(ddb_mediasource_event_type_t event, void *user_data);
@@ -48,11 +49,11 @@ public:
     void currentStateClean(CurrentState_t *cs);
 
     // Model
-    QModelIndex index(int row, int column, const QModelIndex &parent) const;
-    int rowCount(const QModelIndex &parent) const;
-    int columnCount(const QModelIndex &parent) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    QModelIndex parent(const QModelIndex &index) const;
+    QModelIndex index(int row, int column, const QModelIndex &parent) const override;
+    int rowCount(const QModelIndex &parent) const override;
+    int columnCount(const QModelIndex &parent) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QModelIndex parent(const QModelIndex &index) const override;
 signals:
     // signals emitted from mediasource plugin
     // process them in updateCurrentState/Selectors to not block the plugin
@@ -73,7 +74,7 @@ private slots:
     void onCoverReceived();
 protected:
     DB_mediasource_t *ms = nullptr;
-    ddb_medialib_plugin_t *mlp = nullptr;
+    ddb_medialib_plugin_api_t *mlp = nullptr;
     ddb_mediasource_source_t source;
     int listener;
 
@@ -95,7 +96,6 @@ protected:
 #else
     //QMutex *list_mutex_recursive;
 #endif
-    QStringList folders;
     QSize cover_size;
 
 };
