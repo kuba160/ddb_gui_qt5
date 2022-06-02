@@ -86,6 +86,15 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) : QObject(parent) {
     // Current playing model
     cpm = new CurrentPlayItemModel(nullptr, this);
 
+    // Accent color watcher
+#ifdef __linux__
+    QString path = QStandardPaths::locate(QStandardPaths::ConfigLocation, "kdeglobals");
+    if (!path.isEmpty()) {
+        kglobal_watcher = new QFileSystemWatcher(this);
+        kglobal_watcher->addPath(path);
+        connect(kglobal_watcher, SIGNAL(fileChanged(QString)), this, SLOT(onKdeglobalsChanged(QString)));
+    }
+#endif
 }
 
 DBApi::~DBApi() {
@@ -514,11 +523,51 @@ QColor DBApi::getAccentColor() {
         return c.value<QColor>();
     }
     else {
-        QColor c = QGuiApplication::palette().color(QPalette::Active, QPalette::Highlight);
-        // TODO dirty hack to get color closer to accent color (on KDE) by lighting it up a bit
-        // does not perform if color is light enough
-        c.setHsv(c.hue(),c.saturation(),c.value() < 133 ? c.value()+64 : c.value());
-        return c;
+        if (!m_accent_color.isValid()) {
+            if (kglobal_watcher) {
+                m_accent_color = kde_get_accent_color();
+            }
+            else {
+                m_accent_color = QGuiApplication::palette().color(QPalette::Active, QPalette::Highlight);
+                // TODO dirty hack to get color closer to accent color (on KDE) by lighting it up a bit
+                // does not perform if color is light enough
+                m_accent_color.setHsv(m_accent_color.hue(),
+                                      m_accent_color.saturation(),
+                                      m_accent_color.value() < 133 ?
+                                          m_accent_color.value()+64 :
+                                          m_accent_color.value());
+            }
+        }
+        return m_accent_color;
+    }
+}
+
+QColor DBApi::kde_get_accent_color() {
+    QColor c;
+    QProcess process;
+    process.start("kreadconfig5", {"--group", "General", "--key", "AccentColor"}, QIODevice::ReadOnly);
+    process.waitForFinished();
+    QByteArray ar = process.readAll();
+    QString s(ar.data());
+    QStringList l = s.split(",");
+    if (l.length() == 3) {
+        c.setRed(l[0].toInt());
+        c.setGreen(l[1].toInt());
+        c.setBlue(l[2].toInt());
+    }
+    return c;
+}
+
+void DBApi::onKdeglobalsChanged(QString path) {
+    if (!kglobal_watcher->files().contains(path)) {
+        if (QFile::exists(path)) {
+            kglobal_watcher->addPath(path);
+        }
+    }
+    QColor color_new = kde_get_accent_color();
+    if (m_accent_color != color_new) {
+        m_accent_color = color_new;
+        emit accentColorChanged();
     }
 }
 

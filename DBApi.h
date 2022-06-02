@@ -22,6 +22,8 @@
 #include <QClipboard>
 #include <QAbstractListModel>
 #include <QLineSeries>
+#include <QFileSystemWatcher>
+
 
 // DBApi version
 #define DBAPI_VMAJOR 0
@@ -197,9 +199,15 @@ private:
     QList<void*> scope_list;
     static void waveform_callback (void * ctx, const ddb_audio_data_t *data);
 
+    // Accent color watcher
+    QFileSystemWatcher *kglobal_watcher = nullptr;
+    QColor m_accent_color;
+    QColor kde_get_accent_color();
+
 private slots:
     void onScopeDestroyed(QObject *obj);
     void onCurrentPlaylistChanged();
+    void onKdeglobalsChanged(QString path);
 
 public:
     // Volume (in dB)
