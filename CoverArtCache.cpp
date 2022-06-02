@@ -147,10 +147,14 @@ QImage * CoverArtCache::cover_art_load(CoverArtCache *cac, DB_playItem_t *it, QS
             ret = n;
         }
     }
+    else {
+        // scaled cover available in cache
+        ret = cac->getCoverArt(it,size);
+    }
 
     if (!ret) {
-        //qDebug() << "CoverArtCache: cover art not found, using default";
-        ret = cac->default_image;
+        // cover art scaled, cached on getCoverArt
+        return cac->getCoverArt(nullptr, size);
     }
     return ret;
 }
@@ -224,12 +228,34 @@ void CoverArtCache::cacheUnrefTrack(DB_playItem_t *it) {
 }
 
 QImage * CoverArtCache::getCoverArt(DB_playItem_t *it, QSize size) {
-    if (cache_path.contains(it) && cache.contains(coverSearchValue(cache_path.value(it),size))) {
-        QImage *img = cache.value(coverSearchValue(cache_path.value(it),size));
-        if (img) {
-            cacheRef(img);
+    coverSearch cs;
+    if (cache_path.contains(it)) {
+        cs = coverSearchValue(cache_path.value(it),size);
+        if (cache.contains(cs)) {
+            QImage *img = cache.value(coverSearchValue(cache_path.value(it),size));
+            if (img) {
+                cacheRef(img);
+            }
+            return img;
         }
-        return img;
+    }
+    else if (!it) {
+        cs = coverSearchValue(".default", size);
+        if (size.isValid()) {
+            if (cache.contains(coverSearchValue(".default", size))) {
+                    return cache.value(cs);
+            }
+            else {
+                // perform scaling, it should be done on cover_art_load thread
+                QImage scaled = default_image->scaled(size,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+                QImage *n = new QImage(scaled);
+                cacheCoverArt(cs,n);
+                return n;
+            }
+        }
+        else {
+            return default_image;
+        }
     }
     return nullptr;
 }
