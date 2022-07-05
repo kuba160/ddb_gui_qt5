@@ -284,9 +284,10 @@ void ActionManager::playItemContextMenu(QWidget *parent, QPoint p) {
                 uint32_t flags = ait->property("Flags").toULongLong();
                 if (((flags & (DB_ACTION_SINGLE_TRACK)) || (flags & DB_ACTION_MULTIPLE_TRACKS)) &&
                     !(flags & DB_ACTION_COMMON) && !(flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST)) {
-                    if (ait->objectName() == "add_to_playback_queue" || ait->objectName() == "remove_from_playback_queue") {
+                    if (ait->objectName() == "add_to_playback_queue" || ait->objectName() == "remove_from_playback_queue" || ait->objectName() == "add_to_front_of_playback_queue") {
                         continue;
                     }
+                    // TODO: add nested menus
                     ctxMenu->addAction(ait);
                     if (!parent->property("playItemsSelected").toInt()) {
                         ait->setEnabled(false);
