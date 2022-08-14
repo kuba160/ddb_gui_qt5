@@ -35,12 +35,16 @@ public:
     Q_PROPERTY(int scale READ getScale WRITE setScale NOTIFY scaleChanged);
     int getScale();
 
+    Q_PROPERTY(bool channel_offset READ getChannelOffset WRITE setChannelOffset NOTIFY channelOffsetChanged);
+    bool getChannelOffset();
+
     void process(const ddb_audio_data_t *data);
 
 public slots:
     void setSeries(int num, QtCharts::QAbstractSeries *s);
     void setPaused(bool pause);
     void setScale(int s);
+    void setChannelOffset(bool on);
 
 signals:
     void fragmentDurationChanged();
@@ -48,6 +52,7 @@ signals:
     void seriesWidthChanged();
     void pausedChanged();
     void scaleChanged();
+    void channelOffsetChanged();
 private:
     void *scope;
     QList<QXYSeries *> series;
@@ -57,6 +62,7 @@ private:
     bool m_scale_changed;
     bool m_mode_changed;
     bool m_fragment_duration_changed;
+    bool m_channel_offset;
 
     QVector<QPointF> *data_left = nullptr;
     bool waveform_mono_set = false;

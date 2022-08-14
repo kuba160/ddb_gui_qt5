@@ -48,8 +48,8 @@ Item {
 
             ValueAxis {
                 id: axisRadial
-                min: -1
-                max: 1.2 // bigger than 1 to avoid clipping??
+                min: scope.channel_offset ? -1  : -0.6
+                max: scope.channel_offset ? 1.2 : 0.6 // bigger than 1 to avoid clipping??
                 labelsVisible: false
                 gridVisible: false
                 lineVisible: false
@@ -71,6 +71,7 @@ Item {
                 scope.mode = settings.getValue(name_i(), "mode", 1)
                 scope.fragment_duration = settings.getValue(name_i(), "fragment_duration", 100)
                 scope.scale = settings.getValue(name_i(), "scale", 1)
+                scope.channel_offset = settings.getValue(name_i(), "channel_offset", 1)
 
                 scope.paused = Qt.binding(function() { return !main.visible})
 
@@ -192,6 +193,13 @@ Item {
                 }
             }
 
+            function changeChannelOffset(new_offset) {
+                if (scope.fragment_duration !== new_offset) {
+                    scope.channel_offset = new_offset
+                    settings.setValue(name_i(), "channel_offset", new_offset)
+                }
+            }
+
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -249,6 +257,15 @@ Item {
                             }
                             onObjectAdded: rend_menu.insertItem(index, object)
                             onObjectRemoved: rend_menu.removeItem(object)
+                        }
+                        MenuItem {
+                            text: qsTr("Channel offset")
+                            checkable: true
+                            checked: scope.channel_offset
+                            onTriggered: {
+                                changeChannelOffset(!scope.channel_offset)
+                            }
+                            ActionGroup.group: channelGroup
                         }
                     }
                     Menu {

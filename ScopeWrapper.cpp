@@ -18,6 +18,7 @@ ScopeWrapper::ScopeWrapper(QObject *parent) : QObject(parent) {
     m_scale = 1;
     m_scale_changed = false;
     m_mode_changed = false;
+    m_channel_offset = true;
     //emit seriesWidthChanged();
     //qRegisterMetaType<ScopeWrapper>("ScopeWrapper");
 }
@@ -87,6 +88,17 @@ void ScopeWrapper::setScale(int s) {
         m_scale_changed = true;
         emit scaleChanged();
         emit seriesWidthChanged();
+    }
+}
+
+bool ScopeWrapper::getChannelOffset() {
+    return m_channel_offset;
+}
+
+void ScopeWrapper::setChannelOffset(bool on) {
+    if (on != m_channel_offset) {
+        m_channel_offset = on;
+        emit channelOffsetChanged();
     }
 }
 
@@ -160,7 +172,7 @@ void ScopeWrapper::process(const ddb_audio_data_t *data) {
         size_t bail_out_at = ((int) total_samples/m_scale/2)*2*m_scale;
         for (size_t i = 0; i < bail_out_at; i+=2*m_scale) {
             for (size_t right_chn = 0; right_chn < 2; right_chn++) {
-                float offset = right_chn ? -0.5 : 0.5;
+                float offset = m_channel_offset ? (right_chn ? -0.5 : 0.5) : 0;
                 float value = SCOPE->samples[i+right_chn]*0.5 + offset;
                 if (!right_chn) {
                     data_left->replace(i_out,QPointF(i_out,value));
