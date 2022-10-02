@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/VolumeSliderQuick.qml</file>
+        <file>qml/SeekSliderDeadbeef.qml</file>
+        <file>qml/TabBarQuick.qml</file>
+        <file>qml/PlaybackButtons.qml</file>
+        <file>qml/EqualizerQuick.qml</file>
+        <file>qml/PlaylistBrowserQuick.qml</file>
+        <file>qml/PlaylistQuick.qml</file>
+        <file>qml/PlaylistView.qml</file>
+        <file>qml/QueueManagerQuick.qml</file>
+        <file>qml/InfoQuick.qml</file>
+        <file>qml/Oscilloscope.qml</file>
+        <file>qml/OscilloscopePolar.qml</file>
+        <file>qml/Oscilloscope_qt6.qml</file>
+        <file>qml/OscilloscopePolar_qt6.qml</file>
+        <file>main.qml</file>
+        <file>qml/DBWidget.qml</file>
+        <file>qml/SeekSlider.qml</file>
+        <file>qml/CoverArt.qml</file>
+        <file>qml/VolumeSliderQuickDeadbeef.qml</file>
+        <file>qml/PluginBrowser.qml</file>
+        <file>qml/WidgetBrowser.qml</file>
+        <file>MainPane.qml</file>
+        <file>MainDrawer.qml</file>
+        <file>qml/ActionsTree.qml</file>
+    </qresource>
+</RCC>

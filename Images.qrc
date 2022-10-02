@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/scalable.svg</file>
+        <file>images/deadbeef.png</file>
+        <file>images/play_16.png</file>
+        <file>images/pause_16.png</file>
+    </qresource>
+</RCC>
