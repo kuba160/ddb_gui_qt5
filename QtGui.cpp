@@ -21,22 +21,28 @@
 */
 #include "QtGui.h"
 
-
 #include <unistd.h>
-#include <QApplication>
 
-#include "DBApi.h"
-#include "MainWindow.h"
-#include "QtGuiSettings.h"
-#include <QStyleFactory>
+#if USE_WIDGETS
+#include <QApplication>
+#include "widgets/MainWindow.h"
+#else
+#include <QGuiApplication>
+#include "PluginLoader.h"
+#endif
+
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QDebug>
+
 #include <QLocale>
 #include <QQuickWindow>
 
-#include "PluginLoader.h"
-#include "DeadbeefTranslator.h"
 
-#undef DBAPI
-#define DBAPI deadbeef_internal
+//#include "DeadbeefTranslator.h"
+
+
+#define DBAPI (deadbeef_internal)
 
 static int pluginStart();
 static int pluginStop();
@@ -46,14 +52,18 @@ DB_functions_t *deadbeef_internal;
 DB_qtgui_t qt_plugin;
 DB_gui_t &plugin = qt_plugin.gui;
 // TODO make casual plugin list
-DB_artwork_plugin_t *coverart_plugin;
-
 
 DBApi *api = nullptr;
+QQmlApplicationEngine *engine = nullptr;
 PluginLoader *pl = nullptr;
+//DeadbeefTranslator *tr = nullptr;*/
+#if USE_WIDGETS
 MainWindow *w = nullptr;
-DeadbeefTranslator *tr = nullptr;
 QApplication *app = nullptr;
+#else
+QGuiApplication *app = nullptr;
+#endif
+
 
 static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     return api->pluginMessage(id, ctx, p1, p2);
@@ -65,15 +75,35 @@ static int initializeApi() {
             usleep(10000);
         }
 
+        qmlRegisterUncreatableType<PlaybackControl>("DBApi", 1, 0, "Playback","");
+
         // provide dummy args for QApplication
         static char argv0[] = "a.out";
         static char *argv[] = {argv0, nullptr};
         static int argc = sizeof(argv) / sizeof(char*) - 1;
-        app = new QApplication(argc, argv);
-        QApplication::setOrganizationName("deadbeef");
-        QApplication::setApplicationName("DeaDBeeF");
-        dbtr = new DeadbeefTranslator(app);
-        app->installTranslator(dbtr);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+
+#if USE_WIDGETS
+app = new QApplication(argc, argv);
+#else
+app = new QGuiApplication(argc, argv);
+#endif
+        //QGuiApplication::setOrganizationName("deadbeef");
+        QGuiApplication::setApplicationName("qt5");
+        app->setWindowIcon(QIcon(":/images/deadbeef.png"));
+
+
+        engine = new QQmlApplicationEngine();
+        const QUrl url(QStringLiteral("qrc:/main.qml"));
+
+
+
+        /// TODO
+        /*dbtr = new DeadbeefTranslator(app);
+        app->installTranslator(dbtr);*/
 
         //QApplication::setStyle(QStyleFactory::create("breeze"));
 
@@ -96,35 +126,56 @@ static int initializeApi() {
         //QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
         #endif
 
-        // setup settings
-        QString file = QString("%1/%2") .arg(deadbeef_internal->get_system_dir(DDB_SYS_DIR_CONFIG), "qt5");
-        QtGuiSettings::setDefaultFormat(QSettings::IniFormat);
-        QtGuiSettings::setPath(QSettings::IniFormat, QSettings::UserScope, file);
+
+        QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+        format.setSwapInterval(0);
+        QSurfaceFormat::setDefaultFormat(format);
+
+        //if (!pl) {
+//            pl = new PluginLoader();
+//        }
+        api = new DBApi(nullptr, deadbeef_internal);
 
 
-        if (!pl) {
-            pl = new PluginLoader();
-        }
-        api = new DBApi(app, deadbeef_internal);
-        // initialize window
+#if USE_WIDGETS
         w = new MainWindow(nullptr, api);
-        plugin.plugin.message = pluginMessage_wrapper;
-    }
-    return 0;
-}
+        w->show();
 
-static int initializePluginLoader() {
-    if (!pl) {
-        pl = new PluginLoader();
-    }
-    if (!api) {
-        initializeApi();
+#endif
+//#else
+
+
+        // setup settings
+
+   //return 0;
+
+        // initialize window
+//        w = new MainWindow(nullptr, api);
+        plugin.plugin.message = pluginMessage_wrapper;
+#if USE_WIDGETS
+        engine->rootContext()->setContextProperty("app", app);
+#endif
+        engine->rootContext()->setContextProperty("api", api);
+        engine->rootContext()->setContextProperty("actions", &api->actions);
+        engine->rootContext()->setContextProperty("playback", &api->playback);
+        engine->rootContext()->setContextProperty("conf", &api->conf);
+        engine->rootContext()->setContextProperty("cover", &api->playlist);
+        engine->rootContext()->setContextProperty("playlist", &api->playlist);
+        engine->rootContext()->setContextProperty("eq", &api->eq);
+        engine->rootContext()->setContextProperty("_db_bg_override", false);
+        engine->rootContext()->setContextProperty("_db_bg", "transparent");
+        engine->rootContext()->setContextProperty("_db_do_not_load", false);
+
+        pl = new PluginLoader(nullptr);
+        engine->rootContext()->setContextProperty("plugin", pl);
+
+        engine->load(url);
     }
     return 0;
 }
 
 static int pluginStop() {
-    QApplication::instance()->quit();
+    QGuiApplication::instance()->quit();
     qDebug() << "QtGui_stop completed";
     return 0;
 }
@@ -132,34 +183,45 @@ static int pluginConnect() {
     return 0;
 }
 
-static int registerWidget (DBWidgetInfo *info) {
+static int registerWidget (WidgetPluginConstructor constructor) {
     initializeApi();
-    pl->widgetLibraryAppend(info);
+    // TODO
+//    pl->widgetLibraryAppend(info);
     return 0;
 }
+
+
+
+
 
 
 static int pluginStart() {
     initializeApi();
 
 
-    w->loadConfig();
-    w->show();
+
+
+//    w->loadConfig();
+//    w->show();
     app->exec();
 
     // shutdown
-    //delete w;
-    delete api;
+#if USE_WIDGETS
+    delete w;
+#endif
     delete pl;
+    delete engine;
+//    delete pl;
     delete app;
+    delete api;
 
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     return 0;
 }
 
 extern "C" {
-    DB_plugin_t *ddb_gui_qt5_load(DB_functions_t *dbapi) {
-        deadbeef_internal = dbapi;
+    DB_plugin_t *ddb_gui_qt5_load(DB_functions_t *Api) {
+        deadbeef_internal = Api;
         plugin.plugin.api_vmajor = 1;
         plugin.plugin.api_vminor = 9;
         plugin.plugin.version_major = 1;
