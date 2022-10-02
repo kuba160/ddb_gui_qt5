@@ -25,6 +25,7 @@ class PluginManager : public QObject
     DBApi * api;
 public:
     explicit PluginManager(QObject *parent, DBApi *Api = nullptr);
+    ~PluginManager();
     PluginWidgetsLoader loader;
 
 

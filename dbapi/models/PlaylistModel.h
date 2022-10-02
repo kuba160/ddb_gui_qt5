@@ -5,6 +5,7 @@
 #include <QMimeData>
 
 #include "PlayItemModel.h"
+#include <QMutex>
 
 class PlaylistModel : public PlayItemModel {
     Q_OBJECT
@@ -31,6 +32,7 @@ signals:
 
 private:
     ddb_playlist_t *plt = nullptr;
+    QMutex mut;
 
 private slots:
     void onPlaylistContentChanged(ddb_playlist_t *plt);

@@ -79,6 +79,17 @@ int PlaylistManager::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint
         case DB_EV_STOP:
             emit statusRowChanged();
             break;
+        case DB_EV_PLAYLISTCHANGED:
+            //ddb_playlist_change_t i = (ddb_playlist_change_t) p1;
+            switch((ddb_playlist_change_t) p1) {
+                case DDB_PLAYLIST_CHANGE_CREATED:
+                case DDB_PLAYLIST_CHANGE_DELETED:
+                case DDB_PLAYLIST_CHANGE_TITLE:
+                    m_list->refreshPlaylist();
+                default:
+                    break;
+            }
+            break;
         case DB_EV_TRACKINFOCHANGED:
              // detect queue
              if (p1 == DDB_PLAYLIST_CHANGE_PLAYQUEUE) {
@@ -91,7 +102,6 @@ int PlaylistManager::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint
             DBAPI->plt_unref(ddb_plt);
             emit currentPlaylistChanged();
             break;
-
     }
     CoverArt::pluginMessage(id, ctx, p1, p2);
     return 0;

@@ -7,7 +7,7 @@
         <file>qml/EqualizerQuick.qml</file>
         <file>qml/PlaylistBrowserQuick.qml</file>
         <file>qml/PlaylistQuick.qml</file>
-        <file>qml/PlaylistView.qml</file>
+        <file>qml/PlayItemView.qml</file>
         <file>qml/QueueManagerQuick.qml</file>
         <file>qml/InfoQuick.qml</file>
         <file>qml/Oscilloscope.qml</file>
@@ -24,5 +24,6 @@
         <file>MainPane.qml</file>
         <file>MainDrawer.qml</file>
         <file>qml/ActionsTree.qml</file>
+        <file>qml/PlayItemViewDelegate.qml</file>
     </qresource>
 </RCC>

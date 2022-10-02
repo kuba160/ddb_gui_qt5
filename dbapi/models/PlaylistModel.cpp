@@ -22,6 +22,8 @@ ddb_playlist_t* PlaylistModel::getPlaylist() {
 }
 
 void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
+    // Use mutex lock since playlist can be set from multiple threads
+    mut.lock();
     beginResetModel();
     ddb_playlist_t *plt_old = this->plt;
     this->plt = plt_new;
@@ -33,6 +35,7 @@ void PlaylistModel::setPlaylist(ddb_playlist_t *plt_new) {
     }
     emit playlistChanged(plt);
     endResetModel();
+    mut.unlock();
 }
 
 void PlaylistModel::onPlaylistContentChanged(ddb_playlist_t *plt_changed) {

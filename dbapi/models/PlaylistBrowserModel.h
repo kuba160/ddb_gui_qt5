@@ -38,6 +38,8 @@ public:
     Qt::DropActions supportedDropActions() const override;
     bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 
+public slots:
+    void refreshPlaylist();
 private slots:
     void onPlaylistMoved(int, int);
     void onPlaylistCreated();

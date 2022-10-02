@@ -15,6 +15,8 @@ public:
     // create parent node
     TreeNode(TreeNode *parent = nullptr, QString title = {});
 
+    ~TreeNode();
+
     // group text
     QString title;
     //
@@ -54,6 +56,7 @@ class ActionsModel : public QAbstractItemModel {
 
 public:
     explicit ActionsModel(QObject *parent, DB_functions_t *Api, uint16_t action_filter = 0);
+    ~ActionsModel();
 
 
     enum ActionsModelRoles {

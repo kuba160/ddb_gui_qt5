@@ -11,6 +11,10 @@ ActionsModel::ActionsModel(QObject *parent, DB_functions_t *Api, uint16_t action
     tree = new TreeNode<const DBAction *>();
 }
 
+ActionsModel::~ActionsModel() {
+    delete tree;
+}
+
 void ActionsModel::insertActions(const QList<DBAction*> action_list) {
     beginResetModel();
     for (const DBAction* action : action_list) {
@@ -110,6 +114,13 @@ TreeNode<T>::TreeNode(TreeNode *parent, QString title) {
     this->value= T{};
     this->parent = parent;
     this->leafNode = false;
+}
+
+template <class T>
+TreeNode<T>::~TreeNode() {
+    for (TreeNode<T>* child : children) {
+        delete child;
+    }
 }
 
 

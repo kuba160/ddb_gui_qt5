@@ -187,7 +187,7 @@ void PlaybackControl::setCurrentTrackIdx(quint32 idx) {
 }
 
 QString PlaybackControl::tf_current(const QString &format) {
-    const char* tf_format = DBAPI->tf_compile(format.toUtf8().constData());
+    char* tf_format = DBAPI->tf_compile(format.toUtf8().constData());
     char buffer[1024];
     ddb_tf_context_t context;
     {
@@ -210,6 +210,8 @@ QString PlaybackControl::tf_current(const QString &format) {
     if (context.it) {
         DBAPI->pl_item_unref(context.it);
     }
+
+    DBAPI->tf_free(tf_format);
     return QString(buffer);
 
 }

@@ -148,6 +148,11 @@ void PlaylistBrowserModel::onPlaylistMoved(int plt, int before) {
     endMoveRows();
 }
 
+void PlaylistBrowserModel::refreshPlaylist() {
+    beginResetModel();
+    endResetModel();
+}
+
 void PlaylistBrowserModel::onPlaylistCreated() {
     // unsure which row playlist is added, update all
     beginResetModel();

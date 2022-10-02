@@ -181,6 +181,7 @@ PlaylistView::~PlaylistView() {
                     roletable->getHeaderConfiguration());
     DBAPI->conf.set(internalName, "playlistview_headerdata", header()->saveState());
 
+    delete style();
     // free header actions
     /*
     int i;

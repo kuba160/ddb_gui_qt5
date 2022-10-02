@@ -10,31 +10,10 @@ DBWidget {
     widgetStyle: "Qt Quick"
     widgetType: "main"
 
-    widget: ColumnLayout {
-        anchors.fill: parent
-        PlaylistView {
-            id : playlistView
-            model: playlist.current
-        }
-        ToolBar {
-            visible: false
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignBottom
-            Material.background: Material.accent
-            RowLayout {
-                ToolButton {
-                    text: "Unselect"
-                }
-
-                Label {
-                    text: "Currently selected " + playlistView.checkedItems + " items."
-                }
-
-                ToolButton {
-                    text: "+"
-                }
-            }
-        }
+    widget: PlayItemView {
+        id : playlistView
+        model: playlist.current
+        delegate: PlayItemViewDelegate {}
     }
 
     Layout.fillWidth: true

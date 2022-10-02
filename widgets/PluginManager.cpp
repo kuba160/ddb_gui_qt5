@@ -173,6 +173,12 @@ PluginManager::PluginManager(QObject *parent, DBApi *Api)
     api = Api;
 }
 
+PluginManager::~PluginManager() {
+    for (DBWidget *w : widgets.values()) {
+        delete w;
+    }
+}
+
 QWidget * PluginManager::loadNewInstance(QMainWindow *window, PluginWidgetsWrapper *info) {
     QString internalName = info->property("internalName").toString();
     int instance = widgets.count(internalName);

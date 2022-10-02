@@ -10,6 +10,7 @@
 #include "CoverArt.h"
 
 class PlaylistModel;
+class PlaylistBrowserModel;
 
 class PlaylistManager : public CoverArt
 {
@@ -53,7 +54,7 @@ public:
 private:
     PlaylistModel *m_current;
     QAbstractItemModel *m_queue;
-    QAbstractItemModel *m_list;
+    PlaylistBrowserModel *m_list;
     QAbstractItemModel *m_current_item;
 };
 

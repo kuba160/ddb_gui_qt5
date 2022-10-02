@@ -312,6 +312,14 @@ QVariant PlayItemModel::data(const QModelIndex &index, int role) const {
             case ItemMime:
                 ret = QVariant::fromValue(mimeData({index}));
                 break;
+            case ItemCursor: {
+                DB_playItem_t *it_test = DBAPI->pl_get_for_idx(DBAPI->pl_get_cursor(PL_MAIN));
+                if (it_test) {
+                    ret = it_test == it;
+                    DBAPI->pl_item_unref(it_test);
+                }
+                break;
+            }
             case Qt::SizeHintRole:
             {
                 QSize defSize;
@@ -457,6 +465,7 @@ QHash<int, QByteArray> PlayItemModel::roleNames() const {
     l.insert(ItemCodec,"ItemCodec");
     l.insert(ItemBitrate,"ItemBitrate");
     l.insert(ItemMime, "ItemMime");
+    l.insert(ItemCursor, "ItemCursor");
     //l.insert(LastRoleUnused,"LastRoleUnused");
     return l;
 }

@@ -69,21 +69,16 @@ static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32
     return api->pluginMessage(id, ctx, p1, p2);
 }
 
-static int initializeApi() {
-    if (!api) {
-        while (!deadbeef_internal) {
-            usleep(10000);
-        }
+static void initializeQApp() {
+    qmlRegisterUncreatableType<PlaybackControl>("DBApi", 1, 0, "Playback","");
 
-        qmlRegisterUncreatableType<PlaybackControl>("DBApi", 1, 0, "Playback","");
-
-        // provide dummy args for QApplication
-        static char argv0[] = "a.out";
-        static char *argv[] = {argv0, nullptr};
-        static int argc = sizeof(argv) / sizeof(char*) - 1;
+    // provide dummy args for QApplication
+    static char argv0[] = "a.out";
+    static char *argv[] = {argv0, nullptr};
+    static int argc = sizeof(argv) / sizeof(char*) - 1;
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 
 #if USE_WIDGETS
@@ -91,87 +86,81 @@ app = new QApplication(argc, argv);
 #else
 app = new QGuiApplication(argc, argv);
 #endif
-        //QGuiApplication::setOrganizationName("deadbeef");
-        QGuiApplication::setApplicationName("qt5");
-        app->setWindowIcon(QIcon(":/images/deadbeef.png"));
 
+    //QGuiApplication::setOrganizationName("deadbeef");
+    QGuiApplication::setApplicationName("qt5");
+    app->setWindowIcon(QIcon(":/images/deadbeef.png"));
 
-        engine = new QQmlApplicationEngine();
-        const QUrl url(QStringLiteral("qrc:/main.qml"));
+#ifdef __MINGW32__
+    QStringList theme_search_paths = QIcon::themeSearchPaths();
+    theme_search_paths.append("./share/icons");
+    QIcon::setThemeSearchPaths(theme_search_paths);
+    qDebug() << QIcon::themeSearchPaths();
+    //QIcon::setThemeName("Windows-10-Icons");
+    QIcon::setThemeName("Adwaita");
 
-
-
-        /// TODO
-        /*dbtr = new DeadbeefTranslator(app);
-        app->installTranslator(dbtr);*/
-
-        //QApplication::setStyle(QStyleFactory::create("breeze"));
-
-    #ifdef __MINGW32__
-        QStringList theme_search_paths = QIcon::themeSearchPaths();
-        theme_search_paths.append("./share/icons");
-        QIcon::setThemeSearchPaths(theme_search_paths);
-        qDebug() << QIcon::themeSearchPaths();
-        //QIcon::setThemeName("Windows-10-Icons");
-        QIcon::setThemeName("Adwaita");
-
-        // Set opengl api for qt quick (qt 6 and higher)
-        #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
-        #endif
+    // Set opengl api for qt quick (qt 6 and higher)
+    #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
     #endif
+#endif
 
-        #if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-        //QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
-        #endif
+    // fix for lag on linux qquick
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    format.setSwapInterval(0);
+    QSurfaceFormat::setDefaultFormat(format);
 
+}
 
-        QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-        format.setSwapInterval(0);
-        QSurfaceFormat::setDefaultFormat(format);
+static void initializeTranslator() {
+    /// TODO
+    /*dbtr = new DeadbeefTranslator(app);
+    app->installTranslator(dbtr);*/
+}
 
-        //if (!pl) {
-//            pl = new PluginLoader();
-//        }
-        api = new DBApi(nullptr, deadbeef_internal);
-
-
+static void startWidgets() {
 #if USE_WIDGETS
-        w = new MainWindow(nullptr, api);
-        w->show();
+    w = new MainWindow(nullptr, api);
+    w->show();
 
 #endif
-//#else
+}
 
-
-        // setup settings
-
-   //return 0;
-
-        // initialize window
-//        w = new MainWindow(nullptr, api);
-        plugin.plugin.message = pluginMessage_wrapper;
+static void unloadWidgets() {
 #if USE_WIDGETS
-        engine->rootContext()->setContextProperty("app", app);
+    delete w;
 #endif
-        engine->rootContext()->setContextProperty("api", api);
-        engine->rootContext()->setContextProperty("actions", &api->actions);
-        engine->rootContext()->setContextProperty("playback", &api->playback);
-        engine->rootContext()->setContextProperty("conf", &api->conf);
-        engine->rootContext()->setContextProperty("cover", &api->playlist);
-        engine->rootContext()->setContextProperty("playlist", &api->playlist);
-        engine->rootContext()->setContextProperty("eq", &api->eq);
-        engine->rootContext()->setContextProperty("_db_bg_override", false);
-        engine->rootContext()->setContextProperty("_db_bg", "transparent");
-        engine->rootContext()->setContextProperty("_db_do_not_load", false);
+}
 
-        pl = new PluginLoader(nullptr);
-        engine->rootContext()->setContextProperty("plugin", pl);
+static void startQuick() {
+    engine = new QQmlApplicationEngine();
+    const QUrl url(QStringLiteral("qrc:/main.qml"));
 
-        engine->load(url);
+#if USE_WIDGETS
+    engine->rootContext()->setContextProperty("app", app);
+#endif
+    engine->rootContext()->setContextProperty("api", api);
+    engine->rootContext()->setContextProperty("actions", &api->actions);
+    engine->rootContext()->setContextProperty("playback", &api->playback);
+    engine->rootContext()->setContextProperty("conf", &api->conf);
+    engine->rootContext()->setContextProperty("cover", &api->playlist);
+    engine->rootContext()->setContextProperty("playlist", &api->playlist);
+    engine->rootContext()->setContextProperty("eq", &api->eq);
+    engine->rootContext()->setContextProperty("_db_bg_override", false);
+    engine->rootContext()->setContextProperty("_db_bg", "transparent");
+    engine->rootContext()->setContextProperty("_db_do_not_load", false);
+
+    pl = new PluginLoader(nullptr);
+    engine->rootContext()->setContextProperty("plugin", pl);
+
+    engine->load(url);
+}
+
+static void unloadQuick() {
+    if (engine) {
+        delete engine;
+        delete pl;
     }
-    return 0;
 }
 
 static int pluginStop() {
@@ -180,40 +169,34 @@ static int pluginStop() {
     return 0;
 }
 static int pluginConnect() {
+    qDebug() << "CONNECT";
     return 0;
 }
 
 static int registerWidget (WidgetPluginConstructor constructor) {
-    initializeApi();
-    // TODO
-//    pl->widgetLibraryAppend(info);
+    if (!api) {
+        return 1;
+    }
+    //pl->widgetLibraryAppend(info);
     return 0;
 }
 
-
-
-
-
-
 static int pluginStart() {
-    initializeApi();
+    initializeQApp();
+    api = new DBApi(nullptr, deadbeef_internal);
+    plugin.plugin.message = pluginMessage_wrapper;
 
+    startWidgets();
+    startQuick();
 
-
-
-//    w->loadConfig();
-//    w->show();
+    // GUI thread loop
     app->exec();
 
-    // shutdown
-#if USE_WIDGETS
-    delete w;
-#endif
-    delete pl;
-    delete engine;
-//    delete pl;
-    delete app;
+    unloadQuick();
+    unloadWidgets();
+
     delete api;
+    delete app;
 
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
     return 0;

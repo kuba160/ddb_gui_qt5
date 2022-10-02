@@ -84,6 +84,7 @@ Actions::Actions(QObject *parent, DB_functions_t *Api)
                 DB_plugin_action_t *itr = pluglist[i]->get_actions(nullptr); // kinda off implementation :(
                 while (itr) {
                     DBActionImported *a = new DBActionImported(deadbeef, itr);
+                    a->setParent(this);
                     import_all.append(a);
                     if (itr->flags & DB_ACTION_COMMON &&
                         itr->flags & DB_ACTION_ADD_MENU) {
