@@ -6,6 +6,8 @@
 #include <QDataStream>
 #include <QUrl>
 
+#include "../Actions.h"
+
 #include "../CoverArt.h"
 
 #define DBAPI (manager->deadbeef)
@@ -268,6 +270,20 @@ QVariant PlayItemModel::data(const QModelIndex &index, int role) const {
                 // index guaranteed to be row of this model
                 ret = QString::number(index.row());
                 break;
+            case ItemQueue:
+                if ((DBAPI->playqueue_test(it) != -1)) {
+                    QList<int> in_queue;
+                    int i;
+                    for (i = 0; i < DBAPI->playqueue_get_count(); i++) {
+                        DB_playItem_t *it_test = DBAPI->playqueue_get_item(i);
+                        if (it_test == it) {
+                            in_queue.append(i+1);
+                        }
+                        DBAPI->pl_item_unref(it_test);
+                    }
+                    ret = QVariant::fromValue(in_queue);
+                }
+                break;
             case ItemPlaying:
             case ItemPlayingDisplay:
                 // TODO fix queue hack
@@ -312,6 +328,9 @@ QVariant PlayItemModel::data(const QModelIndex &index, int role) const {
             case ItemMime:
                 ret = QVariant::fromValue(mimeData({index}));
                 break;
+            case ItemActionContext:
+                ret = QVariant::fromValue(ActionContext(it));
+                break;
             case ItemCursor: {
                 DB_playItem_t *it_test = DBAPI->pl_get_for_idx(DBAPI->pl_get_cursor(PL_MAIN));
                 if (it_test) {
@@ -353,7 +372,9 @@ QVariant PlayItemModel::headerData(int section, Qt::Orientation orientation, int
 
 
 void PlayItemModel::onPlaybackChanged() {
-    emit dataChanged(createIndex(0,0), createIndex(rowCount(),columnCount()), QVector<int>{ItemPlayingState,ItemPlaying, ItemPlayingDisplay, ItemPlayingDecoration});
+    emit dataChanged(createIndex(0,0), createIndex(rowCount(),columnCount()), QVector<int>{ItemPlayingState, ItemPlaying,
+                                                                                           ItemPlayingDisplay, ItemPlayingDecoration,
+                                                                                           ItemQueue});
 }
 
 void PlayItemModel::onSelectionChanged() {
@@ -450,6 +471,7 @@ QHash<int, QByteArray> PlayItemModel::roleNames() const {
     l.insert(ItemPlayingState, "ItemPlayingState");
     l.insert(ItemSelected, "ItemSelected");
     l.insert(ItemPlaying,"ItemPlaying");
+    l.insert(ItemPlayingState,"ItemPlayingState");
     l.insert(ItemIndex,"ItemIndex");
     l.insert(ItemPlaying,"ItemPlaying");
     l.insert(ItemAlbumArt,"ItemAlbumArt");
@@ -465,7 +487,9 @@ QHash<int, QByteArray> PlayItemModel::roleNames() const {
     l.insert(ItemCodec,"ItemCodec");
     l.insert(ItemBitrate,"ItemBitrate");
     l.insert(ItemMime, "ItemMime");
+    l.insert(ItemActionContext, "ItemActionContext");
     l.insert(ItemCursor, "ItemCursor");
+    l.insert(ItemQueue, "ItemQueue");
     //l.insert(LastRoleUnused,"LastRoleUnused");
     return l;
 }

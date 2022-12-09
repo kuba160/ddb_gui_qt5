@@ -41,6 +41,22 @@ QVariant PlaylistBrowserModel::data(const QModelIndex &index, int role) const {
                 }
             }
         }
+        else if (role == PlaylistsRoles::PlaylistItemsRole) {
+            ddb_playlist_t *plt = DBAPI->plt_get_for_idx(index.row());
+            if (plt) {
+                int count = DBAPI->plt_get_item_count(plt, PL_MAIN);
+                DBAPI->plt_unref(plt);
+                return count;
+            }
+        }
+        else if (role == PlaylistsRoles::PlaylistLengthRole) {
+            ddb_playlist_t *plt = DBAPI->plt_get_for_idx(index.row());
+            if (plt) {
+                float total_length = DBAPI->plt_get_totaltime(plt);
+                DBAPI->plt_unref(plt);
+                return total_length;
+            }
+        }
         else {
             // TODO implement other roles (playlistItems, playlistLength)
         }

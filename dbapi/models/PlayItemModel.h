@@ -32,7 +32,9 @@ public:
     enum playItemRoles {
         ItemEmpty = Qt::UserRole,
         ItemMime,
+        ItemActionContext,
         ItemCursor,
+        ItemQueue,
         ItemNumber, // equvalent to ItemIndex+1
         //PlayItemRoleFirst = Qt::UserRole,
         ItemAlbumArtUrl,

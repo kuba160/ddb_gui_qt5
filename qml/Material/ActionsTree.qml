@@ -3,6 +3,9 @@ import QtQuick.Layouts 1.2
 import QtQuick.Controls 2.12
 import QtQml 2.12
 
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
 DBWidget {
     friendlyName: qsTr("Actions Tree")
     internalName: "actionsTree"
@@ -18,13 +21,13 @@ DBWidget {
 
         TreeView {
             Component.onCompleted: {
-                console.log(actions.actions)
+                console.log(DBApi.actions.actions)
             }
 
             anchors.fill: parent
             //Layout.fillHeight: true
             //Layout.fillWidth: true
-            model: actions.actions
+            model: DBApi.actions.actions
 
             delegate: Item {
                 id: treeDelegate

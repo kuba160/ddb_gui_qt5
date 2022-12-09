@@ -14,6 +14,8 @@
 #endif
 
 #include <QObject>
+#include <QQmlEngine>
+
 
 #include "Actions.h"
 #include "Equalizer.h"
@@ -22,17 +24,29 @@
 #include "Settings.h"
 #include "Visualizations.h"
 
-
-
 // DBApi version
 #define DBAPI_VMAJOR 1
 #define DBAPI_VMINOR 0
 
+class DBApi;
+extern DBApi *DBApi_main;
+
 class DBApi : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+    QML_UNCREATABLE("Cannot create DBApi in QML!")
 public:
-    DBApi(QObject *parent = nullptr, DB_functions_t *Api = nullptr);
+    static DBApi *create(QQmlEngine *, QJSEngine *) {
+        QJSEngine::setObjectOwnership(DBApi_main, QJSEngine::CppOwnership);
+        return DBApi_main;
+    }
+    Q_PROPERTY(int version_major MEMBER DBApi_vmajor CONSTANT)
+    Q_PROPERTY(int version_minor MEMBER DBApi_vminor CONSTANT)
+
+public:
+    DBApi(QObject *parent, DB_functions_t *Api);
     ~DBApi();
 
     // DBApi compatibility version
@@ -50,6 +64,37 @@ public:
     PlaybackControl playback;
     PlaylistManager playlist;
     Visualizations viz;
+
+
+    Q_PROPERTY(Actions* actions READ getActions CONSTANT)
+    Q_PROPERTY(Settings* conf READ getConf CONSTANT)
+    Q_PROPERTY(Equalizer* eq READ getEq CONSTANT)
+    Q_PROPERTY(PlaybackControl* playback READ getPlayback CONSTANT)
+    Q_PROPERTY(Visualizations* viz READ getViz CONSTANT)
+    Q_PROPERTY(PlaylistManager* playlist READ getPlaylist CONSTANT)
+    public slots:
+    Actions* getActions() {
+        return &actions;
+    }
+    Settings* getConf() {
+        return &conf;
+    }
+    Equalizer* getEq() {
+        return &eq;
+    }
+    PlaybackControl* getPlayback() {
+        return &playback;
+    }
+    Visualizations* getViz() {
+        return &viz;
+    }
+    PlaylistManager* getPlaylist() {
+        return &playlist;
+    }
+
+
+
+
 
 };
 

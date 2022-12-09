@@ -3,10 +3,13 @@ import QtQuick.Controls 2.12
 import QtCharts 2.1
 import Qt.labs.platform
 
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
 Item {
     id: main
-    readonly property string friendlyName: qsTr("Oscilloscope Polar")
-    readonly property string internalName: "oscilloscopePolar"
+    readonly property string friendlyName: qsTr("Oscilloscope")
+    readonly property string internalName: "oscilloscope"
     readonly property string widgetStyle: "DeaDBeeF"
     readonly property string widgetType: "main"
     property int instance
@@ -26,15 +29,12 @@ Item {
 
     Component {
         id: oscilloscope
-        PolarChartView {
+        ChartView {
             id: chartView
             animationOptions: ChartView.NoAnimation
             legend.visible: false
-            width: Math.min(parent.width,parent.height)
-            height: Math.min(parent.width,parent.height)
-            anchors.fill: parent
 
-            plotArea: Qt.rect(0,0,Math.min(width,height),Math.min(width,height))
+            plotArea: Qt.rect(0,0,width,height)
             plotAreaColor: "black"
             backgroundColor: "black"
             // doesn't work :( - using rectangle
@@ -43,19 +43,20 @@ Item {
                 color: "black"
                 z: -5
             }
+
            // oscilloscope settings
            property variant scope;
 
             ValueAxis {
-                id: axisRadial
+                id: axisY
                 min: -1
-                max: 1.2 // bigger than 1 to avoid clipping??
+                max: 1
                 labelsVisible: false
                 gridVisible: false
                 lineVisible: false
             }
             ValueAxis {
-                id: axisAngular
+                id: axisX
                 min: 0
                 max: scope.series_width
                 labelsVisible: false
@@ -72,22 +73,31 @@ Item {
                 scope.fragment_duration = settings.getValue(name_i(), "fragment_duration", 100)
                 scope.scale = settings.getValue(name_i(), "scale", 1)
 
-                scope.paused = Qt.binding(function() { return !main.visible})
-
-                use_global_accent = settings.getValue(name_i(), "use_global_accent", 1)
-
                 wave1_color = settings.getValue(name_i(), "wave1_color", "#2b7fba")
                 wave2_color = settings.getValue(name_i(), "wave2_color", "#2b7fba")
 
+                use_global_accent = settings.getValue(name_i(), "use_global_accent", 1)
             }
 
             property color wave1_color: "#2b7fba"
             property color wave2_color: "#2b7fba"
-            property int use_global_accent: 1
+            property int use_global_accent
+
+            Binding {
+                target: chartView
+                property: "wave1_color"
+                when: use_global_accent
+            }
+            Binding {
+                target: chartView
+                property: "wave2_color"
+                when: use_global_accent
+            }
+
 
             ColorDialog {
                 id: colorDialog
-                title: qsTr("Custom visualization base color")
+                title: "Please choose a color"
                 property int wave: 0
                 onAccepted: {
                     if (wave === 1 | wave !== 0) {
@@ -103,54 +113,41 @@ Item {
 
             ScatterSeries {
                 id: waveform
-                axisAngular: axisAngular
-                axisRadial: axisRadial
+                axisX: axisX
+                axisY: axisY
                 color: use_global_accent ? api.accent_color : wave2_color
                 useOpenGL: true
-                // LineSeries
-                //width: 1
-                //capStyle: Qt.FlatCap
-                // ScatterSeries
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
-
             }
             ScatterSeries {
                 id: waveform2
-                axisAngular: axisAngular
-                axisRadial: axisRadial
-                color: use_global_accent ? api.accent_color : wave2_color
+                axisX: axisX
+                axisY: axisY
+                color: use_global_accent ? api.accent_color : wave1_color
                 useOpenGL: true
-                // LineSeries
-                //width: 1
-                //capStyle: Qt.FlatCap
-                // ScatterSeries
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
-
             }
 
             LineSeries {
                 id: waveform3
-                axisAngular: axisAngular
-                axisRadial: axisRadial
+                axisX: axisX
+                axisY: axisY
                 color: use_global_accent ? api.accent_color : wave2_color
                 useOpenGL: true
-                // LineSeries
                 width: 1
                 //capStyle: Qt.FlatCap
             }
             LineSeries {
                 id: waveform4
-                axisAngular: axisAngular
-                axisRadial: axisRadial
+                axisX: axisX
+                axisY: axisY
                 color: use_global_accent ? api.accent_color : wave1_color
                 useOpenGL: true
-                // LineSeries
                 width: 1
                 //capStyle: Qt.FlatCap
             }
-
 
             property int style: -1 // Scatter/Line
 
@@ -239,13 +236,13 @@ Item {
                         Instantiator {
                             model: ["Mono", "Multichannel"]
                             MenuItem {
-                                text: qsTr(modelData)
-                                checkable: true
-                                checked: scope.scope_mode === index
-                                onTriggered: {
-                                    changeMode(index)
-                                }
-                                ActionGroup.group: channelGroup
+                                    text: qsTr(modelData)
+                                    checkable: true
+                                    checked: scope.scope_mode === index
+                                    onTriggered: {
+                                        changeMode(index)
+                                    }
+                                    ActionGroup.group: channelGroup
                             }
                             onObjectAdded: rend_menu.insertItem(index, object)
                             onObjectRemoved: rend_menu.removeItem(object)
@@ -257,13 +254,13 @@ Item {
                         Instantiator {
                             model: [50,100,200,300,500]
                             MenuItem {
-                                text: qsTr(modelData + " ms")
-                                checkable: true
-                                checked: scope.fragment_duration === modelData
-                                onTriggered: {
-                                    changeFragmentDuration(modelData)
-                                }
-                                ActionGroup.group: fragmentGroup
+                                    text: qsTr(modelData + " ms")
+                                    checkable: true
+                                    checked: scope.fragment_duration === modelData
+                                    onTriggered: {
+                                        changeFragmentDuration(modelData)
+                                    }
+                                    ActionGroup.group: fragmentGroup
                             }
                             onObjectAdded: frag_menu.insertItem(index, object)
                             onObjectRemoved: frag_menu.removeItem(object)
@@ -282,7 +279,7 @@ Item {
                             }
                         }
 
-                        Repeater {
+                        Instantiator {
                             model: ["Left channel", "Right channel", "Both"]
                             MenuItem {
                                 text: modelData
@@ -291,6 +288,10 @@ Item {
                                     colorDialog.open()
                                 }
                             }
+                            onObjectAdded: {
+                                color_menu.insertItem(color_menu.count, object)
+                            }
+                            onObjectRemoved: color_menu.removeItem(object)
                         }
                     }
                     Menu {

@@ -63,11 +63,27 @@ public slots:
 class ActionContext : public QObject {
     Q_OBJECT
     friend class Actions;
+    friend class ActionContext;
 public:
+    // duplicate
+    ActionContext(const ActionContext &from) {
+        this->mode = from.mode;
+        this->plt = from.plt;
+        this->it_list = from.it_list;
+        if (mode == DBAction::ACTION_PLAYLIST) {
+            deadbeef->plt_ref(plt);
+        }
+        else if (mode == DBAction::ACTION_SELECTION) {
+            for (DB_playItem_t *it : it_list) {
+                deadbeef->pl_item_ref(it);
+            }
+        }
+    }
     // create playlist action context
     ActionContext(ddb_playlist_t* plt);
     // create playitem list action context
     ActionContext(QList<DB_playItem_t*> tracks);
+    ActionContext(DB_playItem_t* track);
     // create main or nowplaying action context
     ActionContext(bool nowplaying = false);
     ActionContext() : ActionContext(false) {};
@@ -106,8 +122,12 @@ public:
     QAbstractItemModel* getActionsMenuModel() const;
     QAbstractItemModel *getActionsModel() const;
 
-    bool execAction(QString &action, ActionContext &context);
+public slots:
 
+    bool execAction(QString action, ActionContext context);
+    QString getActionTitle(QString action_id);
+
+public:
 
     bool registerActionsBuilder(QString name, actionsBuilderConstructor builder);
 

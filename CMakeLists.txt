@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.1.0)
 
 
 if (NOT DEFINED SET_QT_VERSION)
-    set(SET_QT_VERSION Qt5)
+    set(SET_QT_VERSION Qt6)
 endif()
 set (USE_WIDGETS 1)
 set(CMAKE_CXX_FLAGS_INIT "-gdwarf-4")
 #set(CMAKE_CXX_FLAGS_INIT "-fsanitize=undefined")
 
+set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 add_subdirectory(dbapi)
 
 
@@ -26,19 +27,10 @@ endif()
 
 set (CMAKE_SHARED_LIBRARY_PREFIX "")
 
-message(STATUS "SET_QT_VERSION=${SET_QT_VERSION}")
-if (SET_QT_VERSION STREQUAL Qt6)
-    find_package(Qt6 COMPONENTS Core Concurrent Gui Quick Svg Charts)
-    if (USE_WIDGETS)
-        find_package(Qt6 COMPONENTS Widgets QuickWidgets)
-    endif()
-else()
-    find_package(Qt5 COMPONENTS Core Concurrent Gui Quick Svg Charts)
-    if (USE_WIDGETS)
-        find_package(Qt5 COMPONENTS Widgets QuickWidgets)
-    endif()
+find_package(Qt6 COMPONENTS REQUIRED Core Concurrent Gui Quick Svg Charts)
+if (USE_WIDGETS)
+    find_package(Qt6 COMPONENTS REQUIRED Widgets QuickWidgets)
 endif()
-
 
 if (USE_WIDGETS)
     set (SOURCES_WIDGETS
@@ -67,27 +59,30 @@ set(SOURCES
     WidgetLibraryModel.cpp
     QtGui.cpp)
 qt_add_resources(SOURCES Images.qrc)
-qt_add_resources(SOURCES Qml.qrc)
-
-
 add_library(ddb_gui_qt5 SHARED ${SOURCES})
 
-if (SET_QT_VERSION STREQUAL Qt6)
-    target_link_libraries(ddb_gui_qt5 dbapi Qt6::Core Qt::Concurrent Qt::Gui Qt::Quick)
-    if (USE_WIDGETS)
-        target_link_libraries(ddb_gui_qt5 dbapi Qt6::Widgets Qt6::QuickWidgets)
-    endif()
-else()
-    target_link_libraries(ddb_gui_qt5 dbapi Qt5::Core Qt5::Concurrent Qt5::Gui Qt5::Quick)
-    if (USE_WIDGETS)
-        target_link_libraries(ddb_gui_qt5 dbapi Qt5::Widgets Qt5::QuickWidgets)
-    endif()
+
+# fix for Qt Creator to find qml files
+list(APPEND QML_DIRS "${CMAKE_BINARY_DIR}/qml")
+set(QML_IMPORT_PATH "${QML_DIRS}" CACHE STRING "Qt Creator 4.1 extra qml import paths")
+
+# Add qml modules
+add_subdirectory(qml/GuiCommon)
+add_subdirectory(qml/DDB2)
+# add_subdirectory(qml/Material)
+
+
+
+target_link_libraries(ddb_gui_qt5 dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Concurrent Qt::Gui Qt::Quick)
+if (USE_WIDGETS)
+    target_link_libraries(ddb_gui_qt5 dbapi Qt6::Widgets Qt6::QuickWidgets)
 endif()
 
 target_include_directories(ddb_gui_qt5 PRIVATE ".")
 
 target_compile_definitions(ddb_gui_qt5 PRIVATE USE_WIDGETS=${USE_WIDGETS} QT_USE_STRINGBUILDER)
-target_compile_definitions(ddb_gui_qt5 PRIVATE USE_COVERART_CACHE=${USE_COVERART_CACHE})
+target_compile_definitions(ddb_gui_qt5 PRIVATE USE_
+    _CACHE=${USE_COVERART_CACHE})
 
 target_compile_options(ddb_gui_qt5 PRIVATE "-gdwarf-4")
 

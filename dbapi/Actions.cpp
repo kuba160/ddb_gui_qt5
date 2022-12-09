@@ -20,6 +20,14 @@ ActionContext::ActionContext(QList<DB_playItem_t*> tracks) {
         deadbeef->pl_item_ref(it);
     }
 }
+
+ActionContext::ActionContext(DB_playItem_t* track) {
+    this->mode = DBAction::ACTION_SELECTION;
+    this->it_list = QList<DB_playItem_t*>();
+    this->it_list.append(track);
+    deadbeef->pl_item_ref(track);
+}
+
 ActionContext::ActionContext(bool nowplaying) {
     if (nowplaying) {
         this->mode = DBAction::ACTION_NOWPLAYING;
@@ -41,22 +49,43 @@ ActionContext::~ActionContext() {
 }
 
 void ActionContext::executeForAction(DBAction* action) {
+
     if (mode == DBAction::ACTION_PLAYLIST) {
         deadbeef->action_set_playlist(plt);
         action->actionExecute(DBAction::ACTION_PLAYLIST);
     }
     else if (mode == DBAction::ACTION_SELECTION) {
+        if (action->action_id == "add_to_playback_queue") {
+            for (DB_playItem_t *it : it_list) {
+                deadbeef->playqueue_push(it);
+            }
+            deadbeef->sendmessage(DB_EV_PLAYLIST_REFRESH, 0, 0, 0);
+            return;
+        }
+        else if (action->action_id == "remove_from_playback_queue") {
+            for (DB_playItem_t *it : it_list) {
+                deadbeef->playqueue_remove(it);
+            }
+            deadbeef->sendmessage(DB_EV_PLAYLIST_REFRESH, 0, 0, 0);
+            return;
+        }
+        /*
         ddb_playlist_t *plt_tmp = deadbeef->plt_alloc("_dbapi_tmp");
         if (plt_tmp) {
+            deadbeef->plt_ref(plt_tmp);
+            deadbeef->plt_ref(plt_tmp);
             DB_playItem_t *it_last = nullptr;
             for (DB_playItem_t *it : it_list) {
                 deadbeef->plt_insert_item(plt_tmp, it_last, it);
+                deadbeef->pl_item_ref(it);
                 it_last = it;
             }
             deadbeef->action_set_playlist(plt_tmp);
             action->actionExecute(DBAction::ACTION_PLAYLIST);
-            deadbeef->plt_free(plt_tmp);
-        }
+            //deadbeef->action_set_playlist(nullptr);
+            //deadbeef->plt_unref(plt_tmp);
+            //deadbeef->plt_free(plt_tmp);
+        }*/
     }
     else {
         action->actionExecute(mode);
@@ -123,7 +152,7 @@ bool Actions::registerActionsBuilder(QString name, actionsBuilderConstructor bui
     return false;
 }
 
-bool Actions::execAction(QString &action, ActionContext &context) {
+bool Actions::execAction(QString action, ActionContext context) {
     if (m_actions_hash.contains(action)) {
         context.executeForAction(m_actions_hash.value(action));
         return true;
@@ -137,6 +166,13 @@ QAbstractItemModel* Actions::getActionsModel() const {
 
 QAbstractItemModel* Actions::getActionsMenuModel() const {
     return m_actions_menu;
+}
+
+QString Actions::getActionTitle(QString action_id) {
+    if (m_actions_hash.contains(action_id)) {
+        return m_actions_hash.value(action_id)->title;
+    }
+    return QString();
 }
 
 QVariant Actions::buildActionMenu(QObject *parent, QString name, ActionContext *context) {
@@ -283,7 +319,7 @@ void DBActionImported::actionExecute(ActionExecuteMode role) const {
                 //break;
             case DBAction::ACTION_SELECTION:
                 // todo
-                //break;
+                break;
             case DBAction::ACTION_NOWPLAYING:
                 callback2(plug_action, (ddb_action_context_t) role);
                 break;

@@ -2,6 +2,8 @@
 
 #include <QDebug>
 
+DBApi *DBApi_main = nullptr;
+
 DBApi::DBApi(QObject *parent, DB_functions_t *Api) :
     QObject(parent),
     actions(this, Api),
@@ -11,6 +13,7 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) :
     playback(this, Api),
     playlist(this, Api) {
     deadbeef = Api;
+    DBApi_main = this;
     //playlist.setProperty("_dbapi_cover_cache", QVariant::fromValue(&cover));
 
 }

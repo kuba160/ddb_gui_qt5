@@ -2,6 +2,9 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.2
 
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
 DBWidget {
     friendlyName: qsTr("Playback controls")
     internalName: "playbackButtons"

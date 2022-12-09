@@ -3,6 +3,9 @@ import QtQuick.Controls 2.12
 import QtCharts 2.1
 import QtQuick.Dialogs 1.0
 
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
 DBWidget {
     friendlyName: qsTr("Oscilloscope")
     internalName: "oscilloscope"

@@ -85,7 +85,8 @@ public:
 
     //QFuture<char *> getCoverArtPath(DB_playItem_t *);
 
-    Q_PROPERTY(QString current_cover_path MEMBER m_current_cover_path NOTIFY currentCoverPathChanged)
+    Q_PROPERTY(QUrl current_cover_path READ getCurrentCoverPath NOTIFY currentCoverPathChanged)
+    QUrl getCurrentCoverPath();
 
     // inserts cover cache type and aquires its ownership
     bool insertCoverArtCache(int type, ICoverArtCache *obj);

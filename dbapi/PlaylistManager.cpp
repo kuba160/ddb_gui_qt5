@@ -4,6 +4,8 @@
 #include "models/PlaylistModel.h"
 #include "models/PlayqueueModel.h"
 #include "models/PlayItemTableProxyModel.h"
+#include "models/PlayItemFilterModel.h"
+
 
 #include <QDebug>
 
@@ -19,6 +21,8 @@ PlaylistManager::PlaylistManager(QObject *parent, DB_functions_t *api)
 
     ddb_playlist_t *plt = DBAPI->plt_get_curr();
     m_current = new PlaylistModel(this, this, plt);
+    m_current_search = new PlayItemFilterModel(this);
+    m_current_search->setSourceModel(m_current);
     DBAPI->plt_unref(plt);
 
     m_queue = new PlayqueueModel(this, this);
@@ -37,6 +41,10 @@ PlaylistManager::~PlaylistManager() {
 
 QAbstractItemModel* PlaylistManager::getCurrentPlaylist() {
     return m_current;
+}
+
+QAbstractItemModel* PlaylistManager::getCurrentPlaylistSearch() {
+    return m_current_search;
 }
 
 int PlaylistManager::getCurrentPlaylistIdx() {
@@ -86,6 +94,8 @@ int PlaylistManager::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint
                 case DDB_PLAYLIST_CHANGE_DELETED:
                 case DDB_PLAYLIST_CHANGE_TITLE:
                     m_list->refreshPlaylist();
+                case DDB_PLAYLIST_CHANGE_PLAYQUEUE:
+                    emit statusRowChanged();
                 default:
                     break;
             }

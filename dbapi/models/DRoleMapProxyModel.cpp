@@ -52,15 +52,15 @@ void DRoleMapProxyModel::setSourceModel(QAbstractItemModel *new_source_model) {
                 // go through each column
                 for (int col = 0; col < this->roles.count() ; col++) {
                     // role_map for given column
-                    QHash<int,int> role_map = this->roles.at(col);
+                    QHash<int,int> column_role_map = this->roles.at(col);
                     // go through each source roles
                     for (int source_role : roles) {
                         // find any key in role_map that maps to given source_role
-                        for (int role_key : role_map) {
-                            if (source_role == role_map.value(role_key)) {
+                        for (int role_key : column_role_map) {
+                            if (source_role == role_key) {
                                 emit dataChanged(createIndex(topLeft.row(), col),
                                                  createIndex(bottomRight.row(), col),
-                                                 {role_key, Qt::DisplayRole, Qt::DecorationRole});
+                                                 {column_role_map.value(role_key), Qt::DisplayRole, Qt::DecorationRole});
                             }
                         }
                     }

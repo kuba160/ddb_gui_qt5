@@ -2,8 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 
-
-import DBApi 1.0
+import DeaDBeeF.Q.DBApi 1.0
 
 ListView {
     readonly property string widgetType: "ignore"
@@ -18,8 +17,10 @@ ListView {
     flickDeceleration: 10000
     maximumFlickVelocity: 5000
 
-    reuseItems: true
-    spacing: 1
+    reuseItems: false
+    spacing: 0
+
+    contentWidth: width - scrollbar.width
 
     //Keys.onUpPressed: scrollbar.decrease()
     //Keys.onDownPressed: scrollbar.increase()
@@ -30,13 +31,13 @@ ListView {
         active: true
     }
 
-    section.property: "ItemAlbum"
+    /*section.property: "ItemAlbum"
     section.criteria: ViewSection.FullString
     section.delegate: Label {
         text: section
         font.italic: true
         height: implicitHeight + 4
-    }
+    }*/
 }
 
 /*##^##

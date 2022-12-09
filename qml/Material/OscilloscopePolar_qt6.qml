@@ -1,15 +1,32 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtCharts 2.1
-import QtQuick.Dialogs 1.0
+import Qt.labs.platform
 
-DBWidget {
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
+Item {
     id: main
-    friendlyName: qsTr("Oscilloscope Polar")
-    internalName: "oscilloscopePolar"
-    widgetStyle: "DeaDBeeF"
-    widgetType: "main"
-    widget: oscilloscope
+    readonly property string friendlyName: qsTr("Oscilloscope Polar")
+    readonly property string internalName: "oscilloscopePolar"
+    readonly property string widgetStyle: "DeaDBeeF"
+    readonly property string widgetType: "main"
+    property int instance
+
+    function name_i() {
+        return instance ? internalName + "_" + instance : internalName
+    }
+
+    Loader {
+        id: loader
+        sourceComponent: api === null ? undefined : oscilloscope
+        // size determined by rootItem (corresponding to QWidget size)
+        width: parent.width
+        height: parent.height
+        asynchronous: false
+    }
+
     Component {
         id: oscilloscope
         PolarChartView {
@@ -34,8 +51,8 @@ DBWidget {
 
             ValueAxis {
                 id: axisRadial
-                min: scope.channel_offset ? -1  : -0.6
-                max: scope.channel_offset ? 1.2 : 0.6 // bigger than 1 to avoid clipping??
+                min: -1
+                max: 1.2 // bigger than 1 to avoid clipping??
                 labelsVisible: false
                 gridVisible: false
                 lineVisible: false
@@ -57,7 +74,6 @@ DBWidget {
                 scope.mode = settings.getValue(name_i(), "mode", 1)
                 scope.fragment_duration = settings.getValue(name_i(), "fragment_duration", 100)
                 scope.scale = settings.getValue(name_i(), "scale", 1)
-                scope.channel_offset = settings.getValue(name_i(), "channel_offset", 1)
 
                 scope.paused = Qt.binding(function() { return !main.visible})
 
@@ -179,13 +195,6 @@ DBWidget {
                 }
             }
 
-            function changeChannelOffset(new_offset) {
-                if (scope.fragment_duration !== new_offset) {
-                    scope.channel_offset = new_offset
-                    settings.setValue(name_i(), "channel_offset", new_offset)
-                }
-            }
-
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -215,13 +224,13 @@ DBWidget {
                         Instantiator {
                             model: ["Scatter", "Line"]
                             MenuItem {
-                                text: qsTr(modelData)
-                                checkable: true
-                                checked: chartView.style === index
-                                onTriggered: {
-                                    changeStyle(index)
-                                }
-                                ActionGroup.group: styleGroup
+                                    text: qsTr(modelData)
+                                    checkable: true
+                                    checked: chartView.style === index
+                                    onTriggered: {
+                                        changeStyle(index)
+                                    }
+                                    ActionGroup.group: styleGroup
                             }
                             onObjectAdded: style_menu.insertItem(index, object)
                             onObjectRemoved: style_menu.removeItem(object)
@@ -243,15 +252,6 @@ DBWidget {
                             }
                             onObjectAdded: rend_menu.insertItem(index, object)
                             onObjectRemoved: rend_menu.removeItem(object)
-                        }
-                        MenuItem {
-                            text: qsTr("Channel offset")
-                            checkable: true
-                            checked: scope.channel_offset
-                            onTriggered: {
-                                changeChannelOffset(!scope.channel_offset)
-                            }
-                            ActionGroup.group: channelGroup
                         }
                     }
                     Menu {
@@ -302,14 +302,14 @@ DBWidget {
                         Instantiator {
                             model: [1,2,4,8,16,32]
                             MenuItem {
-                                text: qsTr(modelData + ".0x")
-                                checkable: true
-                                checked: scope.scale === modelData
-                                onTriggered: {
-                                    scope.scale = modelData
-                                    settings.setValue(name_i(), "scale", modelData)
-                                }
-                                ActionGroup.group: scaleGroup
+                                    text: qsTr(modelData + ".0x")
+                                    checkable: true
+                                    checked: scope.scale === modelData
+                                    onTriggered: {
+                                        scope.scale = modelData
+                                        settings.setValue(name_i(), "scale", modelData)
+                                    }
+                                    ActionGroup.group: scaleGroup
                             }
                             onObjectAdded: scale_menu.insertItem(index, object)
                             onObjectRemoved: scale_menu.removeItem(object)

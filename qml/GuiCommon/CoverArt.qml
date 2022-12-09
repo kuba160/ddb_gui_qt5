@@ -3,6 +3,8 @@ import QtQuick.Layouts 1.2
 import QtQuick.Controls 2.12
 import QtQml 2.12
 
+import DeaDBeeF.Q.DBApi 1.0
+
 DBWidget {
     friendlyName: qsTr("Cover Art")
     internalName: "coverArt"
@@ -18,12 +20,15 @@ DBWidget {
     Component {
         id: component
         Image {
-        Layout.fillHeight: true
-        Layout.fillWidth: true
-        Layout.maximumWidth: Math.min(height,width)
-        Layout.maximumHeight: Math.min(height,width)
-        fillMode: Image.PreserveAspectFit
-        source: "file://" + cover.current_cover_path
+            mipmap: true
+            smooth: false
+            asynchronous: true
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            Layout.maximumWidth: Math.min(height,width)
+            Layout.maximumHeight: Math.min(height,width)
+            fillMode: Image.PreserveAspectFit
+            source: DBApi.playlist.current_cover_path
         }
     }
 }

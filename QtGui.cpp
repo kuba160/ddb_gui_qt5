@@ -134,18 +134,21 @@ static void unloadWidgets() {
 
 static void startQuick() {
     engine = new QQmlApplicationEngine();
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    engine->addImportPath(":/qt/qml");
+
+    const QUrl url(u"qrc:/qt/qml/DeaDBeeF/Q/DDB2/main.qml"_qs);
+    //const QUrl url(QStringLiteral("qrc:/qml/DDB2/main.qml"));
 
 #if USE_WIDGETS
     engine->rootContext()->setContextProperty("app", app);
 #endif
-    engine->rootContext()->setContextProperty("api", api);
+    /*engine->rootContext()->setContextProperty("api", api);
     engine->rootContext()->setContextProperty("actions", &api->actions);
     engine->rootContext()->setContextProperty("playback", &api->playback);
     engine->rootContext()->setContextProperty("conf", &api->conf);
-    engine->rootContext()->setContextProperty("cover", &api->playlist);
+    engine->rootContext()->setContextProperty("cover", (CoverArt*)(&api->playlist));
     engine->rootContext()->setContextProperty("playlist", &api->playlist);
-    engine->rootContext()->setContextProperty("eq", &api->eq);
+    engine->rootContext()->setContextProperty("eq", &api->eq);*/
     engine->rootContext()->setContextProperty("_db_bg_override", false);
     engine->rootContext()->setContextProperty("_db_bg", "transparent");
     engine->rootContext()->setContextProperty("_db_do_not_load", false);

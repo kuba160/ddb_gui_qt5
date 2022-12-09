@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include "models/PluginModel.h"
 #include <QDebug>
+#include <QFile>
 
 #define DBAPI (this->deadbeef)
 
@@ -48,4 +49,19 @@ void Settings::remove(const QString &group, const QString &key) {
 
 QAbstractItemModel* Settings::getPlugins() {
     return m_plugins;
+}
+
+QString Settings::getAboutText() {
+    QFile aboutDBFile(QString::fromUtf8(DBAPI->get_system_dir(DDB_SYS_DIR_DOC)) + "/about.txt");
+
+    if (aboutDBFile.open(QFile::ReadOnly)) {
+        QTextStream s(&aboutDBFile);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+        s.setCodec("UTF-8");
+#endif
+        return s.readAll();
+    }
+    else {
+        return tr("Unable to read file with about information");
+    }
 }

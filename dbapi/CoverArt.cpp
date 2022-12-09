@@ -1,6 +1,8 @@
 #include "CoverArt.h"
 #include <QDebug>
 #include <QVariant>
+#include <QTimer>
+#include <QUrl>
 
 #include "CoverArtBackend.h"
 #include "CoverArtCache.h"
@@ -43,6 +45,15 @@ CoverArt::CoverArt(QObject *parent, DB_functions_t *api) : ICoverArtCache{parent
         }
         insertCoverArtCache(COVER_QSTRING, new CoverArtCache(this, cover_provider));
     }
+
+
+    QTimer::singleShot(1000, this, [this]() {
+        DB_playItem_t *it = DBAPI->streamer_get_playing_track();
+        if (it) {
+            current_cover_path_watcher.setFuture(cover_provider->loadCoverArt(it));
+            DBAPI->pl_item_unref(it);
+        }
+    });
 }
 
 CoverArt::~CoverArt() {
@@ -82,6 +93,10 @@ void CoverArt::current_cover_path_handler() {
     m_current_cover_path = QString(result);
     emit currentCoverPathChanged();
     cover_provider->unloadCoverArt(result);
+}
+
+QUrl CoverArt::getCurrentCoverPath() {
+    return QUrl::fromLocalFile(m_current_cover_path);
 }
 
 bool CoverArt::getCoverArtAvailable() {

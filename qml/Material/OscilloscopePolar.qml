@@ -1,37 +1,29 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtCharts 2.1
-import Qt.labs.platform
+import QtQuick.Dialogs 1.0
 
-Item {
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
+DBWidget {
     id: main
-    readonly property string friendlyName: qsTr("Oscilloscope")
-    readonly property string internalName: "oscilloscope"
-    readonly property string widgetStyle: "DeaDBeeF"
-    readonly property string widgetType: "main"
-    property int instance
-
-    function name_i() {
-        return instance ? internalName + "_" + instance : internalName
-    }
-
-    Loader {
-        id: loader
-        sourceComponent: api === null ? undefined : oscilloscope
-        // size determined by rootItem (corresponding to QWidget size)
-        width: parent.width
-        height: parent.height
-        asynchronous: false
-    }
-
+    friendlyName: qsTr("Oscilloscope Polar")
+    internalName: "oscilloscopePolar"
+    widgetStyle: "DeaDBeeF"
+    widgetType: "main"
+    widget: oscilloscope
     Component {
         id: oscilloscope
-        ChartView {
+        PolarChartView {
             id: chartView
             animationOptions: ChartView.NoAnimation
             legend.visible: false
+            width: Math.min(parent.width,parent.height)
+            height: Math.min(parent.width,parent.height)
+            anchors.fill: parent
 
-            plotArea: Qt.rect(0,0,width,height)
+            plotArea: Qt.rect(0,0,Math.min(width,height),Math.min(width,height))
             plotAreaColor: "black"
             backgroundColor: "black"
             // doesn't work :( - using rectangle
@@ -40,20 +32,19 @@ Item {
                 color: "black"
                 z: -5
             }
-
            // oscilloscope settings
            property variant scope;
 
             ValueAxis {
-                id: axisY
-                min: -1
-                max: 1
+                id: axisRadial
+                min: scope.channel_offset ? -1  : -0.6
+                max: scope.channel_offset ? 1.2 : 0.6 // bigger than 1 to avoid clipping??
                 labelsVisible: false
                 gridVisible: false
                 lineVisible: false
             }
             ValueAxis {
-                id: axisX
+                id: axisAngular
                 min: 0
                 max: scope.series_width
                 labelsVisible: false
@@ -69,32 +60,24 @@ Item {
                 scope.mode = settings.getValue(name_i(), "mode", 1)
                 scope.fragment_duration = settings.getValue(name_i(), "fragment_duration", 100)
                 scope.scale = settings.getValue(name_i(), "scale", 1)
+                scope.channel_offset = settings.getValue(name_i(), "channel_offset", 1)
+
+                scope.paused = Qt.binding(function() { return !main.visible})
+
+                use_global_accent = settings.getValue(name_i(), "use_global_accent", 1)
 
                 wave1_color = settings.getValue(name_i(), "wave1_color", "#2b7fba")
                 wave2_color = settings.getValue(name_i(), "wave2_color", "#2b7fba")
 
-                use_global_accent = settings.getValue(name_i(), "use_global_accent", 1)
             }
 
             property color wave1_color: "#2b7fba"
             property color wave2_color: "#2b7fba"
-            property int use_global_accent
-
-            Binding {
-                target: chartView
-                property: "wave1_color"
-                when: use_global_accent
-            }
-            Binding {
-                target: chartView
-                property: "wave2_color"
-                when: use_global_accent
-            }
-
+            property int use_global_accent: 1
 
             ColorDialog {
                 id: colorDialog
-                title: "Please choose a color"
+                title: qsTr("Custom visualization base color")
                 property int wave: 0
                 onAccepted: {
                     if (wave === 1 | wave !== 0) {
@@ -110,41 +93,54 @@ Item {
 
             ScatterSeries {
                 id: waveform
-                axisX: axisX
-                axisY: axisY
+                axisAngular: axisAngular
+                axisRadial: axisRadial
                 color: use_global_accent ? api.accent_color : wave2_color
                 useOpenGL: true
+                // LineSeries
+                //width: 1
+                //capStyle: Qt.FlatCap
+                // ScatterSeries
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
+
             }
             ScatterSeries {
                 id: waveform2
-                axisX: axisX
-                axisY: axisY
-                color: use_global_accent ? api.accent_color : wave1_color
+                axisAngular: axisAngular
+                axisRadial: axisRadial
+                color: use_global_accent ? api.accent_color : wave2_color
                 useOpenGL: true
+                // LineSeries
+                //width: 1
+                //capStyle: Qt.FlatCap
+                // ScatterSeries
                 markerShape: ScatterSeries.MarkerShapeRectangle
                 markerSize: 1
+
             }
 
             LineSeries {
                 id: waveform3
-                axisX: axisX
-                axisY: axisY
+                axisAngular: axisAngular
+                axisRadial: axisRadial
                 color: use_global_accent ? api.accent_color : wave2_color
                 useOpenGL: true
+                // LineSeries
                 width: 1
                 //capStyle: Qt.FlatCap
             }
             LineSeries {
                 id: waveform4
-                axisX: axisX
-                axisY: axisY
+                axisAngular: axisAngular
+                axisRadial: axisRadial
                 color: use_global_accent ? api.accent_color : wave1_color
                 useOpenGL: true
+                // LineSeries
                 width: 1
                 //capStyle: Qt.FlatCap
             }
+
 
             property int style: -1 // Scatter/Line
 
@@ -186,6 +182,13 @@ Item {
                 }
             }
 
+            function changeChannelOffset(new_offset) {
+                if (scope.fragment_duration !== new_offset) {
+                    scope.channel_offset = new_offset
+                    settings.setValue(name_i(), "channel_offset", new_offset)
+                }
+            }
+
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -215,13 +218,13 @@ Item {
                         Instantiator {
                             model: ["Scatter", "Line"]
                             MenuItem {
-                                    text: qsTr(modelData)
-                                    checkable: true
-                                    checked: chartView.style === index
-                                    onTriggered: {
-                                        changeStyle(index)
-                                    }
-                                    ActionGroup.group: styleGroup
+                                text: qsTr(modelData)
+                                checkable: true
+                                checked: chartView.style === index
+                                onTriggered: {
+                                    changeStyle(index)
+                                }
+                                ActionGroup.group: styleGroup
                             }
                             onObjectAdded: style_menu.insertItem(index, object)
                             onObjectRemoved: style_menu.removeItem(object)
@@ -233,16 +236,25 @@ Item {
                         Instantiator {
                             model: ["Mono", "Multichannel"]
                             MenuItem {
-                                    text: qsTr(modelData)
-                                    checkable: true
-                                    checked: scope.scope_mode === index
-                                    onTriggered: {
-                                        changeMode(index)
-                                    }
-                                    ActionGroup.group: channelGroup
+                                text: qsTr(modelData)
+                                checkable: true
+                                checked: scope.scope_mode === index
+                                onTriggered: {
+                                    changeMode(index)
+                                }
+                                ActionGroup.group: channelGroup
                             }
                             onObjectAdded: rend_menu.insertItem(index, object)
                             onObjectRemoved: rend_menu.removeItem(object)
+                        }
+                        MenuItem {
+                            text: qsTr("Channel offset")
+                            checkable: true
+                            checked: scope.channel_offset
+                            onTriggered: {
+                                changeChannelOffset(!scope.channel_offset)
+                            }
+                            ActionGroup.group: channelGroup
                         }
                     }
                     Menu {
@@ -251,13 +263,13 @@ Item {
                         Instantiator {
                             model: [50,100,200,300,500]
                             MenuItem {
-                                    text: qsTr(modelData + " ms")
-                                    checkable: true
-                                    checked: scope.fragment_duration === modelData
-                                    onTriggered: {
-                                        changeFragmentDuration(modelData)
-                                    }
-                                    ActionGroup.group: fragmentGroup
+                                text: qsTr(modelData + " ms")
+                                checkable: true
+                                checked: scope.fragment_duration === modelData
+                                onTriggered: {
+                                    changeFragmentDuration(modelData)
+                                }
+                                ActionGroup.group: fragmentGroup
                             }
                             onObjectAdded: frag_menu.insertItem(index, object)
                             onObjectRemoved: frag_menu.removeItem(object)
@@ -276,7 +288,7 @@ Item {
                             }
                         }
 
-                        Instantiator {
+                        Repeater {
                             model: ["Left channel", "Right channel", "Both"]
                             MenuItem {
                                 text: modelData
@@ -285,10 +297,6 @@ Item {
                                     colorDialog.open()
                                 }
                             }
-                            onObjectAdded: {
-                                color_menu.insertItem(color_menu.count, object)
-                            }
-                            onObjectRemoved: color_menu.removeItem(object)
                         }
                     }
                     Menu {
@@ -297,14 +305,14 @@ Item {
                         Instantiator {
                             model: [1,2,4,8,16,32]
                             MenuItem {
-                                    text: qsTr(modelData + ".0x")
-                                    checkable: true
-                                    checked: scope.scale === modelData
-                                    onTriggered: {
-                                        scope.scale = modelData
-                                        settings.setValue(name_i(), "scale", modelData)
-                                    }
-                                    ActionGroup.group: scaleGroup
+                                text: qsTr(modelData + ".0x")
+                                checkable: true
+                                checked: scope.scale === modelData
+                                onTriggered: {
+                                    scope.scale = modelData
+                                    settings.setValue(name_i(), "scale", modelData)
+                                }
+                                ActionGroup.group: scaleGroup
                             }
                             onObjectAdded: scale_menu.insertItem(index, object)
                             onObjectRemoved: scale_menu.removeItem(object)

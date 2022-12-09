@@ -1,6 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.12
 
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
 DBWidget {
     friendlyName: qsTr("Equalizer")
     internalName: "equalizer"

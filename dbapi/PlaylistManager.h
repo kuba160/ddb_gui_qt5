@@ -7,10 +7,12 @@
 #include <deadbeef/deadbeef.h>
 
 #include "models/PlayItemTableProxyModel.h"
+#include "models/PlayItemFilterModel.h"
 #include "CoverArt.h"
 
 class PlaylistModel;
 class PlaylistBrowserModel;
+
 
 class PlaylistManager : public CoverArt
 {
@@ -21,6 +23,7 @@ public:
     DB_functions_t *deadbeef;
 
     Q_PROPERTY(QAbstractItemModel* current READ getCurrentPlaylist CONSTANT)
+    Q_PROPERTY(QAbstractItemModel* current_search READ getCurrentPlaylistSearch CONSTANT)
     Q_PROPERTY(int current_idx READ getCurrentPlaylistIdx WRITE setCurrentPlaylistIdx NOTIFY currentPlaylistChanged)
     Q_PROPERTY(QAbstractItemModel* current_item READ getCurrentItem CONSTANT)
     Q_PROPERTY(QAbstractItemModel* queue READ getQueue CONSTANT)
@@ -40,6 +43,7 @@ signals:
 
 public:
     QAbstractItemModel* getCurrentPlaylist();
+    QAbstractItemModel* getCurrentPlaylistSearch();
     int getCurrentPlaylistIdx();
     void setCurrentPlaylistIdx(int plt);
     QAbstractItemModel* getQueue();
@@ -53,6 +57,7 @@ public:
 
 private:
     PlaylistModel *m_current;
+    PlayItemFilterModel *m_current_search;
     QAbstractItemModel *m_queue;
     PlaylistBrowserModel *m_list;
     QAbstractItemModel *m_current_item;

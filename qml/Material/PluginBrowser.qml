@@ -2,6 +2,9 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 
+import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
+
 DBWidget {
     friendlyName: qsTr("Plugin browser")
     internalName: "pluginBrowserQuick"
