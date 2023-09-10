@@ -78,7 +78,7 @@ jobs:
       with:
         update: true
         install: >-
-          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-svg mingw-w64-clang-x86_64-qt6-declarative mingw-w64-clang-x86_64-qt6-base mingw-w64-clang-x86_64-qt6-charts ninja
+          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-svg mingw-w64-clang-x86_64-qt6-declarative mingw-w64-clang-x86_64-qt6-base mingw-w64-clang-x86_64-qt6-charts cmake ninja
     - name: Build for Windows
       shell: msys2 {0}
       run: cmake . ; cmake --build . ; mkdir -p plugins;mv ddb_gui_qt5*.dll plugins/ ; zip -r ddb_gui_qt5_windows-shared.zip plugins/*.dll
