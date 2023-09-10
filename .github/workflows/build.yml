@@ -6,7 +6,7 @@ jobs:
   build_linux_static:
     name: Static linux
     runs-on: ubuntu-latest
-    container: ubuntu:18.04
+    container: ubuntu:20.04
     steps:
     - name: Install dependencies for Linux
       run: |
@@ -27,17 +27,17 @@ jobs:
   build_linux_shared:
     name: Shared linux
     runs-on: ubuntu-latest
-    container: ubuntu:18.04
+    container: ubuntu:22.04
     steps:
     - name: Install dependencies for Linux
       run: |
         apt-get -qq update
-        apt-get install -y -qq qtbase5-dev qml-module-qtcharts qtquickcontrols2-5-dev qtdeclarative5-dev libqt5svg5-dev libqt5charts5-dev make \
+        apt-get install -y -qq qtbase6-dev qml6-module-qtcharts qml6-module-qtquick-controls qtquickcontrols2-5-dev libqt6quickcontrols2-6 qt6-declarative-dev qt6-svg-dev qml6-module-qtcharts cmake make \
           g++ wget zip unzip
     - name: Checkout for Linux
       uses: actions/checkout@v1
     - name: Build for Linux
-      run: qmake -qt=qt5; make; mkdir -p plugins; cp ddb_gui_qt5.so plugins/; zip -r ddb_gui_qt5_linux-shared.zip plugins/ddb_gui_qt5.so
+      run: cmake .; cmake --build . ; mkdir -p plugins; cp ddb_gui_qt5.so plugins/; zip -r ddb_gui_qt5_linux-shared.zip plugins/ddb_gui_qt5.so
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
@@ -78,10 +78,10 @@ jobs:
       with:
         update: true
         install: >-
-          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-x86_64-qt5
+          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-svg mingw-w64-clang-x86_64-qt6-declarative mingw-w64-clang-x86_64-qt6-base mingw-w64-clang-x86_64-qt6-charts ninja
     - name: Build for Windows
       shell: msys2 {0}
-      run: qmake; make; mkdir -p plugins;mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-shared.zip plugins/*.dll
+      run: cmake . ; cmake --build . ; mkdir -p plugins;mv ddb_gui_qt5*.dll plugins/ ; zip -r ddb_gui_qt5_windows-shared.zip plugins/*.dll
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
@@ -124,7 +124,7 @@ jobs:
       with:
         submodules: true
     - name: Install dependencies
-      run: brew install qt@5 gcc zip make
+      run: brew install qt@6 gcc zip make
     - name: Build for macOS
       run: |
         export PATH="/usr/local/opt/qt@5/bin:$PATH"
@@ -134,8 +134,8 @@ jobs:
         export PATH="/usr/local/opt/zip/bin:$PATH"
         export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
         echo $PATH
-        qmake
-        make
+        cmake .
+        cmake --build .
         mkdir -p plugins
         cp ddb_gui_qt5.dylib plugins/
         zip -r ddb_gui_qt5_macos-shared.zip plugins/*.dylib
