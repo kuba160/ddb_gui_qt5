@@ -24,7 +24,6 @@ qt_add_qml_module(DDB2
         QML_FILES ActionMenu.qml
         QML_FILES ActionMenuMain.qml
         QML_FILES DDB2Globals.qml
-        QML_FILES ActionMenu_old.qml
         QML_FILES Medialib.qml
         QML_FILES QueuePane.qml
 )

@@ -106,6 +106,7 @@ DBWidget {
                     onStop_after_currentChanged: requestPaint()
 
                     onPaint: {
+                        var context = getContext("2d");
                         context.clearRect(0,0,line_canvas.width, line_canvas.height)
                         // mid line
                         if (stop_after_album || stop_after_current) {

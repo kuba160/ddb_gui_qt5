@@ -72,7 +72,7 @@ qt6_add_qml_module(dbapi
         actions/ActionSpec.h actions/ActionSpec.cpp
         actions/ActionsDeadbeef.h actions/ActionsDeadbeef.cpp
         models/TreeNode.h models/TreeNode.cpp
-        models/ScriptableModel.h models/ScriptableModel.cpp
+        # models/ScriptableModel.h models/ScriptableModel.cpp
         scriptable/scriptable.c scriptable/scriptable.h
         models/ScriptableSimple.h models/ScriptableSimple.cpp
         SOURCES MedialibConfig.h MedialibConfig.cpp

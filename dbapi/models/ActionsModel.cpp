@@ -118,7 +118,7 @@ void ActionsModel::rebuildActionTree() {
             else {
                 order_path = action->path;
                 tree->insertChildIter(action->path, action->action_id);
-                qDebug() << "Inserting:" << action->path << action->action_id;
+                //qDebug() << "Inserting:" << action->path << action->action_id;
             }
 
             if (order_first.contains(action->action_id)) {
@@ -144,7 +144,7 @@ void ActionsModel::rebuildActionTree() {
             else {
                 order_path = action->path;
                 tree->insertChildIter(action->path, action->action_id);
-                qDebug() << "Inserting:" << action->path << action->action_id;
+                //qDebug() << "Inserting:" << action->path << action->action_id;
             }
 
             if (order_first.contains(action->action_id)) {

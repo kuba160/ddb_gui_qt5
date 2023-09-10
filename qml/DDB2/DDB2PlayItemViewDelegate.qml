@@ -70,6 +70,7 @@ ItemDelegate {
         onQueue_listChanged: requestPaint()
 
         onPaint: {
+            var context = getContext("2d");
             context.clearRect(0,0,line_canvas.width, line_canvas.height)
             // mid line
             if (queue_list != undefined) {
