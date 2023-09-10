@@ -51,28 +51,29 @@ jobs:
       with:
         name: linux
         path: ddb_gui_qt5_linux-shared.zip
-#  build_windows_static:
-#    name: Static Windows
-#    runs-on: windows-latest
-#    steps:
-#    - name: Checkout for Windows
-#      uses: actions/checkout@v2
-#      with:
-#        submodules: true
-#    - name: Install msys2
-#      uses: msys2/setup-msys2@v2
-#      with:
-#        update: true
-#        install: >-
-#          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-x86_64-qt5-static
-#    - name: Build for Windows
-#      shell: msys2 {0}
-#      run: /mingw64/qt5-static/bin/qmake ; make ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-static.zip plugins/*.dll
-#    - name: Upload artifact
-#      uses: actions/upload-artifact@v2
-#      with:
-#        name: windows
-#        path: ddb_gui_qt5_windows-static.zip
+  build_windows_static:
+    name: Static Windows
+    runs-on: windows-latest
+    steps:
+    - name: Checkout for Windows
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Install msys2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+         mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-x86_64-qt6-static mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
+    - name: Build for Windows
+      shell: msys2 {0}
+      run: CMAKE_PREFIX_PATH=/mingw64/qt6-static/ cmake . ; cmake --build . ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-static.zip plugins/*.dll
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows
+        path: ddb_gui_qt5_windows-static.zip
   build_windows_shared:
     name: Shared Windows
     runs-on: windows-latest
