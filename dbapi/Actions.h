@@ -60,7 +60,7 @@ public:
 
 signals:
     void actionApplied(PlayItemIterator &pit);
-    virtual void actionPropertiesChanged(void);
+    void actionPropertiesChanged(void);
 };
 
 class Actions : public QObject
