@@ -7,6 +7,7 @@
 #include "models/PlayItemFilterModel.h"
 
 
+#include "ItemImporter.h"
 #include <QDebug>
 
 #define DBAPI (this->deadbeef)
@@ -30,6 +31,15 @@ PlaylistManager::PlaylistManager(QObject *parent, DB_functions_t *api)
     m_current_item = new CurrentPlayItemModel(this, this);
 
     qDebug() << m_current->data(m_current->index(0,0));
+
+
+    DB_plugin_t *medialib = DBAPI->plug_get_for_id("medialib");
+    if (medialib) {
+        DB_mediasource_t *ml = static_cast<DB_mediasource_t*>((void*)medialib);
+        m_medialib = new MediasourceModel(this, ml, "medialib");
+        m_medialib_config = new MedialibConfig(this,ml, m_medialib->getSource());
+        connect(m_medialib_config, &MedialibConfig::foldersChanged, this, &PlaylistManager::medialibFoldersChanged);
+    }
 }
 
 PlaylistManager::~PlaylistManager() {
@@ -37,6 +47,8 @@ PlaylistManager::~PlaylistManager() {
     delete m_queue;
     delete m_list;
     delete m_current_item;
+    delete m_medialib;
+    delete m_medialib_config;
 }
 
 QAbstractItemModel* PlaylistManager::getCurrentPlaylist() {
@@ -78,6 +90,19 @@ QAbstractItemModel* PlaylistManager::getList() {
 QAbstractItemModel* PlaylistManager::getCurrentItem() {
     return m_current_item;
 }
+
+QAbstractItemModel* PlaylistManager::getMedialib() {
+    return m_medialib;
+}
+
+QStringList PlaylistManager::getMedialibFolders() {
+    return m_medialib_config->getFolders();
+}
+
+void PlaylistManager::setMedialibFolders(QStringList l) {
+    m_medialib_config->setFolders(l);
+}
+
 
 
 int PlaylistManager::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
@@ -131,3 +156,17 @@ void PlaylistManager::queueAppend(QVariant mime) {
         qDebug() <<" mime data error";
     }
 }
+
+QFuture<PlayItemIterator> PlaylistManager::runFileImport(QStringList files) {
+    return ItemImporter::runFileImport(files);
+}
+
+QFuture<PlayItemIterator> PlaylistManager::runFolderImport(QStringList folders) {
+    return ItemImporter::runFolderImport(folders);
+}
+
+QFuture<PlayItemIterator> PlaylistManager::runPlaylistImport(QStringList playlists) {
+    return ItemImporter::runPlaylistImport(playlists);
+}
+
+

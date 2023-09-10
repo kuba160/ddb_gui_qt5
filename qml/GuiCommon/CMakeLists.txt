@@ -12,4 +12,5 @@ qt_add_qml_module(GuiCommon
         PlayItemViewDelegate.qml
         PlayItemView.qml
         PlaylistQuick.qml
+        PluginWidgets.qml
 )

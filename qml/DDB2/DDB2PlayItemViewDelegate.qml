@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.15
 import QtQuick.Controls.Material 2.15
 
 import DeaDBeeF.Q.DBApi 1.0
+import DeaDBeeF.Q.GuiCommon 1.0
 
 ItemDelegate {
     readonly property string widgetType: "ignore"
@@ -38,6 +39,50 @@ ItemDelegate {
     }
 
     padding: 5
+
+    Component {
+        id: menu_component
+        ActionMenu {
+            prototype_id: 1
+            itemIterator: ItemIterator
+        }
+    }
+
+    MouseArea {
+        acceptedButtons: Qt.RightButton
+        anchors.fill: parent
+
+        onClicked: {
+            if (mouse.button === Qt.RightButton) { // 'mouse' is a MouseEvent argument passed into the onClicked signal handler
+                let menu = menu_component.createObject(this, {x: mouse.x- 128})
+                menu.open()
+            }
+        }
+    }
+
+    // in queue indicator:
+    Canvas {
+        id: line_canvas
+        anchors.fill: parent
+        contextType: "2d"
+        property var queue_list: ItemQueue
+
+        onQueue_listChanged: requestPaint()
+
+        onPaint: {
+            context.clearRect(0,0,line_canvas.width, line_canvas.height)
+            // mid line
+            if (queue_list != undefined) {
+                context.strokeStyle = Material.accent //Qt.rgba(1,1,1,.5);
+                context.lineWidth = 1
+                context.path = undefined
+                context.moveTo(2, 2) //line_canvas.height/2)
+                context.lineTo(2, line_canvas.height - 2);
+                context.stroke()
+            }
+        }
+        z: 2
+    }
 
 
     /*Rectangle {
@@ -93,6 +138,17 @@ ItemDelegate {
                     property var queue_list: ItemQueue
                     property string queue_str: ""
 
+                    // TODO label width can be wrong when item already in queue and delegate is created
+                    // fixed but not opacity
+                    Component.onCompleted: {
+                        if (queue_list != undefined) {
+                            queue_label.text = queue_str
+                            console.log("width",  queue_label.implicitWidth)
+                            Layout.minimumWidth = queue_label.implicitWidth
+                            opacity = 1
+                        }
+                    }
+
                     function buildQueueString(queue) {
                         var str_out = "Q: "
                         for (let i = 0; i < queue_list.length; i++) {
@@ -111,11 +167,11 @@ ItemDelegate {
                             }
                         }
                         else {
+                            Layout.minimumWidth = 0
                             hide_animation.start();
                         }
                     }
-
-                    property int previousWidth
+                    property int previousWidth: 0
                     ParallelAnimation {
                         id: show_animation
                         PropertyAnimation {
@@ -227,8 +283,9 @@ ItemDelegate {
 
                     }
                 }
-
-                text: it_delegate.isPlaying ? currentTime + "/" + ItemLength : ItemLength
+                property string text_stream: it_delegate.isPlaying ? currentTime + "/∞" + ItemLength : "∞"
+                property string text_file: it_delegate.isPlaying ? currentTime + "/" + ItemLength : ItemLength
+                text: ItemCodec === "content" ? text_stream : text_file
                 font.pixelSize: 12
                 //width: parent.width
                 wrapMode: Text.WrapAnywhere
@@ -243,48 +300,17 @@ ItemDelegate {
         }
         ToolButton {
             id: toolbtn
-            text: "⋮"
+            icon.name: "overflow-menu"
             Layout.alignment: Qt.AlignVCenter
             //anchors.rightMargin: scrollbar.width
             //Layout.preferredWidth: height
             //anchors.verticalCenter: parent.verticalCenter
             //anchors.verticalCenter: parent.verticalCenter
 
-            Component {
-                id: menu_component
-                Menu {
-                    clip: true
-                    MenuItem {
-                        property string action_id: "add_to_playback_queue"
-                        text: DBApi.actions.getActionTitle(action_id)
-                        onTriggered: {
-                            DBApi.actions.execAction(action_id, ItemActionContext)
-                        }
-                    }
-                    MenuItem {
-                        property string action_id: "remove_from_playback_queue"
-                        enabled: ItemQueue != undefined
-                        text: DBApi.actions.getActionTitle(action_id)
-                        onTriggered: {
-                            DBApi.actions.execAction(action_id, ItemActionContext)
-                        }
-                    }
-
-                    onVisibleChanged: {
-                        parent.active = visible
-                    }
-                }
-            }
-            Loader {
-                id: menu_loader
-                active: false
-                sourceComponent: menu_component
-            }
 
             onClicked: {
-                menu_loader.active = true
-                menu_loader.item.popup()
-                //track_menu.popup()
+                let menu = menu_component.createObject(this)
+                menu.open()
             }
 
             flat: true

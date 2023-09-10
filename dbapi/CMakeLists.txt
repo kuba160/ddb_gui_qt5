@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.1.0)
 
-project(dbapi LANGUAGES CXX)
+project(dbapi LANGUAGES C CXX)
 
 set(USE_COVERART_CACHE 1)
 
@@ -18,6 +18,7 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
 endif()
 
 set (CMAKE_SHARED_LIBRARY_PREFIX "")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 message(STATUS "SET_QT_VERSION=${SET_QT_VERSION}")
 if (SET_QT_VERSION STREQUAL Qt6)
@@ -42,11 +43,17 @@ qt6_add_qml_module(dbapi
     RESOURCE_PREFIX
         /qt/qml
     SOURCES
-        Actions.cpp
+        Actions.cpp Actions.h
+        ActionsDefault.cpp
+        ActionOwner.h ActionOwner.cpp
+        actions/ActionsConfig.h actions/ActionsConfig.cpp
+        actions/ActionsPlaceholder.h actions/ActionsPlaceholder.cpp
         CoverArt.cpp
         Equalizer.cpp
+        ItemImporter.cpp ItemImporter.h
         PlaybackControl.cpp
-        PlaylistManager.cpp
+        PlaylistManager.cpp PlaylistManager.h
+        PlayItemIterator.cpp PlayItemIterator.h
         Settings.cpp
         Visualizations.cpp
         CoverArtBackend.cpp
@@ -62,10 +69,15 @@ qt6_add_qml_module(dbapi
         models/ActionsModel.h models/ActionsModel.cpp
         models/PlayItemFilterModel.h models/PlayItemFilterModel.cpp
         models/PlayItemTableProxyModel.h models/PlayItemTableProxyModel.cpp
+        actions/ActionSpec.h actions/ActionSpec.cpp
+        actions/ActionsDeadbeef.h actions/ActionsDeadbeef.cpp
+        models/TreeNode.h models/TreeNode.cpp
+        models/ScriptableModel.h models/ScriptableModel.cpp
+        scriptable/scriptable.c scriptable/scriptable.h
+        models/ScriptableSimple.h models/ScriptableSimple.cpp
+        SOURCES MedialibConfig.h MedialibConfig.cpp
 )
 
 target_link_libraries(dbapi PRIVATE Qt::Core Qt::Concurrent)
 target_include_directories(dbapi PRIVATE include)
 target_compile_definitions(dbapi PRIVATE USE_COVERART_CACHE=${USE_COVERART_CACHE} QT_USE_STRINGBUILDER)
-
-

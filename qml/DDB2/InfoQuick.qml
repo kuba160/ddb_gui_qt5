@@ -13,44 +13,42 @@ DBWidget {
     internalName: "infoQuick"
     widgetStyle: "DeaDBeeF"
     widgetType: "main"
+    Layout.fillWidth: true
 
     clip: true
     widget: Repeater {
         id: reap
         model: DBApi.playlist.current_item // Only 1 item
-        //Layout.margins: 4
-        ColumnLayout {
-            spacing: 0
-            //anchors.margins: 5
+        Item {
+            Layout.fillWidth: true
+            implicitWidth: Math.max(label_title.implicitWidth, label_artist.implicitWidth)
             anchors.fill: parent
-            anchors.leftMargin: 4
-            Label {
-                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                //padding: 2
-                //Layout.topMargin: 4
-                text: ItemTitle
-                //Layout.margins: 2
-                font.pixelSize: 14
-                font.bold: true
-                wrapMode: Text.WrapAnywhere
-                maximumLineCount: 1
-                elide: Text.ElideRight
-                Layout.fillWidth: true
+            ColumnLayout {
+                width: parent.width
+                //anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 2
+                anchors.leftMargin: 4
+                Label {
+                    id: label_title
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    text: ItemTitle
+                    font.pixelSize: 14
+                    font.bold: true
+                    wrapMode: Text.WrapAnywhere
+                    maximumLineCount: 1
+                    Layout.fillWidth: true
+                }
+                Label {
+                    id: label_artist
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                    text: ItemArtist
+                    font.pixelSize: 12
+                    wrapMode: Text.WrapAnywhere
+                    maximumLineCount: 1
+                    Layout.fillWidth: true
+                }
             }
-            Label {
-                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                //padding: 2
-                //Layout.bottomMargin: 8
-                text: ItemArtist
-                font.pixelSize: 12
-                wrapMode: Text.WrapAnywhere
-                maximumLineCount: 1
-                Layout.fillWidth: true
-
-            }
-        }
-        Component.onCompleted: {
-            console.log("COLOR:::", Material.foreground)
         }
     }
 }

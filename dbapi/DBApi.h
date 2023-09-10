@@ -91,18 +91,15 @@ public:
     PlaylistManager* getPlaylist() {
         return &playlist;
     }
-
-
-
-
-
 };
 
 typedef std::function<QObject* (QWidget *parent, DBApi *Api)> WidgetPluginConstructor;
 
+
 typedef struct DB_qtgui_s {
     DB_gui_t gui;
     int (*register_widget) (WidgetPluginConstructor);
+    int (*register_module) (const char*);
 } DB_qtgui_t;
 
 /// Macros to be used in DBWidget
@@ -112,5 +109,13 @@ typedef struct DB_qtgui_s {
 #define CONFGET(X, Y) (this->api->confGetValue(_internalNameWidget, X,Y))
 // Macro to save entry X with value Y to config (instance specific, returns void)
 #define CONFSET(X, Y) (this->api->confSetValue(_internalNameWidget, X,Y))
+
+
+//class TrackRefc {
+//public:
+//    static void item_ref(DB_playItem_t *it);
+//    static void item_unref(DB_playItem_t *it);
+//    static void override_ref();
+//};
 
 #endif // DBAPI_H

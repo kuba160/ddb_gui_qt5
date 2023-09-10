@@ -1,4 +1,7 @@
+
+#if USE_CONCURRENT
 #include <QtConcurrent>
+#endif
 
 #include "CoverArtWidgetCache.h"
 #include <QVariant>
@@ -112,7 +115,12 @@ QFuture<QVariant> CoverArtWidgetCache::requestCoverArt(CoverArtRequest_t &reques
     }
     else if (stat == STATUS_MISS) {
         CoverArtRequest_t *req_new = new CoverArtRequest_t(request);
+#if USE_CONCURRENT
         return QtConcurrent::run(cover_art_load,api,this, req_new);
+#else
+        cover_art_load(api, this, req_new);
+        return {};
+#endif
     }
     return QFuture<QVariant>();
 }

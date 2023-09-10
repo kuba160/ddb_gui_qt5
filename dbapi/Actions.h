@@ -8,162 +8,143 @@
 #include <QJsonArray>
 #include <deadbeef/deadbeef.h>
 
+#include <QHash>
+
+#include "PlayItemIterator.h"
+#include "ActionOwner.h"
+#include <QList>
+
 class ActionsModel;
+class ActionsDefault;
+class ActionOwner;
 
 class DBAction : public QObject {
     Q_OBJECT
 public:
     DBAction(QObject *parent) : QObject(parent){};
 
-    enum ActionExecuteMode {
-        ACTION_MAIN = DDB_ACTION_CTX_MAIN,
-        ACTION_SELECTION = DDB_ACTION_CTX_SELECTION,
-        // NOTE: starting with API 1.8, plugins should be using the
-        // action_get_playlist function for getting the playlist pointer.
-        ACTION_PLAYLIST = DDB_ACTION_CTX_PLAYLIST,
-        ACTION_NOWPLAYING = DDB_ACTION_CTX_NOWPLAYING,
+    // standard ddb parameters
+    QString title; // action name (NOT PATH);
+    QStringList path;
+    QString action_id; // id
+    
+    enum ActionAccepts {
+        ACTION_ARG_NONE = 1 << 0,
+        ACTION_ARG_TRACK = 1 << 1,
+        ACTION_ARG_TRACKS = 1 << 2,
+        ACTION_ARG_PLAYLIST = 1 << 3,
+        ACTION_ARG_ALL = (ACTION_ARG_NONE | ACTION_ARG_TRACK |
+                          ACTION_ARG_TRACKS | ACTION_ARG_PLAYLIST)
     };
-    Q_ENUM(ActionExecuteMode);
+    Q_ENUM(ActionAccepts);
+    enum ActionLocations {
+        ACTION_LOC_HOTKEY = 1 << 0,
+        ACTION_LOC_TRACK_CONTEXT = 1 << 1, // item(s) context
+        ACTION_LOC_PLAYLIST_CONTEXT = 1 << 2,
+        ACTION_LOC_MENUBAR = 1 << 3,
+        ACTION_LOC_ALL = (ACTION_LOC_HOTKEY | ACTION_LOC_TRACK_CONTEXT |
+                          ACTION_LOC_PLAYLIST_CONTEXT | ACTION_LOC_MENUBAR)
 
-    QString title;
-    QString icon;
-    QString action_id;
-    QString path; // full unprocessed action path
-    bool enabled; // enabled for given tracks, updated with buildtrackmenu
-    qulonglong flags;
-    // todo callback
-    virtual void actionExecute(ActionExecuteMode) const = 0;
+    };
+    Q_ENUM(ActionLocations);
+
+    uint16_t accepts;
+    uint16_t locations;
+
+    QHash<QString, QVariant> properties_const;
+
+    // contextualize
+    virtual QHash<QString, QVariant> contextualize(PlayItemIterator &context) const {return properties_const;};
+    // apply
+    virtual bool apply(PlayItemIterator &context) = 0;
+
+signals:
+    void actionApplied(PlayItemIterator &pit);
+    virtual void actionPropertiesChanged(void);
 };
-
-class DBActionImported : public DBAction {
-    Q_OBJECT
-    DB_functions_t* deadbeef;
-public:
-    DBActionImported(DB_functions_t* deadbeef, DB_plugin_action_t *);
-    // Properties:
-    // name/object name - internal action name
-    // title - action title or subgroup title
-    // path - full action path
-    // flags - deadbeef flags;
-
-
-    // DBACTION - original DB_plugin_action_t pointer
-    //
-    // DeaDBeeF Action flags (used for all types)
-    // DeaDBeeF Action callback (TYPE_DEADBEEF)
-    DB_plugin_action_callback2_t callback2;
-    DB_plugin_action_t *plug_action;
-
-    static QString iconOnAction(const QString action);
-
-public slots:
-    virtual void actionExecute(ActionExecuteMode role) const override;
-};
-
-class ActionContext : public QObject {
-    Q_OBJECT
-    friend class Actions;
-    friend class ActionContext;
-public:
-    // duplicate
-    ActionContext(const ActionContext &from) {
-        this->mode = from.mode;
-        this->plt = from.plt;
-        this->it_list = from.it_list;
-        if (mode == DBAction::ACTION_PLAYLIST) {
-            deadbeef->plt_ref(plt);
-        }
-        else if (mode == DBAction::ACTION_SELECTION) {
-            for (DB_playItem_t *it : it_list) {
-                deadbeef->pl_item_ref(it);
-            }
-        }
-    }
-    // create playlist action context
-    ActionContext(ddb_playlist_t* plt);
-    // create playitem list action context
-    ActionContext(QList<DB_playItem_t*> tracks);
-    ActionContext(DB_playItem_t* track);
-    // create main or nowplaying action context
-    ActionContext(bool nowplaying = false);
-    ActionContext() : ActionContext(false) {};
-
-    ~ActionContext();
-
-    // executes given DBAction with current context
-    void executeForAction(DBAction* action);
-
-protected:
-    static DB_functions_t* deadbeef;
-    DBAction::ActionExecuteMode mode;
-    ddb_playlist_t* plt;
-    QList<DB_playItem_t *> it_list;
-};
-
-class ActionsBuilder {
-public:
-    virtual QVariant returnValue() = 0;
-    virtual ActionsBuilder * createSubMenu(QString &title) = 0;
-    virtual void insertAction(DBAction *action) = 0;
-    virtual void insertSeparator() = 0;
-};
-
-typedef ActionsBuilder * (*actionsBuilderConstructor)(QObject *parent, ActionContext *context);
 
 class Actions : public QObject
 {
     Q_OBJECT
 public:
-    explicit Actions(QObject *parent, DB_functions_t *Api);
+    explicit Actions(QObject *parent);
 
+    void registerActionOwner(ActionOwner*);
+    // unregisterActionOwner
 
-    Q_PROPERTY(QAbstractItemModel* actions READ getActionsModel CONSTANT);
+private:
 
-    QAbstractItemModel* getActionsMenuModel() const;
-    QAbstractItemModel *getActionsModel() const;
+    QList<ActionOwner *> m_action_owners;
+    QHash<uint32_t, ActionsModel*> m_prototypes;
+    uint32_t prototype_counter = 0;
 
 public slots:
 
-    bool execAction(QString action, ActionContext context);
+    DBAction* getAction(QString action_id);
+    QStringList getActions();
     QString getActionTitle(QString action_id);
+    QHash<QString, QVariant> getActionContext(QString id, PlayItemIterator &context);
+    bool execAction(QString action, PlayItemIterator context = PlayItemIterator(false));
 
-public:
 
-    bool registerActionsBuilder(QString name, actionsBuilderConstructor builder);
+    uint32_t registerPrototype(uint32_t location_filter, uint32_t accepts_filter, QString config);
 
-    QVariant buildActionMenu(QObject *parent, QString name, ActionContext *context);
-    QVariant buildTrackMenu(QObject *parent, QString name, ActionContext *context);
+    QJsonArray parsePrototype(uint32_t prototype, PlayItemIterator pit);
+    QJsonArray parsePrototype(uint32_t prototype);
+    QAbstractItemModel * prototypeModel(uint32_t prototype);
+
+
+
+signals:
+    void prototypeInvalidated(uint32_t prototype);
+    void actionsAdded();
+    void actionAdded(QString action_id);
+    void actionDeleted(QString action_id);
 
 protected:
-    DB_functions_t *deadbeef;
-    ActionsModel *m_actions;
-    ActionsModel *m_actions_menu;
-    ActionsModel *m_actions_track;
-    ActionsModel *m_actions_playlist;
-    QHash<QString, DBAction *> m_actions_hash;
-    QHash<QString, actionsBuilderConstructor> m_actions_builders;
-
-    void buildActionMenuIter(ActionsBuilder *, QModelIndex &);
-    void buildTrackMenuIter(ActionsBuilder *, QModelIndex &);
-    //DBAction createAction(QAbstractItemModel *, int row, QModelIndex &parent);
 
 
-    bool trackMenuExcludeAction(DBAction *action);
+    const int filter_flags[4] = { DBAction::ACTION_LOC_HOTKEY, DBAction::ACTION_LOC_TRACK_CONTEXT,
+                                      DBAction::ACTION_LOC_PLAYLIST_CONTEXT, DBAction::ACTION_LOC_MENUBAR };
+
+    void rebuildMenu(DBAction::ActionLocations);
+
+
+    QString getDefaultConfig(DBAction::ActionLocations);
+
+
+
+
+    static constexpr int locToNum(DBAction::ActionLocations loc) {
+        switch(loc) {
+            case DBAction::ACTION_LOC_HOTKEY:
+                return 0;
+            case DBAction::ACTION_LOC_TRACK_CONTEXT:
+                return 1;
+            case DBAction::ACTION_LOC_PLAYLIST_CONTEXT:
+                return 2;
+            case DBAction::ACTION_LOC_MENUBAR:
+                return 3;
+            default:
+                return 0;
+        }
+    }
 signals:
 
 };
 
-/*
-class ActionsJsonBuilder : public ActionsBuilder, public QObject {
-public:
-    ActionsJsonBuilder(QObject *parent);
-    virtual ActionsBuilder * createSubMenu(QString &title) override;
-    virtual void insertAction(DBAction *action) override;
-    QJsonObject json_obj;
-    QJsonArray submenus;
-    QJsonArray actions;
-    QByteArray toJson(QJsonDocument::JsonFormat format = QJsonDocument::JsonFormat::Indented);
-};*/
+// actions comment
 
+// Actions provide unified system for maintaining deadbeef and player related actions
+// They can be distributed in different locations such as application menu, right click track menu etc.
+// Each action in addition to standard action description (similar to deadbeef) can be contextualized.
+// This means that an action can provide extra parameters (or override default) when the context is different.
+// Example: "Add to Playqueue" can be replaced with "Add 2 songs to Playqueue" if the context is 2 songs.
+// Example 2: "Remove from Playqueue" will be disabled if selected tracks are not in playqueue.
+//
+// Actions maintains models for each menu such as hotkey, track menu, playlist menu or menubar
+// Each menu is generated from the config which decides the order, separators or visibility of each action.
+// Models can export its internal tree structure into json format that can be parsed for generating the menu
+// independent of the platform.
 
 #endif // ACTIONS_H

@@ -54,6 +54,12 @@ void PlayItemTableProxyModel::setSourceModel(QAbstractItemModel *sourceModel) {
             }
         }
     });
+    connect (sourceModel, &QAbstractItemModel::rowsAboutToBeInserted, this, [this](const QModelIndex &parent, int start, int end) {
+        beginInsertRows(parent, start, end);
+    });
+    connect (sourceModel, &QAbstractItemModel::rowsInserted, this, [this](const QModelIndex &parent, int start, int end) {
+        endInsertRows();
+    });
     DRoleMapProxyModel::setSourceModel(sourceModel);
 }
 

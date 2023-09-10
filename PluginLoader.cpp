@@ -23,6 +23,7 @@
 #include <QDir>
 #include "PluginLoader.h"
 #include <QQmlEngine>
+#include <QThread>
 
 #include "WidgetLibraryModel.h"
 
@@ -34,9 +35,11 @@ PluginQmlWrapper::PluginQmlWrapper(QObject *parent, QUrl source) : QObject(paren
         engine.rootContext()->setContextProperty("_db_bg_override", true);
         engine.rootContext()->setContextProperty("_db_bg", "transparent");
         engine.rootContext()->setContextProperty("_db_do_not_load", true);
-
         QObject *plugin = component.create();
         if (plugin) {
+            while(!component.isReady()) {
+                QThread::usleep(1000);
+            }
             PluginQmlWrapper::extractPluginInfo(plugin);
         }
         delete plugin;
@@ -58,8 +61,12 @@ PluginLoader::PluginLoader(QObject *parent) : QObject(parent) {
 
     // Load local Qt Quick widgets (TODO load from deadbeef dir)
     QStringList default_qml_list;
-    for (QString &str : QDir(":/qml").entryList()) {
-        default_qml_list.append(QString("qrc:/qml/").append(str));
+    for (QString &str : QDir(":/qt/qml/DeaDBeeF/Q/GuiCommon").entryList()) {
+        qDebug() << "Found built-in qml widget" << str;
+        // TODO FIX
+#if USE_WIDGETS
+       default_qml_list.append(QString("qrc:/qt/qml/DeaDBeeF/Q/GuiCommon/").append(str));
+#endif
     }
     insertPlugins(default_qml_list);
 

@@ -19,6 +19,7 @@ void PlayqueueModel::onQueueChanged() {
     beginResetModel();
     //qDebug() << "PlayqueueModel: onQueueChanged";
     endResetModel();
+    emit lengthChanged();
 }
 
 int PlayqueueModel::rowCount(const QModelIndex &parent) const {
@@ -58,6 +59,7 @@ void PlayqueueModel::insertTracks(playItemList *l, int after) {
         DBAPI->playqueue_insert_at(after++,it);
     }
     endInsertRows();
+    emit lengthChanged();
 }
 
 void PlayqueueModel::moveIndexes(QList<int> ind, int after) {
@@ -135,4 +137,9 @@ void PlayqueueModel::removeIndexes(QList<int> ind) {
         DBAPI->playqueue_remove_nth(i);
     }
     endResetModel();
+    emit lengthChanged();
+}
+
+int PlayqueueModel::getLength() {
+    return rowCount();
 }

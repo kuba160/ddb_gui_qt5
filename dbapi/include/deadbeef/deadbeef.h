@@ -2,7 +2,7 @@
   deadbeef.h -- plugin API of the DeaDBeeF audio player
   http://deadbeef.sourceforge.net
 
-  Copyright (C) 2009-2022 Alexey Yakovenko
+  Copyright (C) 2009-2022 Oleksiy Yakovenko
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,7 +21,6 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-
 #ifndef __DEADBEEF_H
 #define __DEADBEEF_H
 
@@ -30,6 +29,9 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <stdarg.h>
+
+struct scriptableItem_s;
+typedef struct scriptableItem_s ddb_scriptable_item_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,6 +73,8 @@ extern "C" {
 // that there's a better replacement in the newer deadbeef versions.
 
 // API version history:
+// 1.17 -- deadbeef-1.9.6
+// 1.16 -- deadbeef-1.9.4
 // 1.15 -- deadbeef-1.9.0
 // 1.14 -- deadbeef-1.8.8
 // 1.12 -- deadbeef-1.8.4
@@ -99,7 +103,7 @@ extern "C" {
 // 0.1 -- deadbeef-0.2.0
 
 #define DB_API_VERSION_MAJOR 1
-#define DB_API_VERSION_MINOR 15
+#define DB_API_VERSION_MINOR 17
 
 #if defined(__clang__)
 
@@ -134,6 +138,18 @@ extern "C" {
 
 #ifndef DDB_API_LEVEL
 #define DDB_API_LEVEL DB_API_VERSION_MINOR
+#endif
+
+#if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 17)
+#define DEPRECATED_117 DDB_DEPRECATED("since deadbeef API 1.17")
+#else
+#define DEPRECATED_117
+#endif
+
+#if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 16)
+#define DEPRECATED_116 DDB_DEPRECATED("since deadbeef API 1.16")
+#else
+#define DEPRECATED_116
 #endif
 
 #if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 15)
@@ -461,9 +477,6 @@ typedef struct DB_conf_item_s {
     struct DB_conf_item_s *next;
 } DB_conf_item_t;
 
-// event callback type
-typedef int (*DB_callback_t)(ddb_event_t *, uintptr_t data);
-
 // events
 enum {
     DB_EV_NEXT = 1, // switch to next track
@@ -505,6 +518,13 @@ enum {
 #if (DDB_API_LEVEL >= 8)
     // A caller sends this event, to ask playlist viewer(s) to focus on selected track.
     DB_EV_FOCUS_SELECTION = 24, 
+#endif
+
+#if (DDB_API_LEVEL >= 17)
+    // Notify about playback state change,
+    // which includes a switch to another output plugin.
+    // p1 contains the new state.
+    DB_EV_PLAYBACK_STATE_DID_CHANGE = 25,
 #endif
 
     // -----------------
@@ -629,7 +649,6 @@ enum ddb_sys_directory_t {
 
 // typecasting macros
 #define DB_PLUGIN(x) ((DB_plugin_t *)(x))
-#define DB_CALLBACK(x) ((DB_callback_t)(x))
 #define DB_EVENT(x) ((ddb_event_t *)(x))
 #define DB_PLAYITEM(x) ((DB_playItem_t *)(x))
 
@@ -649,8 +668,18 @@ typedef struct {
     int samplerate;
     uint32_t channelmask;
     int is_float; // bps must be 32 if this is true
+#if (DDB_API_LEVEL >= 17)
+    uint32_t flags;
+#else
     int is_bigendian;
+#endif
 } ddb_waveformat_t;
+
+#if (DDB_API_LEVEL >= 17)
+enum {
+    DDB_WAVEFORMAT_FLAG_IS_DOP = 0x01,
+};
+#endif
 
 // since 1.5
 #if (DDB_API_LEVEL >= 5)
@@ -721,7 +750,7 @@ typedef struct ddb_file_found_data_s {
 #endif
 
 // context for title formatting interpreter
-typedef struct {
+typedef struct ddb_tf_context_s {
     int _size; // must be set to sizeof(tf_context_t)
     uint32_t flags; // DDB_TF_CONTEXT_ flags
     ddb_playItem_t *it; // track to get information from, or NULL
@@ -752,6 +781,9 @@ typedef struct {
     // Return value, is set to non-zero if text was <<<dimmed>>> or >>>brightened<<<
     // It's used to determine whether the text needs to be searched for the corresponding esc sequences
     int dimmed;
+#endif
+#if (DDB_API_LEVEL >= 17)
+    void (*metadata_transformer)(struct ddb_tf_context_s *ctx, char *data, size_t size);
 #endif
 } ddb_tf_context_t;
 #endif
@@ -813,7 +845,8 @@ typedef struct {
     void (*playback_set_pos) (float pos); // [0..100]
 
     // streamer access
-    DB_playItem_t *(*streamer_get_playing_track) (void);
+    /// This function is unsafe, and has been deprecated in favor of @c streamer_get_playing_track_safe
+    DB_playItem_t *(*streamer_get_playing_track) (void) DEPRECATED_16;
     DB_playItem_t *(*streamer_get_streaming_track) (void);
     float (*streamer_get_playpos) (void);
     int (*streamer_ok_to_read) (int len);
@@ -913,7 +946,7 @@ typedef struct {
     // It doesn't need to be called if you save the playlist via direct call to `plt_save_*`, or `pl_save_current`
     void (*plt_modified) (ddb_playlist_t *handle);
 
-    // returns modication index
+    // returns modification index
     // the index is incremented by 1 every time playlist changes
     int (*plt_get_modification_idx) (ddb_playlist_t *handle);
 
@@ -1665,6 +1698,13 @@ typedef struct {
         void *user_data
     );
 #endif
+
+#if (DDB_API_LEVEL >= 16)
+    /// @return The currently playing track
+    /// Please ensure that this function is not called from within @c pl_lock,
+    /// since this function internally uses streamer_lock, which may cause a deadlock against pl_lock.
+    ddb_playItem_t * (*streamer_get_playing_track_safe) (void);
+#endif
 } DB_functions_t;
 
 // NOTE: an item placement must be selected like this
@@ -1698,9 +1738,10 @@ enum {
     DB_ACTION_DISABLED = 1 << 4,
 
 #if (DDB_API_LEVEL >= 2)
-    // Ignored in callback2
-    // Action for the playlist (tab)
-    DB_ACTION_PLAYLIST DEPRECATED_15 = (1 << 5),
+    // Action is compatible with action context is DDB_ACTION_CTX_PLAYLIST,
+    // I.e. it should show up in the playlist tab context menu.
+    // Example "Duplicate playlist".
+    DB_ACTION_PLAYLIST = (1 << 5),
 #endif
 
 #if (DDB_API_LEVEL >= 5)
@@ -2241,21 +2282,22 @@ typedef enum {
 typedef void (* ddb_medialib_listener_t)(ddb_mediasource_event_type_t event, void *user_data);
 
 /// Each media source plugin can create source instances for you, by calling @c create_source.
-typedef void *ddb_mediasource_source_t;
+struct ddb_mediasource_source_t;
+typedef struct ddb_mediasource_source_t ddb_mediasource_source_t;
 
 /// Abstract type representing a selector for media source query (e.g. Albums, Artists, Genres)
 /// Use @c get_selectors_list method to get the list of available selectors.
 /// Use the values to specify the selector when calling @c create_item_tree.
-typedef struct ddb_mediasource_list_selector_s *ddb_mediasource_list_selector_t;
+//typedef struct ddb_mediasource_list_selector_s *ddb_mediasource_list_selector_t;
 
 /// Opaque struct representing the extended API of the underlying plugin. Use @c get_extended_api method to get it.
 typedef struct ddb_mediasource_api_s ddb_mediasource_api_t;
 
-/// Opaque struct representing the item in a tree. Use tree_item_* set of functions to access the values.
+/// Opaque struct representing the item in a tree. Use @c tree_item_* set of functions to access the values.
 typedef struct ddb_medialib_item_s ddb_medialib_item_t;
 
-/// NOTE: never "subclass" the DB_mediasource_t struct - this is not backwards compatible.
-/// Instead, implement the get_extended_api method to provide access to the plugin API.
+/// NOTE: never "subclass" the @c DB_mediasource_t struct - this is not backwards compatible.
+/// Instead, implement the @c get_extended_api method to provide access to the plugin API.
 typedef struct {
     DB_plugin_t plugin;
 
@@ -2268,17 +2310,17 @@ typedef struct {
     const char *(*source_name) (void);
 
     /// Create a media source instance. It must be freed after use by calling the @c free_source
-    /// @param source_path: a unique name to identify the instance, this will be used to prefix individual instance configuration files, caches, etc.
-    ddb_mediasource_source_t (*create_source) (const char *source_path);
+    /// @param source_path a unique name to identify the instance, this will be used to prefix individual instance configuration files, caches, etc.
+    ddb_mediasource_source_t * (*create_source) (const char *source_path);
 
     /// Free the @c source created by @c create_source
-    void (*free_source) (ddb_mediasource_source_t source);
+    void (*free_source) (ddb_mediasource_source_t *source);
 
     /// Enable or disable the source
-    void (*set_source_enabled) (ddb_mediasource_source_t source, int enabled);
+    void (*set_source_enabled) (ddb_mediasource_source_t *source, int enabled);
 
     /// Get the enabled state
-    int (*is_source_enabled) (ddb_mediasource_source_t source);
+    int (*is_source_enabled) (ddb_mediasource_source_t *source);
 
     /// This tells the source to start operating with the current configuration.
     /// It may cancel any current operation, and get the new state with the new settings.
@@ -2286,51 +2328,44 @@ typedef struct {
     /// This source is not supposed to run any operations automatically, and the caller is expected to call refresh
     /// every time when the plugin configuration changes.
     /// However, when the source is created - it's may load its initial state.
-    void (*refresh) (ddb_mediasource_source_t source);
-
-    /// A selector is a token, which can be used to find out all top level items that can be queried from the library.
-    /// For example - Folders, Albums, Artists, Genres.
-    /// @return the list of selectors. The caller must free the list after use, by calling @c free_selectors
-    ddb_mediasource_list_selector_t *(*get_selectors_list) (ddb_mediasource_source_t source);
-
-    /// Free the selector list
-    void (*free_selectors_list) (ddb_mediasource_source_t source, ddb_mediasource_list_selector_t *selectors);
-
-    /// Get selector name
-    const char *(*selector_name) (ddb_mediasource_source_t source, ddb_mediasource_list_selector_t selector);
+    void (*refresh) (ddb_mediasource_source_t *source);
 
     /// Add event listener. Your callback function will be called every time some event occurs. Such as state change, content update, and so on.
-    /// The callback funtion may be executed on background thread, so make sure to dispatch to main to update UI.
-    int (*add_listener) (ddb_mediasource_source_t source, ddb_medialib_listener_t listener, void *user_data);
+    /// The callback function may be executed on background thread, so make sure to dispatch to main to update UI.
+    int (*add_listener) (ddb_mediasource_source_t *source, ddb_medialib_listener_t listener, void *user_data);
 
     /// Remove event listener
-    void (*remove_listener) (ddb_mediasource_source_t source, int listener_id);
+    void (*remove_listener) (ddb_mediasource_source_t *source, int listener_id);
 
     /// Create a tree of items for the given @c selector.
     /// The tree is immutable, and can be used by the caller in any way it needs.
     /// The caller must free the returned object by calling the @c free_list
-    ddb_medialib_item_t * (*create_item_tree) (ddb_mediasource_source_t source, ddb_mediasource_list_selector_t selector, const char *filter);
+    ddb_medialib_item_t * (*create_item_tree) (ddb_mediasource_source_t *source, ddb_scriptable_item_t *preset, const char *filter);
 
     /// Free the tree created by the @c create_list
-    void (*free_item_tree) (ddb_mediasource_source_t source, ddb_medialib_item_t *list);
+    void (*free_item_tree) (ddb_mediasource_source_t *source, ddb_medialib_item_t *list);
 
     /// Whether the scanner/indexer is active
-    ddb_mediasource_state_t (*scanner_state) (ddb_mediasource_source_t source);
+    ddb_mediasource_state_t (*scanner_state) (ddb_mediasource_source_t *source);
+
+    ddb_scriptable_item_t *(*get_queries_scriptable)(ddb_mediasource_source_t *source);
+
+    ddb_medialib_item_t *(*get_tree_item_parent)(ddb_medialib_item_t *item);
 
     // It is recommended to use the select/expand methods below
     // to preserve selected/expanded state across medialib refreshes.
 
     /// Returns 1 if the specified item is selected, 0 otherwise.
-    int (*is_tree_item_selected) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item);
+    int (*is_tree_item_selected) (ddb_mediasource_source_t *source, const ddb_medialib_item_t *item);
 
     /// Select/delesect the specified item
-    void (*set_tree_item_selected) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item, int selected);
+    void (*set_tree_item_selected) (ddb_mediasource_source_t *source, const ddb_medialib_item_t *item, int selected);
 
     /// Returns 1 if the specified item is expanded, 0 otherwise
-    int (*is_tree_item_expanded) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item);
+    int (*is_tree_item_expanded) (ddb_mediasource_source_t *source, const ddb_medialib_item_t *item);
 
     /// Expand/collapse the specified item
-    void (*set_tree_item_expanded) (ddb_mediasource_source_t source, const ddb_medialib_item_t *item, int expanded);
+    void (*set_tree_item_expanded) (ddb_mediasource_source_t *source, const ddb_medialib_item_t *item, int expanded);
 
     /// Returns the text associated with the item, e.g. a genre value, or the artist, etc.
     const char *(*tree_item_get_text) (const ddb_medialib_item_t *item);

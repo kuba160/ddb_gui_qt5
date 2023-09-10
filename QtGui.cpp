@@ -134,7 +134,7 @@ static void unloadWidgets() {
 
 static void startQuick() {
     engine = new QQmlApplicationEngine();
-    engine->addImportPath(":/qt/qml");
+    //engine->addImportPath(":/qt/qml");
 
     const QUrl url(u"qrc:/qt/qml/DeaDBeeF/Q/DDB2/main.qml"_qs);
     //const QUrl url(QStringLiteral("qrc:/qml/DDB2/main.qml"));

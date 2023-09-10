@@ -8,34 +8,34 @@
 #include <dbapi/DBApi.h>
 #include <dbapi/Actions.h>
 
-class DBActionMenu : public QMenu, public ActionsBuilder {
-    ActionContext *context;
-public:
-    DBActionMenu(QWidget *parent, ActionContext *context);
-    ~DBActionMenu();
+//class DBMenuBuilder : public QObject {
+//    Q_OBJECT
+//public:
+//    static QMenu
+//};
 
-    virtual ActionsBuilder * createSubMenu(QString &title) override;
-    virtual void insertAction(DBAction *action) override;
-    virtual void insertSeparator() override;
-    virtual QVariant returnValue() override;
+//class DBActionMenu : public QMenu {
+//    PlayItemIterator *context;
+//    DBApi *dbapi;
+//public:
+//    DBActionMenu(QWidget *parent, QJsonObject menu_def, DBApi *Api);
+//    ~DBActionMenu();
 
-signals:
-    void actionTriggered(QString);
-};
+//signals:
+//    void actionTriggered(QString);
+//};
 
-class DBActionMenuBar : public QMenuBar, public ActionsBuilder {
-    ActionContext *context;
-public:
-    DBActionMenuBar(QWidget *parent, ActionContext *context);
-    virtual ActionsBuilder * createSubMenu(QString &title) override;
-    virtual void insertAction(DBAction *action) override;
-    virtual void insertSeparator() override;
-    virtual QVariant returnValue() override;
-public slots:
-    void onActionTriggered(QAction *);
+//class DBActionMenuBar : public QMenuBar{
+//    PlayItemIterator *context;
+//public:
+//    DBActionMenuBar(QWidget *parent, QJsonObject menu_def, DBApi *Api);
 
-};
+//public slots:
+//    void onActionTriggered(QAction *);
 
-void registerMenuBuilders(DBApi *api);
+//};
+
+QMenuBar* buildMenuBar(QWidget *parent, DBApi *Api);
+QMenu* buildTrackContextMenu(QWidget *parent, DBApi *Api, PlayItemIterator pit);
 
 #endif // DBACTIONMENU_H

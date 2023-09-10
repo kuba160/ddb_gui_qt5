@@ -21,7 +21,7 @@ DBWidget {
         id: component
         Image {
             mipmap: true
-            smooth: false
+            smooth: true
             asynchronous: true
             Layout.fillHeight: true
             Layout.fillWidth: true

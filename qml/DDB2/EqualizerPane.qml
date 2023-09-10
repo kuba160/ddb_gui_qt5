@@ -271,6 +271,7 @@ Page {
                             to: 20.0
 
                             value: DBApi.eq.values[index]
+                            Behavior on value { SmoothedAnimation { velocity: 250; } }
                             onMoved: {
                                 let vals = DBApi.eq.values
                                 vals[index] = value
@@ -278,11 +279,14 @@ Page {
                             }
                             stepSize: Math.abs(value) < 1.1 ? 1 : 0.0
                             snapMode: Slider.SnapAlways
+                            ToolTip.visible: pressed
+                            ToolTip.text: "%1dB".arg(value.toFixed(2))
                         }
                         Label {
                             id: label
                             text: DBApi.eq.names[index]
                             Layout.alignment: Qt.AlignHCenter
+                            font.pixelSize: 12
                         }
                     }
                 }

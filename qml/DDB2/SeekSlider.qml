@@ -59,6 +59,8 @@ DBWidget {
             id: row
             visible: DBApi.playback.playing || DBApi.playback.paused
             anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
             //height: control.implicitHeight
 
             Loader {
@@ -92,6 +94,38 @@ DBWidget {
                     !pressed ? time_current_abs = value : 0
                 }
                 enabled: DBApi.playback.playing || DBApi.playback.paused
+                Canvas {
+                    id: line_canvas
+                    anchors.fill: parent
+                    contextType: "2d"
+                    opacity: 0.75
+                    property bool stop_after_current: DBApi.playback.stop_after_current
+                    property bool stop_after_album: DBApi.playback.stop_after_album
+
+                    onStop_after_albumChanged: requestPaint()
+                    onStop_after_currentChanged: requestPaint()
+
+                    onPaint: {
+                        context.clearRect(0,0,line_canvas.width, line_canvas.height)
+                        // mid line
+                        if (stop_after_album || stop_after_current) {
+                            context.strokeStyle = Material.accent //Qt.rgba(1,1,1,.5);
+                            if (stop_after_album) {
+                                context.setLineDash([2,2])
+                            }
+                            else {
+                                context.setLineDash([])
+                            }
+
+                            context.lineWidth = 1
+                            context.path = undefined
+                            context.moveTo(width, 2) //line_canvas.height/2)
+                            context.lineTo(width, line_canvas.height - 2);
+                            context.stroke()
+                        }
+                    }
+                    z: 2
+                }
             }
             Loader {
                 sourceComponent: time_label

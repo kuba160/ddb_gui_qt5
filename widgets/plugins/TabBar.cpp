@@ -83,5 +83,6 @@ void TabBar::mousePressEvent(QMouseEvent *event) {
 }
 
 void TabBar::showTabContextMenu(int index, QPoint pos) {
+
    // api->playlistContextMenu(this,mapToGlobal(pos),index);
 }

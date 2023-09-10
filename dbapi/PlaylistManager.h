@@ -8,7 +8,10 @@
 
 #include "models/PlayItemTableProxyModel.h"
 #include "models/PlayItemFilterModel.h"
+#include "models/MediasourceModel.h"
+#include "MedialibConfig.h"
 #include "CoverArt.h"
+#include "PlayItemIterator.h"
 
 class PlaylistModel;
 class PlaylistBrowserModel;
@@ -27,9 +30,10 @@ public:
     Q_PROPERTY(int current_idx READ getCurrentPlaylistIdx WRITE setCurrentPlaylistIdx NOTIFY currentPlaylistChanged)
     Q_PROPERTY(QAbstractItemModel* current_item READ getCurrentItem CONSTANT)
     Q_PROPERTY(QAbstractItemModel* queue READ getQueue CONSTANT)
-    Q_PROPERTY(QAbstractItemModel* list READ getList() CONSTANT);
+    Q_PROPERTY(QAbstractItemModel* list READ getList CONSTANT);
 
-    // TODO Medialib access
+    Q_PROPERTY(QAbstractItemModel* medialib READ getMedialib CONSTANT)
+    Q_PROPERTY(QStringList medialib_folders READ getMedialibFolders WRITE setMedialibFolders NOTIFY medialibFoldersChanged)
 
 public slots:
     void queueAppend(QVariant mime);
@@ -40,6 +44,7 @@ signals:
 
     // Emitted when playback state or queue changes
     void statusRowChanged();
+    void medialibFoldersChanged();
 
 public:
     QAbstractItemModel* getCurrentPlaylist();
@@ -49,11 +54,20 @@ public:
     QAbstractItemModel* getQueue();
     QAbstractItemModel* getList();
     QAbstractItemModel* getCurrentItem();
+    QAbstractItemModel* getMedialib();
+    QStringList getMedialibFolders();
+    void setMedialibFolders(QStringList l);
     int pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2);
 
 
     // standalone functions
     PlayItemTableProxyModel* createTableProxy(QObject *parent);
+
+
+    // track insertion
+    QFuture<PlayItemIterator> runFileImport(QStringList files);
+    QFuture<PlayItemIterator> runFolderImport(QStringList folders);
+    QFuture<PlayItemIterator> runPlaylistImport(QStringList playlists);
 
 private:
     PlaylistModel *m_current;
@@ -61,6 +75,10 @@ private:
     QAbstractItemModel *m_queue;
     PlaylistBrowserModel *m_list;
     QAbstractItemModel *m_current_item;
+    MediasourceModel *m_medialib = nullptr;
+    MedialibConfig *m_medialib_config = nullptr;
+
 };
+
 
 #endif // PLAYLISTMANAGER_H

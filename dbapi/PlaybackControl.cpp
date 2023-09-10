@@ -19,6 +19,8 @@ PlaybackControl::PlaybackControl(QObject *parent, DB_functions_t *api) : QObject
         m_state = DBAPI->get_output() ? (playback_state) DBAPI->get_output()->state() : STATE_STOPPED;
     }
 
+    m_stop_after_current = api->conf_get_int("playlist.stop_after_current", 0);
+    m_stop_after_album = api->conf_get_int("playlist.stop_after_album", 0);
     connect(this, &PlaybackControl::currentTrackChanged, this, &PlaybackControl::positionChanged);
     connect(this, &PlaybackControl::currentTrackChanged, this, &PlaybackControl::positionMaxChanged);
 
@@ -42,6 +44,7 @@ int PlaybackControl::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint
     // - State change (track change)
     // - Current track change (track change)
     ddb_event_trackchange_t *track_change = nullptr;
+    bool conf_value_read;
     switch (id) {
         case DB_EV_VOLUMECHANGED:
             emit volumeChanged();
@@ -72,6 +75,15 @@ int PlaybackControl::pluginMessage(uint32_t id, uintptr_t ctx, uint32_t p1, uint
         case DB_EV_STOP:
             emit currentTrackChanged();
             break;
+        case DB_EV_CONFIGCHANGED:
+            if (m_stop_after_current != (conf_value_read = deadbeef->conf_get_int("playlist.stop_after_current", 0))) {
+                m_stop_after_current = conf_value_read;
+                emit stopAfterCurrentChanged();
+            }
+            if (m_stop_after_album != (conf_value_read = deadbeef->conf_get_int("playlist.stop_after_album", 0))) {
+                m_stop_after_album = conf_value_read;
+                emit stopAfterAlbumChanged();
+            }
     }
     return 0;
 }
@@ -184,6 +196,15 @@ quint32 PlaybackControl::getCurrentTrackIdx() {
 
 void PlaybackControl::setCurrentTrackIdx(quint32 idx) {
     DBAPI->sendmessage(DB_EV_PLAY_NUM, 0, idx, 0);
+}
+
+bool PlaybackControl::getStopAfterCurrent() {
+    return m_stop_after_current;
+}
+
+void PlaybackControl::setStopAfterCurrent(bool value) {
+    deadbeef->conf_set_int("playlist.stop_after_current", value);
+    deadbeef->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
 }
 
 QString PlaybackControl::tf_current(const QString &format) {

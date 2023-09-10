@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS_INIT "-gdwarf-4")
 
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 add_subdirectory(dbapi)
+include_directories(dbapi/include)
 
 
 project(ddb_gui_q LANGUAGES CXX)
@@ -28,7 +29,8 @@ endif()
 set (CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-find_package(Qt6 COMPONENTS REQUIRED Core Concurrent Gui Quick Svg Charts)
+find_package(Qt6 COMPONENTS REQUIRED Core Gui Concurrent Quick Svg Charts)
+
 if (USE_WIDGETS)
     find_package(Qt6 COMPONENTS REQUIRED Widgets QuickWidgets)
 endif()
@@ -51,12 +53,14 @@ if (USE_WIDGETS)
         widgets/plugins/ActionsTree.h widgets/plugins/ActionsTree.cpp
         widgets/plugins/QueueManager.cpp widgets/plugins/QueueManager.h
         widgets/DBActionMenu.h widgets/DBActionMenu.cpp
+        widgets/ActionHandlers.cpp widgets/ActionHandlers.h
 )
 endif()
 
 set(SOURCES
     ${SOURCES_WIDGETS}
     PluginLoader.cpp
+    #PluginDB.cpp
     WidgetLibraryModel.cpp
     QtGui.cpp)
 qt_add_resources(SOURCES Images.qrc)
@@ -73,8 +77,7 @@ add_subdirectory(qml/DDB2)
 # add_subdirectory(qml/Material)
 
 
-
-target_link_libraries(ddb_gui_qt5 dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Concurrent Qt::Gui Qt::Quick)
+target_link_libraries(ddb_gui_qt5 dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Gui Qt::Quick Qt::Concurrent)
 if (USE_WIDGETS)
     target_link_libraries(ddb_gui_qt5 dbapi Qt6::Widgets Qt6::QuickWidgets)
 endif()
@@ -82,8 +85,7 @@ endif()
 target_include_directories(ddb_gui_qt5 PRIVATE ".")
 
 target_compile_definitions(ddb_gui_qt5 PRIVATE USE_WIDGETS=${USE_WIDGETS} QT_USE_STRINGBUILDER)
-target_compile_definitions(ddb_gui_qt5 PRIVATE USE_
-    _CACHE=${USE_COVERART_CACHE})
+target_compile_definitions(ddb_gui_qt5 PRIVATE USE_CACHE=${USE_COVERART_CACHE})
 
 target_compile_options(ddb_gui_qt5 PRIVATE "-gdwarf-4")
 

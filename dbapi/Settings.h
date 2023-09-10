@@ -16,6 +16,12 @@ public:
     Q_PROPERTY(QAbstractItemModel* plugins READ getPlugins CONSTANT)
 
     Q_PROPERTY(QString aboutText READ getAboutText CONSTANT)
+    Q_PROPERTY(QString aboutGPLV2 READ getAboutGPLV2 CONSTANT)
+    Q_PROPERTY(QString aboutLGPLV21 READ getAboutLGPLV21 CONSTANT)
+    Q_PROPERTY(QString aboutTranslators READ getAboutTranslators CONSTANT)
+    Q_PROPERTY(QString aboutChangelog READ getAboutChangelog CONSTANT)
+
+
 
 public slots:
     QVariant get(const QString &group, const QString &key, const QVariant &defaultValue);
@@ -26,10 +32,24 @@ public slots:
     QAbstractItemModel* getPlugins();
 
     QString getAboutText();
+    QString getAboutGPLV2();
+    QString getAboutLGPLV21();
+    QString getAboutTranslators();
+    QString getAboutChangelog();
+
+    void ddbSet(QString key, QString value);
+    void ddbSet(QString key, int value);
+    void ddbSet(QString key, int64_t value);
+    void ddbSet(QString key, float value);
+
 signals:
+    void settingChanged(QString group, QString key);
+    void ddbSettingChanged(QString key);
 
 private:
     QAbstractItemModel* m_plugins;
+
+    QString ddb_read_text_file(QString file);
 
 };
 

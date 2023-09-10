@@ -18,12 +18,17 @@ Drawer {
 
     Component {
         id: about_pane
-         AboutPane {}
+        AboutPane {}
     }
 
     Component {
         id: equalizer_pane
-         EqualizerPane {}
+        EqualizerPane {}
+    }
+
+    Component {
+        id: medialib_pane
+        Medialib {}
     }
 
 
@@ -34,6 +39,11 @@ Drawer {
             text: "Equalizer"
             icon.name: "view-media-equalizer"
             onTriggered: stack.push(equalizer_pane)
+        }
+        Action {
+            text: "Media Library"
+            icon.name: "view-institution"
+            onTriggered: stack.push(medialib_pane)
         }
         Action {
             text: "Settings"
@@ -53,10 +63,21 @@ Drawer {
         spacing: 0
         ToolBar {
             Material.background: Material.accent
-            ToolButton {
-                icon.name: "arrow-left"
-                onClicked: {
-                    drawer.close()
+            RowLayout {
+                ToolButton {
+                    icon.name: "arrow-left"
+                    onClicked: {
+                        drawer.close()
+                    }
+                }
+
+                Label {
+                    text: "DeaDBeeF"
+                    font.bold: true
+                    elide: Label.ElideRight
+                    horizontalAlignment: Qt.AlignHCenter
+                    verticalAlignment: Qt.AlignVCenter
+                    Layout.fillWidth: true
                 }
             }
             Layout.fillWidth: true

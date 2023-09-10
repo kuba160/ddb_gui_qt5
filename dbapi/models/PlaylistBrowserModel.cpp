@@ -57,6 +57,14 @@ QVariant PlaylistBrowserModel::data(const QModelIndex &index, int role) const {
                 return total_length;
             }
         }
+        else if (role == PlaylistsRoles::PlaylistIterator) {
+            ddb_playlist_t *plt = DBAPI->plt_get_for_idx(index.row());
+            if (plt) {
+                QVariant out =  QVariant::fromValue(PlayItemIterator(plt));
+                DBAPI->plt_unref(plt);
+                return out;
+            }
+        }
         else {
             // TODO implement other roles (playlistItems, playlistLength)
         }
@@ -88,18 +96,21 @@ bool PlaylistBrowserModel::insertRows(int row, int count, const QModelIndex &par
     QString name = tr("New Playlist");
     for (int i = 0; i < DBAPI->plt_get_count(); i++) {
         char buf[512];
-        DBAPI->plt_get_title(DBAPI->plt_get_for_idx(i), buf, 512);
+        ddb_playlist_t *plt = DBAPI->plt_get_for_idx(i);
+        DBAPI->plt_get_title(plt, buf, 512);
         QRegularExpression re(name + "( \\([1-9]+\\))?");
         if (re.match(buf).hasMatch()) {
-            count++;
+            plt_new_count++;
         }
+        DBAPI->plt_unref(plt);
     }
 
     beginInsertRows(QModelIndex(), row, row+count);
     while (count) {
         QString name_real = name;
         if (plt_new_count) {
-            name_real.append(" (" + QString("a") + ")");
+            name_real.append(" (%1)");
+            name_real = name_real.arg(plt_new_count);
         }
         int pos = (row == 0) ? DBAPI->plt_get_count() : row;
         DBAPI->plt_add(pos, name_real.toUtf8().constData());
@@ -231,5 +242,6 @@ QHash<int, QByteArray> PlaylistBrowserModel::roleNames() const {
     roles[PlaylistNameRole] = "playlistName";
     roles[PlaylistItemsRole] = "playlistItems";
     roles[PlaylistLengthRole] = "playlistLength";
+    roles[PlaylistIterator] = "playlistIterator";
     return roles;
 }

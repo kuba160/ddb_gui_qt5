@@ -1,351 +1,305 @@
 #include "Actions.h"
 
 #include "models/ActionsModel.h"
-#include <QJsonObject>
+
+#include "ActionsDefault.h"
 
 #define DBAPI (this->deadbeef)
 
-DB_functions_t* ActionContext::deadbeef;
-
-ActionContext::ActionContext(ddb_playlist_t* plt) {
-    this->plt = plt;
-    deadbeef->plt_ref(plt);
-    this->mode = DBAction::ACTION_PLAYLIST;
-}
-
-ActionContext::ActionContext(QList<DB_playItem_t*> tracks) {
-    this->mode = DBAction::ACTION_SELECTION;
-    this->it_list = tracks;
-    for (DB_playItem_t *it : it_list) {
-        deadbeef->pl_item_ref(it);
-    }
-}
-
-ActionContext::ActionContext(DB_playItem_t* track) {
-    this->mode = DBAction::ACTION_SELECTION;
-    this->it_list = QList<DB_playItem_t*>();
-    this->it_list.append(track);
-    deadbeef->pl_item_ref(track);
-}
-
-ActionContext::ActionContext(bool nowplaying) {
-    if (nowplaying) {
-        this->mode = DBAction::ACTION_NOWPLAYING;
-    }
-    else {
-        this->mode = DBAction::ACTION_MAIN;
-    }
-}
-
-ActionContext::~ActionContext() {
-    if (mode == DBAction::ACTION_PLAYLIST) {
-        deadbeef->plt_unref(plt);
-    }
-    else if (mode == DBAction::ACTION_SELECTION) {
-        for (DB_playItem_t *it : it_list) {
-            deadbeef->pl_item_unref(it);
-        }
-    }
-}
-
-void ActionContext::executeForAction(DBAction* action) {
-
-    if (mode == DBAction::ACTION_PLAYLIST) {
-        deadbeef->action_set_playlist(plt);
-        action->actionExecute(DBAction::ACTION_PLAYLIST);
-    }
-    else if (mode == DBAction::ACTION_SELECTION) {
-        if (action->action_id == "add_to_playback_queue") {
-            for (DB_playItem_t *it : it_list) {
-                deadbeef->playqueue_push(it);
-            }
-            deadbeef->sendmessage(DB_EV_PLAYLIST_REFRESH, 0, 0, 0);
-            return;
-        }
-        else if (action->action_id == "remove_from_playback_queue") {
-            for (DB_playItem_t *it : it_list) {
-                deadbeef->playqueue_remove(it);
-            }
-            deadbeef->sendmessage(DB_EV_PLAYLIST_REFRESH, 0, 0, 0);
-            return;
-        }
-        /*
-        ddb_playlist_t *plt_tmp = deadbeef->plt_alloc("_dbapi_tmp");
-        if (plt_tmp) {
-            deadbeef->plt_ref(plt_tmp);
-            deadbeef->plt_ref(plt_tmp);
-            DB_playItem_t *it_last = nullptr;
-            for (DB_playItem_t *it : it_list) {
-                deadbeef->plt_insert_item(plt_tmp, it_last, it);
-                deadbeef->pl_item_ref(it);
-                it_last = it;
-            }
-            deadbeef->action_set_playlist(plt_tmp);
-            action->actionExecute(DBAction::ACTION_PLAYLIST);
-            //deadbeef->action_set_playlist(nullptr);
-            //deadbeef->plt_unref(plt_tmp);
-            //deadbeef->plt_free(plt_tmp);
-        }*/
-    }
-    else {
-        action->actionExecute(mode);
-    }
-}
-
-Actions::Actions(QObject *parent, DB_functions_t *Api)
+Actions::Actions(QObject *parent)
     : QObject{parent} {
-    deadbeef = Api;
-    ActionContext::deadbeef = Api;
 
-    m_actions = new ActionsModel(this, Api);
-    m_actions_menu = new ActionsModel(this, Api, DB_ACTION_ADD_MENU);
-    m_actions_track= new ActionsModel(this, Api, DB_ACTION_MULTIPLE_TRACKS);
+    //default_actions = new ActionsDefault(this, Api);
 
-    QList<DBAction *> import_all;
-    QList<DBAction *> import_menu;
-    QList<DBAction *> import_track;
-    QList<DBAction *> import_playlist;
-    {
-        DB_plugin_t **pluglist = DBAPI->plug_get_list();
-        int i = 0;
-        while (pluglist[i]) {
-            if (pluglist[i]->get_actions) {
-                DB_plugin_action_t *itr = pluglist[i]->get_actions(nullptr); // kinda off implementation :(
-                while (itr) {
-                    DBActionImported *a = new DBActionImported(deadbeef, itr);
-                    a->setParent(this);
-                    import_all.append(a);
-                    if (itr->flags & DB_ACTION_COMMON &&
-                        itr->flags & DB_ACTION_ADD_MENU) {
-                        import_menu.append(a);
-                    }
-                    if (itr->flags & (DB_ACTION_MULTIPLE_TRACKS) &&
-                        !(itr->flags & DB_ACTION_EXCLUDE_FROM_CTX_PLAYLIST)) {
-                        if (!trackMenuExcludeAction(a)) {
-                            import_track.append(a);
-                        }
-                    }
-                    if (itr->flags & DB_ACTION_PLAYLIST) {
-                        import_playlist.append(a);
-                    }
-                    itr = itr->next;
-                }
-            }
-            i++;
+    QList<DBAction::ActionLocations> filter_flags = { DBAction::ACTION_LOC_HOTKEY, DBAction::ACTION_LOC_TRACK_CONTEXT,
+                                DBAction::ACTION_LOC_PLAYLIST_CONTEXT, DBAction::ACTION_LOC_MENUBAR };
+
+    for (int i = 0 ; i < 4; i++) {
+        //m_prototypes.insert(i, new ActionsModel(this, i, getDefaultConfig(filter_flags[i])));
+        registerPrototype(static_cast<uint32_t>(filter_flags[i]), DBAction::ACTION_ARG_ALL, getDefaultConfig(filter_flags[i]));
+        //m_prototypes.insert(i, new ActionsModel(this, i));
+    }
+
+}
+
+void Actions::registerActionOwner(ActionOwner *owner) {
+    m_action_owners.append(owner);
+    emit actionsAdded();
+//    for (ActionsModel *model : m_prototypes.values()) {
+//        model->registerActionOwner(owner);
+//    }
+}
+
+// unregister action owner
+
+uint32_t Actions::registerPrototype(uint32_t location_filter, uint32_t accepts_filter, QString config) {
+    m_prototypes.insert(prototype_counter, new ActionsModel(this, location_filter, config));
+    return prototype_counter++;
+}
+
+
+QJsonArray Actions::parsePrototype(uint32_t prototype, PlayItemIterator pit) {
+    if (m_prototypes.contains(prototype)) {
+        QJsonObject root = m_prototypes.value(prototype)->toJson({}, pit);
+        if (root.contains("children")) {
+            return root.value("children").toArray();
         }
     }
-    m_actions->insertActions(import_all);
-    m_actions_menu->insertActions(import_menu);
-    m_actions_track->insertActions(import_track);
-    //m_actions->insertActions(import_all); playlist todo
-
-    for (DBAction *a : qAsConst(import_all)) {
-        m_actions_hash.insert(a->action_id, a);
-    }
+    return {};
 }
 
-bool Actions::registerActionsBuilder(QString name, actionsBuilderConstructor builder) {
-    if (!m_actions_builders.contains(name)) {
-        m_actions_builders.insert(name, builder);
+QJsonArray Actions::parsePrototype(uint32_t prototype) {
+    PlayItemIterator pit(false);
+    if (m_prototypes.contains(prototype)) {
+        QJsonObject root = m_prototypes.value(prototype)->toJson({}, pit);
+        if (root.contains("children")) {
+            return root.value("children").toArray();
+        }
+    }
+    return {};
+}
+
+QAbstractItemModel* Actions::prototypeModel(uint32_t prototype) {
+    if (m_prototypes.contains(prototype)) {
+        return m_prototypes.value(prototype);
+    }
+    return nullptr;
+}
+
+
+bool Actions::execAction(QString action_id, PlayItemIterator context) {
+    DBAction *action = getAction(action_id);
+    if (action) {
+        action->apply(context);
         return true;
     }
     return false;
 }
 
-bool Actions::execAction(QString action, ActionContext context) {
-    if (m_actions_hash.contains(action)) {
-        context.executeForAction(m_actions_hash.value(action));
-        return true;
+DBAction* Actions::getAction(QString action_id) {
+    DBAction *action = nullptr;
+    for (ActionOwner *owner : m_action_owners) {
+        action = owner->getAction(action_id);
+        if (action) {
+            break;
+        }
     }
-    return false;
+    return action;
 }
 
-QAbstractItemModel* Actions::getActionsModel() const {
-    return m_actions;
-}
-
-QAbstractItemModel* Actions::getActionsMenuModel() const {
-    return m_actions_menu;
+QStringList Actions::getActions() {
+    QStringList actions;
+    for (ActionOwner *owner : m_action_owners) {
+        QList<DBAction*> owner_actions = owner->getActions();
+        for (DBAction* action : owner_actions) {
+            actions.append(action->action_id);
+        }
+    }
+    return actions;
 }
 
 QString Actions::getActionTitle(QString action_id) {
-    if (m_actions_hash.contains(action_id)) {
-        return m_actions_hash.value(action_id)->title;
+    DBAction *action = getAction(action_id);
+    if (action) {
+        return action->title;
     }
     return QString();
 }
 
-QVariant Actions::buildActionMenu(QObject *parent, QString name, ActionContext *context) {
-    QModelIndex idx{};
-    if (m_actions_builders.contains(name)) {
-        if (!context) {
-            context = new ActionContext(false);
-        }
-        ActionsBuilder *menu_builder = m_actions_builders.value(name)(parent,context);
-        context->setParent(menu_builder->returnValue().value<QObject*>());
-        if (menu_builder) {
-            buildActionMenuIter(menu_builder, idx);
-            return menu_builder->returnValue();
-        }
+QHash<QString, QVariant> Actions::getActionContext(QString action_id, PlayItemIterator &context) {
+    DBAction *action = getAction(action_id);
+    if (action) {
+        return action->contextualize(context);
     }
-    qDebug() << "Failed to build menu" << name;
+    return QHash<QString, QVariant>{};
+}
+
+
+
+
+
+
+//QJsonArray Actions::getTreeForLocation(DBAction::ActionLocations location, PlayItemIterator &pit) {
+//    QJsonObject a = actionModelToJson(m_actions[locToNum(location)], QModelIndex(), pit);
+//    qDebug() << "AAA" << a;
+//    return a.value("children").toArray();
+//}
+
+//QAbstractItemModel* Actions::getModelForLocation(DBAction::ActionLocations location) {
+//    return m_actions[locToNum(location)];
+//}
+
+
+QString Actions::getDefaultConfig(DBAction::ActionLocations location) {
+    switch (location) {
+        case DBAction::ACTION_LOC_MENUBAR:
+        return "[{\"action\":\"q_open_files\",\"properties\":{\"separator_after\":true}},{\"action\":\"q_add_files\"},{\"action\":\"q_add_folders\"},{\"action\":\"q_add_location\"},{\"action\":\"cd_add\"},{\"action\":\"q_new_playlist\",\"properties\":{\"separator_before\":true}},{\"action\":\"q_load_playlist\"},{\"action\":\"q_save_playlist\"},{\"action\":\"q_quit\",\"properties\":{\"separator_before\":true,\"last\":true}},{\"action\":\"q_clear\"},{\"action\":\"q_design_mode\"},{\"action\":\"q_shuffle_off\"},{\"action\":\"q_repeat_all\"},{\"action\":\"q_scroll_follows_playback\"},{\"action\":\"q_cursor_follows_playback\"},{\"action\":\"q_stop_after_current_track\"},{\"action\":\"q_stop_after_current_album\"},{\"action\":\"q_jump_to_current_track\"},{\"action\":\"q_help\"},{\"action\":\"q_changelog\"},{\"action\":\"q_gplv2\"},{\"action\":\"q_lgplv21\"},{\"action\":\"q_about\"},{\"action\":\"q_about_qt\"},{\"action\":\"q_translators\"}]";
+        break;
+        case DBAction::ACTION_LOC_TRACK_CONTEXT:
+            return "[{\"action\":\"add_to_front_of_playback_queue\",\"properties\":{\"extract\":true}},{\"action\":\"add_to_playback_queue\",\"properties\":{\"extract\":true}},{\"action\":\"remove_from_playback_queue\",\"properties\":{\"extract\":true,\"separator_after\":true}},{\"action\":\"q_cut\"},{\"action\":\"q_copy\"},{\"action\":\"q_paste\",\"properties\":{\"separator_after\":true}},{\"action\":\"q_track_properties\",\"properties\":{\"last\":true}}]";
+            break;
+    }
     return {};
 }
 
-void Actions::buildActionMenuIter(ActionsBuilder *menu, QModelIndex &parent) {
-    QAbstractItemModel *model = m_actions_menu;
-    for (int i = 0; i < model->rowCount(parent); i++) {
-        QModelIndex idx = model->index(i,0,parent);
-        if (!idx.isValid()) {
-            continue;
-        }
-        QString title = model->data(idx).toString();
-        if (model->hasChildren(idx)) {
-            // submenu
-            ActionsBuilder *child = menu->createSubMenu(title);
-            buildActionMenuIter(child, idx);
-        }
-        else {
-            DBAction *action =  model->data(idx, ActionsModel::ACTION_NODE).value<DBAction *>();
-            menu->insertAction(action);
-        }
+QHash<QString, QVariant> jsonPropsConvert(QJsonObject obj) {
+    QHash<QString, QVariant> out;
+    for (QString key : obj.keys()) {
+        out.insert(key, obj.value(key).toVariant());
     }
-}
-
-QVariant Actions::buildTrackMenu(QObject *parent, QString name, ActionContext *context) {
-    QModelIndex idx{};
-    if (m_actions_builders.contains(name)) {
-        ActionsBuilder *menu_builder = m_actions_builders.value(name)(parent, context);
-        if (menu_builder) {
-            buildTrackMenuIter(menu_builder, idx);
-            return menu_builder->returnValue();
-        }
-    }
-    qDebug() << "Failed to build track menu" << name;
-    return {};
-}
-
-void Actions::buildTrackMenuIter(ActionsBuilder *menu, QModelIndex &parent) {
-    QAbstractItemModel *model = m_actions_track;
-    for (int i = 0; i < model->rowCount(parent); i++) {
-        QModelIndex idx = model->index(i,0,parent);
-        if (!idx.isValid()) {
-            continue;
-        }
-        QString title = model->data(idx).toString();
-        if (model->hasChildren(idx)) {
-            if (title == "Playback") {
-                buildTrackMenuIter(menu, idx);
-            }
-            else {
-                // submenu
-                ActionsBuilder *child = menu->createSubMenu(title);
-                buildTrackMenuIter(child, idx);
-            }
-        }
-        else {
-            DBAction *action =  model->data(idx, ActionsModel::ACTION_NODE).value<DBAction *>();
-            menu->insertAction(action);
-        }
-    }
-}
-
-bool Actions::trackMenuExcludeAction(DBAction *action) {
-    if (action->action_id == "add_to_front_of_playback_queue") {
-        return true;
-    }
-    if (action->action_id == "duplicate_playlist") {
-        return true;
-    }
-    return false;
-}
-
-DBActionImported::DBActionImported(DB_functions_t* deadbeef, DB_plugin_action_t *ptr) : DBAction(nullptr) {
-    this->deadbeef = deadbeef;
-    setObjectName(ptr->name);
-    plug_action = ptr;
-    callback2 = ptr->callback2;
-
-
-    static QRegularExpression re("\\/(?<!\\\\\\/)"); // regex go brrrrr
-    QStringList strlist = QString(ptr->title).split(re);
-    title = strlist.last();
-    title = title.replace("\\/", "/");
-    path = ptr->title;
-    action_id = ptr->name;
-    icon = DBActionImported::iconOnAction(action_id);
-    flags = ptr->flags;
-    enabled = true;
-}
-
-QString DBActionImported::iconOnAction(const QString action) {
-    static QHash<QString,QString> icon_map = {
-        {"reload_metadata","view-refresh"},
-        {"lfm_lookup","edit-find"},
-        {"track_properties","document-properties"},
-        {"add_to_playback_queue","list-add"},
-        {"remove_from_playback_queue","list-remove"},
-        {"cut","edit-cut"},
-        {"copy","edit-copy"},
-        {"paste","edit-paste"},
-        {"delete","edit-delete"},
-        {"playlist_rename","edit-rename"},
-        {"playlist_delete","edit-delete-remove"},
-        {"playlist_add","media-playlist-append"},
-        {"playlist_duplicate","document-duplicate"},
-        {"skip_to_prev_genre", "view-media-genre"},
-        {"skip_to_prev_composer", "view-media-similarartists"},
-        {"skip_to_prev_artist", "view-media-artist"},
-        {"skip_to_prev_album", "view-media-album-cover"},
-        {"skip_to_next_genre", "view-media-genre"},
-        {"skip_to_next_composer", "view-media-similarartists"},
-        {"skip_to_next_artist", "view-media-artist"},
-        {"skip_to_next_album", "view-media-album-cover"},
-        {"cd_add", "gtk-cdrom"},
-    };
-    if (icon_map.contains(action)) {
-        return icon_map.value(action);
-    }
-    return QString();
-}
-
-void DBActionImported::actionExecute(ActionExecuteMode role) const {
-    if (callback2) {
-        switch (role) {
-            case DBAction::ACTION_MAIN:
-            case DBAction::ACTION_PLAYLIST:
-
-                // todo
-                //break;
-            case DBAction::ACTION_SELECTION:
-                // todo
-                break;
-            case DBAction::ACTION_NOWPLAYING:
-                callback2(plug_action, (ddb_action_context_t) role);
-                break;
-        }
-    }
+    return out;
 }
 
 
-/*
-ActionsJsonBuilder::ActionsJsonBuilder(QObject *parent) : QObject(parent) {
+//void Actions::rebuildMenu(DBAction::ActionLocations location) {
 
-}
+//    ActionsModel *replacement = new ActionsModel((QObject*)this, deadbeef, location);
 
-ActionsBuilder * ActionsJsonBuilder::createSubMenu(QString &title) {
-    ActionsJsonBuilder *sub = new ActionsJsonBuilder(this);
-    submenus.append(sub->json_obj);
-    return sub;
-}
+//    QList<DBAction *> import;
 
-void ActionsJsonBuilder::insertAction(DBAction *action) {
-    actions.append(action->action_id);
-}
+//    // default actions
+//    for (DBAction *action : default_actions->m_actions) {
+//        if (action->locations & location) {
+//            import.append(action);
+//        }
+//    }
 
-QByteArray ActionsJsonBuilder::toJson(QJsonDocument::JsonFormat format) {
-    json_obj.insert("submenus", submenus);
-    json_obj.insert("actions", actions);
-    QJsonDocument doc(json_obj);
-    return doc.toJson(format);
-}*/
+//    // plugin actions
+//    {
+//        DB_plugin_t **pluglist = DBAPI->plug_get_list();
+//        int i = 0;
+//        while (pluglist[i]) {
+//            if (pluglist[i]->get_actions) {
+//                DB_plugin_action_t *itr = pluglist[i]->get_actions(nullptr); // kinda off implementation :(
+//                while (itr) {
+//                    if (m_actions_hash.contains(itr->name)) {
+//                        if (location & m_actions_hash.value(itr->name)->locations) {
+//                            import.append(m_actions_hash.value(itr->name));
+//                        }
+//                    }
+//                    else {
+//                        DBActionImported *a = new DBActionImported(deadbeef, itr);
+//                        bool imported = false;
+//                        a->setParent(this);
+
+//                        if (location & a->locations) {
+//                            import.append(a);
+//                            imported = true;
+//                        }
+//                        else {
+//                            delete a;
+//                        }
+//                    }
+//                    itr = itr->next;
+//                }
+//            }
+//            i++;
+//        }
+//    }
+
+//    // cache names
+//    for (DBAction *a : qAsConst(import)) {
+//        m_actions_hash.insert(a->action_id, a);
+//    }
+
+//    // sort and insert to model
+//    QJsonArray arr = getDefaultConfig(location);
+
+//    QList<DBAction *> last_actions;
+//    QList<DBAction *> import_sorted;
+//    QSet<DBAction *> import_ignore;
+
+//    for (int i = 0; i < arr.size(); i++) {
+//        QJsonObject obj = arr.at(i).toObject();
+//        QString action_id_search = obj.value("action").toString();
+//        QJsonObject properties_json = obj.value("properties").toObject();
+//        QHash<QString, QVariant> properties = jsonPropsConvert(properties_json);
+//        DBAction *action = m_actions_hash.value(action_id_search);
+
+//        if (!action) {ngle>> {
+
+//                json ActionTree_JSON2 <<action>> {
+//                    "type": "\"action\"",
+//                             "text" : "//action title//",
+//                                      "id" : "//action id name//",
+//                                             "properties" : "//key→valu
+//            qDebug() << "ACTION" << action_id_search << "not found, skipping";
+//            continue;
+//        }
+
+
+//        if (properties_json.contains("hide") && properties_json.value("hide").toBool()) {
+//            import_ignore.insert(action);
+//            continue;
+//        }
+
+
+//        action->properties_const.insert(properties);
+
+//        if (properties_json.contains("last") && properties_json.value("last").toBool()) {
+//            last_actions.append(action);
+//            continue;
+//        }
+
+//        if (properties_json.contains("extract") && properties_json.value("extract").toBool()) {
+//            action->path = QStringList(action->path.last());
+//        }
+
+//        import_sorted.append(action);
+//    }
+
+//    for (DBAction *action : import) {
+//        if (!import_sorted.contains(action) && !last_actions.contains(action) && !import_ignore.contains(action)) {
+//            import_sorted.append(action);
+//        }
+//    }
+
+//    import_sorted.append(last_actions);
+
+//    replacement->insertActions(import_sorted);
+
+//    ActionsModel *old = m_actions[locToNum(location)];
+//    m_actions[locToNum(location)] = replacement;
+//    if (old)
+//        delete old;
+//}
+
+//static void printAction(DBActionImported *action) {
+//    qDebug() << "Action:" << action->action_id;
+//    // action accepts;
+//    QList<int> accepts = {DBAction::ACTION_ARG_NONE, DBAction::ACTION_ARG_TRACK, DBAction::ACTION_ARG_TRACKS, DBAction::ACTION_ARG_PLAYLIST};
+//    QList<QString> accepts_str = {"ACTION_ARG_NONE", "ACTION_ARG_TRACK", "ACTION_ARG_TRACKS", "ACTION_ARG_PLAYLIST"};
+//    QStringList accepts_list;
+//    for (int i = 0; i < accepts.size(); i++) {
+//        if (accepts[i] & action->accepts) {
+//            accepts_list.append(accepts_str[i]);
+//        }
+//    }
+//    QList<int> locations = {DBAction::ACTION_LOC_HOTKEY, DBAction::ACTION_LOC_TRACK_CONTEXT, DBAction::ACTION_LOC_PLAYLIST_CONTEXT, DBAction::ACTION_LOC_MENUBAR};
+//    QList<QString> locations_str = {"ACTION_LOC_HOTKEY", "ACTION_LOC_TRACK_CONTEXT", "ACTION_LOC_PLAYLIST_CONTEXT", "ACTION_LOC_MENUBAR"};
+//    QStringList locations_list;
+//    for (int i = 0; i < locations.size(); i++) {
+//        if (locations[i] & action->locations) {
+//            locations_list.append(locations_str[i]);
+//        }
+//    }
+//    qDebug() << "Accepts:" << accepts_list.join(" | ");
+//    qDebug() << "Locations:" << locations_list.join(" | ");
+//}
+
+
+
+// JSON PROPERTIES
+
+// separator_after: true/false
+// separator_before: true/false
+// last: true/false (place at the list)
+// hide: true/false (do not show)
+// extract: true/false (remove action from submenu(s))
+// checkable: true/false
+// checked: true/false
+// exclusive_group: string (exclusive group)
+// text: string (override title)
+
+// ???config???
+// ???config_default???

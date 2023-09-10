@@ -12,57 +12,6 @@
 
 #define DBAPI (manager->deadbeef)
 
-QDataStream &operator<<(QDataStream &ds, const playItemList &pil) {
-    qint32 i;
-    for (i = 0; i < pil.length(); i++) {
-        auto ptr= reinterpret_cast<quintptr>(pil[i]);
-        ds << ptr;
-    }
-    return ds;
-}
-QDataStream& operator >> (QDataStream &ds, playItemList &pil) {
-    pil.clear();
-    while (!ds.atEnd()) {
-        quintptr ptrval;
-        ds >> ptrval;
-        auto temp = reinterpret_cast<DB_playItem_t *>(ptrval);
-        pil.append(temp);
-    }
-    return ds;
-}
-
-PlayItemMimeData::PlayItemMimeData(DB_functions_t *ddb, QList<DB_playItem_t*> list) {
-    api = ddb;
-    QByteArray arr;
-    QDataStream ds(&arr, QIODevice::WriteOnly);
-    for (DB_playItem_t *it : list) {
-        api->pl_item_ref(it);
-        ds << reinterpret_cast<quintptr>(it);
-    }
-    setData("ddb_gui_q/playitemdata", arr);
-}
-
-QList<DB_playItem_t*> PlayItemMimeData::getTracks() const {
-    QList<DB_playItem_t*> ret;
-    QByteArray arr = data("ddb_gui_q/playitemdata");
-    QDataStream ds(arr);
-    if (!arr.isEmpty()) {
-        while(!ds.atEnd()) {
-            quintptr tmp;
-            ds >> tmp;
-            ret.append(reinterpret_cast<DB_playItem_t *>(tmp));
-        }
-    }
-    return ret;
-}
-
-PlayItemMimeData::~PlayItemMimeData() {
-    QList<DB_playItem_t*> tracks = getTracks();
-    for (DB_playItem_t *it : qAsConst(tracks)) {
-        api->pl_item_unref(it);
-    }
-}
-
 // Taken from DeaDBeeF gtkui (plcommon.h)
 //#define COLUMN_FORMAT_ARTISTALBUM "$if(%artist%,%artist%,Unknown Artist)[ - %album%]"
 #define COLUMN_FORMAT_ARTISTALBUM "$if(%album artist%,%album artist%,$if(%artist%,%artist%,Unknown Artist))[ - %album%]"
@@ -288,7 +237,7 @@ QVariant PlayItemModel::data(const QModelIndex &index, int role) const {
             case ItemPlayingDisplay:
                 // TODO fix queue hack
                 /*if (property("queueManager").toBool()) {
-                    ret = QString("%1") .arg(index.row()+1);
+                  toMimeData  ret = QString("%1") .arg(index.row()+1);
                 }*/
                 if ((DBAPI->playqueue_test(it) != -1)) {
                     QList<int> in_queue;
@@ -328,8 +277,8 @@ QVariant PlayItemModel::data(const QModelIndex &index, int role) const {
             case ItemMime:
                 ret = QVariant::fromValue(mimeData({index}));
                 break;
-            case ItemActionContext:
-                ret = QVariant::fromValue(ActionContext(it));
+            case ItemIterator:
+                ret = QVariant::fromValue(PlayItemIterator(it));
                 break;
             case ItemCursor: {
                 DB_playItem_t *it_test = DBAPI->pl_get_for_idx(DBAPI->pl_get_cursor(PL_MAIN));
@@ -425,9 +374,13 @@ QMimeData *PlayItemModel::mimeData(const QModelIndexList &indexes) const {
 
 bool PlayItemModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) {
     if (data->hasFormat("ddb_gui_q/playitemdata") && !parent.isValid()) {
-        const PlayItemMimeData *mime = qobject_cast<const PlayItemMimeData *>(data);
-        QList<DB_playItem_t*> tracks = mime->getTracks();
-        insertTracks(&tracks, row);
+        QList<DB_playItem_t*> tracks = PlayItemMimeData::getTracks(data);
+        if (row == -1) {
+            insertTracks(&tracks, -2);
+        }
+        else {
+            insertTracks(&tracks, row);
+        }
         return true;
     }
     return false;
@@ -487,7 +440,7 @@ QHash<int, QByteArray> PlayItemModel::roleNames() const {
     l.insert(ItemCodec,"ItemCodec");
     l.insert(ItemBitrate,"ItemBitrate");
     l.insert(ItemMime, "ItemMime");
-    l.insert(ItemActionContext, "ItemActionContext");
+    l.insert(ItemIterator, "ItemIterator");
     l.insert(ItemCursor, "ItemCursor");
     l.insert(ItemQueue, "ItemQueue");
     //l.insert(LastRoleUnused,"LastRoleUnused");

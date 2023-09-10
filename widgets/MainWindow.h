@@ -5,6 +5,7 @@
 #include "../dbapi/DBApi.h"
 
 #include "PluginManager.h"
+#include "ActionHandlers.h"
 
 class MainWindow : public QMainWindow
 {
@@ -20,6 +21,7 @@ public:
 
 protected:
     PluginManager plugins;
+    ActionHandlers action_handlers;
 signals:
 
 };

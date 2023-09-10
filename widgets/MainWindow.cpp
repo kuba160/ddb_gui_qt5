@@ -10,6 +10,7 @@
 
 MainWindow::MainWindow(QWidget *parent, DBApi *Api)
     : QMainWindow{parent},
+      action_handlers(this, Api),
       plugins(this, Api)
 {
     setObjectName("MainWindow");
@@ -61,12 +62,17 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api)
         setWindowTitle(DBAPI->playback.tf_current(DBAPI->playback.getStopped() ? title_stopped : title));
     });
 
-    registerMenuBuilders(Api);
 
-    QMenuBar *menubar = DBAPI->actions.buildActionMenu(this, "widgets_mainmenu", {}).value<QMenuBar*>();
+    QMenuBar *menubar = buildMenuBar(this, Api);
     if (menubar) {
         setMenuBar(menubar);
     }
+
+
+    // debug
+    PlayItemIterator pit = PlayItemIterator();
+    QJsonArray a = DBAPI->actions.parsePrototype(DBAction::ACTION_LOC_MENUBAR, pit);
+    qDebug() << a;// QJsonDocument(a).toJson(QJsonDocument::Compact);
 }
 
 MainWindow::~MainWindow() {

@@ -3,35 +3,223 @@
 
 #include <QRegularExpression>
 
-#define DBAPI (this->api)
+//#define DBAPI (this->api)
 
-ActionsModel::ActionsModel(QObject *parent, DB_functions_t *Api, uint16_t action_filter)
-    : QAbstractItemModel{parent} {
-    api = Api;
-    tree = new TreeNode<const DBAction *>();
+QStringList extractActionsOrdering(QString prototype_spec, QString property);
+
+ActionsModel::ActionsModel(Actions *Actions, uint16_t action_filter, QString prototype_spec)
+    : QAbstractItemModel{Actions} {
+    actions = Actions;
+    location_filter = action_filter;
+    prototype = prototype_spec;
+
+    if (!prototype_spec.isNull()) {
+        order = extractActionsOrdering(prototype_spec, {});
+        order_first = extractActionsOrdering(prototype_spec, "first");
+        order_last = extractActionsOrdering(prototype_spec, "last");
+        order_extract = extractActionsOrdering(prototype_spec, "extract");
+    }
+
+    rebuildActionTree();
+
+    connect(actions, &Actions::actionsAdded, this, [=]() {rebuildActionTree();});
 }
 
 ActionsModel::~ActionsModel() {
     delete tree;
 }
 
-void ActionsModel::insertActions(const QList<DBAction*> action_list) {
-    beginResetModel();
-    for (const DBAction* action : action_list) {
-        tree->insertChild(action->path, action);
+QStringList extractActionsOrdering(QString prototype_spec, QString property = QString()) {
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(prototype_spec.toUtf8(), &error);
+    if (doc.isNull()) {
+        qDebug() << "Failed to parse prototype_spec:" << error.errorString();
+        return {};
     }
+    QStringList out_list;
+    QJsonArray actions = doc.array();
+    for (QJsonValue v : actions) {
+        QString action = QString();
+        if (v.isObject()) {
+            QJsonObject obj = v.toObject();
+            if (obj.contains("action")) {
+                if (!property.isNull()) {
+                    if (obj.contains("properties")) {
+                        QJsonObject props = obj.value("properties").toObject();
+                        if (props.contains(property)) {
+                            if (props.value(property).toBool()) {
+                                // ifififififif
+                                action = obj.value("action").toString();
+                            }
+                        }
+
+                    }
+                }
+                else {
+                    action = obj.value("action").toString();
+                }
+            }
+        }
+        if (!action.isNull()) {
+            out_list.append(action);
+        }
+    }
+    return out_list;
+}
+
+QHash<QString, QHash<QString,QVariant>> extractActionsPrototypes(QString prototype_spec, QStringList action_list) {
+    QJsonParseError error;
+    QJsonDocument doc = QJsonDocument::fromJson(prototype_spec.toUtf8(), &error);
+    if (doc.isNull()) {
+        qDebug() << "Failed to parse prototype_spec:" << error.errorString();
+        return {};
+    }
+    QHash<QString, QHash<QString, QVariant>> out_list;
+    QJsonArray actions = doc.array();
+    for (QJsonValue v : actions) {
+        QString action = QString();
+        if (v.isObject()) {
+            QJsonObject obj = v.toObject();
+            if (obj.contains("action")) {
+                action = obj.value("action").toString();
+                if (actions.contains(action)) {
+                    if (obj.contains("properties")) {
+                        QJsonObject props = obj.value("properties").toObject();
+                        out_list.insert(action, props.toVariantHash());
+                    }
+                }
+            }
+        }
+    }
+    return out_list;
+}
+
+void ActionsModel::rebuildActionTree() {
+    beginResetModel();
+    delete tree;
+    tree = new TreeNode<QString>();
+
+    QStringList all_actions = actions->getActions();
+    QStringList actions_added;
+    if (!all_actions.size()) {
+        return;
+    }
+    QList<QStringList> paths_first;
+    QList<QStringList> paths_last;
+    // first round of adding from prototype
+    for (QString &action_id : order) {
+        DBAction *action = actions->getAction(action_id);
+        if (action && action->locations & location_filter) {
+            QStringList order_path;
+            if (order_extract.contains(action_id)) {
+                tree->insertChild(action->title, action->action_id);
+                order_path = {action->title};
+            }
+            else {
+                order_path = action->path;
+                tree->insertChildIter(action->path, action->action_id);
+                qDebug() << "Inserting:" << action->path << action->action_id;
+            }
+
+            if (order_first.contains(action->action_id)) {
+                paths_first.append(order_path);
+            }
+            if (order_last.contains(action->action_id)) {
+                paths_last.append(order_path);
+            }
+        }
+        actions_added.append(action_id);
+        all_actions.removeAll(action_id);
+    }
+    // second round of adding actions missing from prototype
+    while (!all_actions.isEmpty()) {
+        QString action_id = all_actions.takeFirst();
+        DBAction *action = actions->getAction(action_id);
+        if (action && action->locations & location_filter) {
+            QStringList order_path;
+            if (order_extract.contains(action_id)) {
+                tree->insertChild(action->title, action->action_id);
+                order_path = {action->title};
+            }
+            else {
+                order_path = action->path;
+                tree->insertChildIter(action->path, action->action_id);
+                qDebug() << "Inserting:" << action->path << action->action_id;
+            }
+
+            if (order_first.contains(action->action_id)) {
+                paths_first.append(order_path);
+            }
+            if (order_last.contains(action->action_id)) {
+                paths_last.append(order_path);
+            }
+        }
+        actions_added.append(action_id);
+        all_actions.removeAll(action_id);
+    }
+
+    // first/last sorting
+
+    for (QStringList &path : paths_first) {
+        tree->pushChildrenFirst(path);
+    }
+    for (QStringList &path : paths_last) {
+        tree->pushChildrenLast(path);
+    }
+
+    prototype_overrides = extractActionsPrototypes(prototype, actions_added);
+
     endResetModel();
 }
 
+QJsonObject ActionsModel::toJson(QModelIndex idx, PlayItemIterator &pit) {
+    QJsonObject out;
+    bool isSubmenu = hasChildren(idx);
+    if (isSubmenu) {
+        out.insert("type", "submenu");
+        out.insert("text", idx.data().toString());
+        //qDebug() << "TEST" << idx.data().toString();
+        QJsonArray children;
+        int children_count = rowCount(idx);
+        for (int i = 0; i < children_count; i++) {
+            QModelIndex next = index(i,0,idx);
+            QJsonObject child = toJson(next, pit);
+            children.append(child);
+        }
+        out.insert("children", children);
+    }
+    else {
+        out.insert("type", "action");
+        out.insert("text", idx.data().toString());
+        QString action_id = data(idx, Qt::UserRole).toString();
+        DBAction *action = actions->getAction(action_id);
+        if (action) {
+            out.insert("id", action->action_id);
+            QHash<QString,QVariant> props = action->properties_const;
+            props.insert(action->contextualize(pit));
+            // override
+            if (prototype_overrides.contains(action->action_id)) {
+                props.insert(prototype_overrides.value(action->action_id));
+            }
+            QJsonObject properties;
+            for (auto key : props.keys()) {
+                properties.insert(key, props.value(key).toJsonValue());
+            }
+            out.insert("properties", properties);
+        }
+    }
+    return out;
+}
+
 int ActionsModel::rowCount(const QModelIndex &idx) const {
-    const TreeNode<const DBAction *> *node = this->getNodeForIndex(idx);
+    const TreeNode<QString> *node = this->getNodeForIndex(idx);
     if (node)
         return node->getChildrenCount();
     return 0;
 }
 
 int ActionsModel::columnCount(const QModelIndex &idx) const {
-    const TreeNode<const DBAction *> *node = this->getNodeForIndex(idx);
+    const TreeNode<QString> *node = this->getNodeForIndex(idx);
     if (node)
         return 1;
     return 0;
@@ -41,7 +229,7 @@ QModelIndex ActionsModel::index(int row, int column, const QModelIndex &parent) 
     if (column > 0) {
         return {};
     }
-    TreeNode<const DBAction *> *node = getNodeForIndex(parent);
+    TreeNode<QString> *node = getNodeForIndex(parent);
     if (node) {
         if (row >= node->getChildrenCount()) {
             return {};
@@ -52,9 +240,9 @@ QModelIndex ActionsModel::index(int row, int column, const QModelIndex &parent) 
 }
 
 QModelIndex ActionsModel::parent(const QModelIndex &index) const {
-    TreeNode<const DBAction *> *node = getNodeForIndex(index);
+    TreeNode<QString> *node = getNodeForIndex(index);
     if (node) {
-        TreeNode<const DBAction *> *parent = node->getParent();
+        TreeNode<QString> *parent = node->getParent();
         if (parent) {
             return createIndex(0, 0, parent);
         }
@@ -67,86 +255,27 @@ bool ActionsModel::hasChildren(const QModelIndex &parent) const {
 }
 
 QVariant ActionsModel::data(const QModelIndex &index, int role) const {
-    TreeNode<const DBAction *> *node = getNodeForIndex(index);
+    TreeNode<QString> *node = getNodeForIndex(index);
     if (node) {
         if (role == Qt::DisplayRole) {
+            return node->title;
+        }
+        else if (role == Qt::CheckStateRole) {
+            if (node->leafNode) {
+                DBAction *action = actions->getAction(node->value);
+                PlayItemIterator pit(false);
+                QHash<QString, QVariant> props = action->contextualize(pit);
+                if (props.contains("checked")) {
+                    return props.value("checked").toBool();
+                }
+            }
+        }
+        else if (role == Qt::UserRole) {
             if (node->leafNode)
-                return node->value->title;
-            else
-                return node->title;
-        }
-        else if (role == ACTION_NODE) {
-            return QVariant::fromValue((DBAction *) node->value);
-        }
-        if (role == Qt::UserRole) {
-            return QVariant::fromValue((QObject *)node->value);
+                return node->value;
         }
     }
     return QVariant();
 }
 
-bool ActionsModel::setData(const QModelIndex &index, const QVariant &data, int role) {
-    TreeNode<const DBAction *> *node = getNodeForIndex(index);
-    if (node && node->leafNode) {
-        const DBAction * action = node->value;
-        action->actionExecute(convertActionRoleToMode(role));
-        return true;
-    }
-    return false;
-}
-
-template <class T>
-TreeNode<T>::TreeNode(TreeNode *parent, QString title, T value) {
-    this->title = title;
-    this->parent = parent;
-    if (value != T{}) {
-        this->value = value;
-        this->leafNode = true;
-    }
-    else {
-        this->leafNode = false;
-    }
-}
-
-template <class T>
-TreeNode<T>::TreeNode(TreeNode *parent, QString title) {
-    this->title = title;
-    this->value= T{};
-    this->parent = parent;
-    this->leafNode = false;
-}
-
-template <class T>
-TreeNode<T>::~TreeNode() {
-    for (TreeNode<T>* child : children) {
-        delete child;
-    }
-}
-
-
-template <class T>
-void TreeNode<T>::insertChild(QString title, T value) {
-    static QRegularExpression re("\\/(?<!\\\\\\/)"); // regex go brrrrr
-    insertChildIter(QString(title).split(re), value);
-}
-
-template <class T>
-void TreeNode<T>::insertChildIter(QStringList list, T value) {
-    if (list.length() == 1) {
-        children.append(new TreeNode(this, list[0], value));
-    }
-    else {
-        for (TreeNode *i : children) {
-            if (i->title == list[0]) {
-                list.removeFirst();
-                i->insertChildIter(list, value);
-                return;
-            }
-        }
-        // no child node found, create a new one
-        TreeNode<T> *child = new TreeNode<T>(this, list[0], T{});
-        children.append(child);
-        list.removeFirst();
-        child->insertChildIter(list, value);
-    }
-}
+template class TreeNode<QString>;

@@ -84,12 +84,15 @@ void PlaylistModel::sort(int n, Qt::SortOrder order) {
 }
 
 void PlaylistModel::insertTracks(playItemList *l, int after) {
+    qDebug() << "insertTracks:" << l->length() << "items to be put after" << after;
+
     DB_playItem_t *it;
     if (after == -1) {
         it = nullptr;
     }
     else if (after == -2) {
         it = DBAPI->plt_get_last(plt,m_iter);
+        after = rowCount();
     }
     else {
         if (after > DBAPI->plt_get_item_count(plt, m_iter)) {
@@ -99,7 +102,8 @@ void PlaylistModel::insertTracks(playItemList *l, int after) {
     }
 
     DB_playItem_t *iter = it;
-    beginInsertRows(QModelIndex(),after, l->length());
+    qDebug() << "beginInsertRow: plt length:" << DBAPI->plt_get_item_count(plt, m_iter) << "first new row:" << after << "last new row" << after +l->length();
+    beginInsertRows(QModelIndex(),after, after + l->length());
     foreach(DB_playItem_t *i, *l) {
         DB_playItem_t *inserted = DBAPI->plt_insert_item(plt,iter,i);
         iter = inserted;

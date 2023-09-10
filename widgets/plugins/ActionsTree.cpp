@@ -4,11 +4,15 @@
 
 ActionsTree::ActionsTree(QWidget *parent, DBApi *Api) : QTreeView(parent) {
     api = Api;
-    setModel(DBAPI->actions.getActionsModel());
+    setModel(DBAPI->actions.prototypeModel(0));
 
     connect(this,&QAbstractItemView::doubleClicked, this, [this](const QModelIndex &idx) {
-        if (!model()->hasChildren(idx))
-            model()->setData(idx, {}, ActionsModel::ACTION_EXECUTE_MAIN);
+        if (!model()->hasChildren(idx)) {
+            QString action_id =  model()->data(idx, Qt::UserRole).toString();
+            PlayItemIterator pit = {};
+            DBAPI->actions.execAction(action_id, pit);
+            //model()->setData(idx, {}, ActionsModel::ACTION_EXECUTE_MAIN);
+        }
     });
 
 }

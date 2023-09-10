@@ -21,6 +21,12 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
     ddb_playlist_t *plt;
+
+    Q_PROPERTY(int length READ getLength NOTIFY lengthChanged)
+
+    int getLength();
+signals:
+    void lengthChanged();
 protected slots:
     void onQueueChanged();
 };

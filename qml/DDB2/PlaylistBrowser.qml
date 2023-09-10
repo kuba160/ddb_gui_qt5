@@ -68,8 +68,13 @@ ListView {
             ToolButton {
                 Layout.alignment: Qt.AlignRight
                 icon.name: "overflow-menu"
-                onClicked: {
-                    console.log("TEST")
+
+                Component {
+                    id: menu_playlist
+                    ActionMenu {
+                        prototype_id: 2
+                        itemIterator: ItemIterator
+                    }
                 }
 
                 MouseArea {
@@ -78,6 +83,8 @@ ListView {
                     acceptedButtons: Qt.LeftButton
                     onClicked: {
                         console.log("test in")
+                        let menu = menu_playlist.createObject(this)
+                        menu.open()
                     }
                 }
             }

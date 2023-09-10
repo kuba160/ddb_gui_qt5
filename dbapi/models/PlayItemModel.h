@@ -9,20 +9,9 @@
 
 #include "../PlaylistManager.h"
 
-typedef QList<DB_playItem_t *> playItemList;
+#include "../PlayItemIterator.h"
 
-QDataStream &operator<<(QDataStream &ds, const playItemList &pil);
-QDataStream &operator>>(QDataStream &ds, playItemList &pil);
 
-class PlayItemMimeData : public QMimeData {
-    Q_OBJECT
-    DB_functions_t *api;
-public:
-    PlayItemMimeData(DB_functions_t *ddb, QList<DB_playItem_t*>);
-    ~PlayItemMimeData();
-    QList<DB_playItem_t*> getTracks() const;
-
-};
 
 class PlayItemModel : public QAbstractItemModel {
     Q_OBJECT
@@ -32,7 +21,7 @@ public:
     enum playItemRoles {
         ItemEmpty = Qt::UserRole,
         ItemMime,
-        ItemActionContext,
+        ItemIterator,
         ItemCursor,
         ItemQueue,
         ItemNumber, // equvalent to ItemIndex+1

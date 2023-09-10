@@ -140,14 +140,19 @@ PlaylistView::PlaylistView(QWidget *parent, DBApi *Api, QString name) : QTreeVie
     // Context menu (TODO into core)
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &QTreeView::customContextMenuRequested, this, [this](const QPoint &p) {
-        ActionContext *context = new ActionContext(true);
-        QMenu *menu = DBAPI->actions.buildTrackMenu(this, "widgets_contextmenu", context).value<QMenu*>();
+
+        PlayItemIterator context = indexAt(p).data(PlayItemModel::ItemIterator).value<PlayItemIterator>();
+        QMenu *menu = buildTrackContextMenu(this, api, context);
         if (menu) {
-            connect (menu, &QMenu::triggered, this, [this](QAction *) {
-                qDebug() << "TEST";
-            });
             menu->popup(viewport()->mapToGlobal(p));
         }
+//        QMenu *menu = DBAPI->actions.buildTrackMenu(this, "widgets_contextmenu", &context).value<QMenu*>();
+//        if (menu) {
+//            connect (menu, &QMenu::triggered, this, [this](QAction *) {
+//                qDebug() << "TEST";
+//            });
+//            menu->popup(viewport()->mapToGlobal(p));
+//        }
     });
     //QAction *delTrack = new QAction(tr("Remove Track(s) From Playlist"), this);
     //delTrack->setShortcut(Qt::Key_Delete);

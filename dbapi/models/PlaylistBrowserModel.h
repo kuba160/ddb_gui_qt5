@@ -15,7 +15,8 @@ public:
     enum PlaylistsRoles {
         PlaylistNameRole = Qt::UserRole + 1,
         PlaylistItemsRole,
-        PlaylistLengthRole
+        PlaylistLengthRole,
+        PlaylistIterator
     };
     QHash<int, QByteArray> roleNames() const override;
 

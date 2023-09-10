@@ -1,4 +1,9 @@
 qt6_add_library(DDB2 STATIC)
+
+set_source_files_properties(DDB2Globals.qml PROPERTIES
+    QT_QML_SINGLETON_TYPE TRUE
+)
+
 qt_add_qml_module(DDB2
     URI DeaDBeeF.Q.DDB2
     VERSION 1.0
@@ -15,4 +20,12 @@ qt_add_qml_module(DDB2
         RepeatShuffleButton.qml
         AboutPane.qml
         EqualizerPane.qml
+        VolumeButton.qml
+        QML_FILES ActionMenu.qml
+        QML_FILES ActionMenuMain.qml
+        QML_FILES DDB2Globals.qml
+        QML_FILES ActionMenu_old.qml
+        QML_FILES Medialib.qml
+        QML_FILES QueuePane.qml
 )
+
