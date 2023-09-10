@@ -3,27 +3,27 @@ name: ddb_gui_qt5
 on: [ push, pull_request ]
 
 jobs:
-#  build_linux_static:
-#    name: Static linux
-#    runs-on: ubuntu-latest
-#    container: ubuntu:20.04
-#    steps:
-#    - name: Install dependencies for Linux
-#      run: |
-#        apt-get -qq update
-#        apt-get install -y -qq qt5-default zlib1g-dev libdbus-1-dev \
-#          libxcb-xinput0 g++ wget zip unzip
-#    - name: Checkout for Linux
-#      uses: actions/checkout@v1
-#    - name: Fix library links
-#      run: chmod +x scripts/liblinks.sh; scripts/liblinks.sh
-#    - name: Build for Linux
-#      run: chmod +x scripts/build_static.sh; scripts/build_static.sh
-#    - name: Upload artifact
-#      uses: actions/upload-artifact@v2
-#      with:
-#        name: linux
-#        path: ddb_gui_qt5_linux-static.zip
+  build_linux_static:
+    name: Static linux
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    steps:
+    - name: Install dependencies for Linux
+      run: |
+        apt-get -qq update
+        apt-get install -y -qq zlib1g-dev libdbus-1-dev \
+          libxcb-xinput0 g++ wget zip unzip sudo cmake zip
+    - name: Checkout for Linux
+      uses: actions/checkout@v1
+    - name: Fix library links
+      run: chmod +x scripts/liblinks.sh; scripts/liblinks.sh
+    - name: Build for Linux
+      run: chmod +x scripts/build_static.sh; scripts/build_static.sh
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: linux
+        path: ddb_gui_qt5_linux-static.zip
   build_linux_shared:
     name: Shared linux
     runs-on: ubuntu-latest
