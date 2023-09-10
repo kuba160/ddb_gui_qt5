@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
-
+set(CMAKE_FIND_STATIC FIRST)
 
 if (NOT DEFINED SET_QT_VERSION)
     set(SET_QT_VERSION Qt6)
@@ -28,6 +28,7 @@ endif()
 
 set (CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 
 find_package(Qt6 COMPONENTS REQUIRED Core Gui Concurrent Quick Svg Charts)
 

@@ -24,25 +24,33 @@ jobs:
 #      with:
 #        name: linux
 #        path: ddb_gui_qt5_linux-static.zip
-#  build_linux_shared:
-#    name: Shared linux
-#    runs-on: ubuntu-latest
-#    container: ubuntu:22.04
-#    steps:
-#    - name: Install dependencies for Linux
-#      run: |
-#        apt-get -qq update
-#        apt-get install -y -qq qtbase6-dev qml6-module-qtcharts qml6-module-qtquick-controls qtquickcontrols2-5-dev libqt6quickcontrols2-6 qt6-declarative-dev qt6-svg-dev qml6-module-qtcharts cmake make \
-#          g++ wget zip unzip
-#    - name: Checkout for Linux
-#      uses: actions/checkout@v1
-#    - name: Build for Linux
-#      run: cmake .; cmake --build . ; mkdir -p plugins; cp ddb_gui_qt5.so plugins/; zip -r ddb_gui_qt5_linux-shared.zip plugins/ddb_gui_qt5.so
-#    - name: Upload artifact
-#      uses: actions/upload-artifact@v2
-#      with:
-#        name: linux
-#        path: ddb_gui_qt5_linux-shared.zip
+  build_linux_shared:
+    name: Shared linux
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    steps:
+    - name: Install dependencies for Linux
+      run: |
+        apt-get -qq update
+        apt-get install -y -qq sudo cmake zip
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        version: '6.5.2'
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+        modules: 'qtcharts'
+    - name: Checkout for Linux
+      uses: actions/checkout@v1
+    - name: Build for Linux
+      run: cmake .; cmake --build . ; mkdir -p plugins; cp ddb_gui_qt5.so plugins/; zip -r ddb_gui_qt5_linux-shared.zip plugins/ddb_gui_qt5.so
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: linux
+        path: ddb_gui_qt5_linux-shared.zip
 #  build_windows_static:
 #    name: Static Windows
 #    runs-on: windows-latest
