@@ -97,33 +97,33 @@ jobs:
       with:
         name: windows
         path: ddb_gui_qt5_windows-shared.zip
-#  build_macos_static:
-#    name: Static macOS
-#    runs-on: macos-latest
-#    steps:
-#    - name: Checkout for macOS
-#      uses: actions/checkout@v2
-#      with:
-#        submodules: true
-#    - name: Install dependencies
-#      run: |
-#        brew install gcc zip make
-#        wget -q https://github.com/kuba160/qt5_static_build/releases/download/5.12.10/qt_5.12.10_static_macos.zip
-#        unzip -qq qt_5.12.10_static_macos.zip
-#    - name: Build for macOS
-#      run: |
-#        export PATH="/usr/local/opt/zip/bin:$PATH"
-#        export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
-#        qt5_static/bin/qmake
-#        make
-#        mkdir -p plugins
-#        cp ddb_gui_qt5.dylib plugins/
-#        zip -r ddb_gui_qt5_macos-static.zip plugins/*.dylib
-#    - name: Upload artifact
-#      uses: actions/upload-artifact@v2
-#      with:
-#        name: macos
-#        path: ddb_gui_qt5_macos-static.zip
+  build_macos_static:
+   name: Static macOS
+   runs-on: macos-latest
+   steps:
+   - name: Checkout for macOS
+     uses: actions/checkout@v2
+     with:
+       submodules: true
+   - name: Install dependencies
+     run: |
+       brew install gcc zip make
+       wget -q https://github.com/kuba160/qt5_static_build/releases/download/6.5.2/qt_6.5.2_static_macos.zip
+       unzip -qq qt_6.5.2_static_macos.zip
+   - name: Build for macOS
+     run: |
+       export PATH="/usr/local/opt/zip/bin:$PATH"
+       export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
+       CMAKE_PREFIX_PATH=$PWD/qt5_static/ cmake .
+       cmake --build .
+       mkdir -p plugins
+       cp ddb_gui_qt5.dylib plugins/
+       zip -r ddb_gui_qt5_macos-static.zip plugins/*.dylib
+   - name: Upload artifact
+     uses: actions/upload-artifact@v2
+     with:
+       name: macos
+       path: ddb_gui_qt5_macos-static.zip
 
   build_macos_shared:
     name: Shared macOS
