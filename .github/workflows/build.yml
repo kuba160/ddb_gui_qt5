@@ -3,68 +3,68 @@ name: ddb_gui_qt5
 on: [ push, pull_request ]
 
 jobs:
-  build_linux_static:
-    name: Static linux
-    runs-on: ubuntu-latest
-    container: ubuntu:20.04
-    steps:
-    - name: Install dependencies for Linux
-      run: |
-        apt-get -qq update
-        apt-get install -y -qq qt5-default zlib1g-dev libdbus-1-dev \
-          libxcb-xinput0 g++ wget zip unzip
-    - name: Checkout for Linux
-      uses: actions/checkout@v1
-    - name: Fix library links
-      run: chmod +x scripts/liblinks.sh; scripts/liblinks.sh
-    - name: Build for Linux
-      run: chmod +x scripts/build_static.sh; scripts/build_static.sh
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: linux
-        path: ddb_gui_qt5_linux-static.zip
-  build_linux_shared:
-    name: Shared linux
-    runs-on: ubuntu-latest
-    container: ubuntu:22.04
-    steps:
-    - name: Install dependencies for Linux
-      run: |
-        apt-get -qq update
-        apt-get install -y -qq qtbase6-dev qml6-module-qtcharts qml6-module-qtquick-controls qtquickcontrols2-5-dev libqt6quickcontrols2-6 qt6-declarative-dev qt6-svg-dev qml6-module-qtcharts cmake make \
-          g++ wget zip unzip
-    - name: Checkout for Linux
-      uses: actions/checkout@v1
-    - name: Build for Linux
-      run: cmake .; cmake --build . ; mkdir -p plugins; cp ddb_gui_qt5.so plugins/; zip -r ddb_gui_qt5_linux-shared.zip plugins/ddb_gui_qt5.so
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: linux
-        path: ddb_gui_qt5_linux-shared.zip
-  build_windows_static:
-    name: Static Windows
-    runs-on: windows-latest
-    steps:
-    - name: Checkout for Windows
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Install msys2
-      uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: >-
-          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-x86_64-qt5-static
-    - name: Build for Windows
-      shell: msys2 {0}
-      run: /mingw64/qt5-static/bin/qmake ; make ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-static.zip plugins/*.dll
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: windows
-        path: ddb_gui_qt5_windows-static.zip
+#  build_linux_static:
+#    name: Static linux
+#    runs-on: ubuntu-latest
+#    container: ubuntu:20.04
+#    steps:
+#    - name: Install dependencies for Linux
+#      run: |
+#        apt-get -qq update
+#        apt-get install -y -qq qt5-default zlib1g-dev libdbus-1-dev \
+#          libxcb-xinput0 g++ wget zip unzip
+#    - name: Checkout for Linux
+#      uses: actions/checkout@v1
+#    - name: Fix library links
+#      run: chmod +x scripts/liblinks.sh; scripts/liblinks.sh
+#    - name: Build for Linux
+#      run: chmod +x scripts/build_static.sh; scripts/build_static.sh
+#    - name: Upload artifact
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: linux
+#        path: ddb_gui_qt5_linux-static.zip
+#  build_linux_shared:
+#    name: Shared linux
+#    runs-on: ubuntu-latest
+#    container: ubuntu:22.04
+#    steps:
+#    - name: Install dependencies for Linux
+#      run: |
+#        apt-get -qq update
+#        apt-get install -y -qq qtbase6-dev qml6-module-qtcharts qml6-module-qtquick-controls qtquickcontrols2-5-dev libqt6quickcontrols2-6 qt6-declarative-dev qt6-svg-dev qml6-module-qtcharts cmake make \
+#          g++ wget zip unzip
+#    - name: Checkout for Linux
+#      uses: actions/checkout@v1
+#    - name: Build for Linux
+#      run: cmake .; cmake --build . ; mkdir -p plugins; cp ddb_gui_qt5.so plugins/; zip -r ddb_gui_qt5_linux-shared.zip plugins/ddb_gui_qt5.so
+#    - name: Upload artifact
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: linux
+#        path: ddb_gui_qt5_linux-shared.zip
+#  build_windows_static:
+#    name: Static Windows
+#    runs-on: windows-latest
+#    steps:
+#    - name: Checkout for Windows
+#      uses: actions/checkout@v2
+#      with:
+#        submodules: true
+#    - name: Install msys2
+#      uses: msys2/setup-msys2@v2
+#      with:
+#        update: true
+#        install: >-
+#          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-x86_64-qt5-static
+#    - name: Build for Windows
+#      shell: msys2 {0}
+#      run: /mingw64/qt5-static/bin/qmake ; make ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-static.zip plugins/*.dll
+#    - name: Upload artifact
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: windows
+#        path: ddb_gui_qt5_windows-static.zip
   build_windows_shared:
     name: Shared Windows
     runs-on: windows-latest
@@ -88,33 +88,33 @@ jobs:
       with:
         name: windows
         path: ddb_gui_qt5_windows-shared.zip
-  build_macos_static:
-    name: Static macOS
-    runs-on: macos-latest
-    steps:
-    - name: Checkout for macOS
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Install dependencies
-      run: |
-        brew install gcc zip make
-        wget -q https://github.com/kuba160/qt5_static_build/releases/download/5.12.10/qt_5.12.10_static_macos.zip
-        unzip -qq qt_5.12.10_static_macos.zip
-    - name: Build for macOS
-      run: |
-        export PATH="/usr/local/opt/zip/bin:$PATH"
-        export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
-        qt5_static/bin/qmake
-        make
-        mkdir -p plugins
-        cp ddb_gui_qt5.dylib plugins/
-        zip -r ddb_gui_qt5_macos-static.zip plugins/*.dylib
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: macos
-        path: ddb_gui_qt5_macos-static.zip
+#  build_macos_static:
+#    name: Static macOS
+#    runs-on: macos-latest
+#    steps:
+#    - name: Checkout for macOS
+#      uses: actions/checkout@v2
+#      with:
+#        submodules: true
+#    - name: Install dependencies
+#      run: |
+#        brew install gcc zip make
+#        wget -q https://github.com/kuba160/qt5_static_build/releases/download/5.12.10/qt_5.12.10_static_macos.zip
+#        unzip -qq qt_5.12.10_static_macos.zip
+#    - name: Build for macOS
+#      run: |
+#        export PATH="/usr/local/opt/zip/bin:$PATH"
+#        export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
+#        qt5_static/bin/qmake
+#        make
+#        mkdir -p plugins
+#        cp ddb_gui_qt5.dylib plugins/
+#        zip -r ddb_gui_qt5_macos-static.zip plugins/*.dylib
+#    - name: Upload artifact
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: macos
+#        path: ddb_gui_qt5_macos-static.zip
 
   build_macos_shared:
     name: Shared macOS
