@@ -76,9 +76,10 @@ jobs:
     - name: Install msys2
       uses: msys2/setup-msys2@v2
       with:
+        msystem: CLANG64
         update: true
         install: >-
-          mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-svg mingw-w64-clang-x86_64-qt6-declarative mingw-w64-clang-x86_64-qt6-base mingw-w64-clang-x86_64-qt6-charts cmake ninja
+          mingw-w64-clang-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-svg mingw-w64-clang-x86_64-qt6-declarative mingw-w64-clang-x86_64-qt6-base mingw-w64-clang-x86_64-qt6-charts mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja
     - name: Build for Windows
       shell: msys2 {0}
       run: cmake . ; cmake --build . ; mkdir -p plugins;mv ddb_gui_qt5*.dll plugins/ ; zip -r ddb_gui_qt5_windows-shared.zip plugins/*.dll
