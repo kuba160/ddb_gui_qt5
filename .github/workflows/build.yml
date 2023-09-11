@@ -43,7 +43,7 @@ jobs:
           python3-minimal python3.10 python3.10-minimal readline-common \
           shared-mime-info uuid-dev x11proto-dev xdg-user-dirs xkb-data \
           xorg-sgml-doctools xtrans-dev xz-utils zlib1g-dev libudev-dev \
-          libmtdev-dev
+          libmtdev-dev libts-dev
     - name: Checkout for Linux
       uses: actions/checkout@v1
     - name: Fix library links
