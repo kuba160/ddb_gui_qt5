@@ -13,6 +13,15 @@ jobs:
         apt-get -qq update
         apt-get install -y -qq zlib1g-dev libdbus-1-dev libzstd-dev libglib2.0-dev\
           libxcb-xinput0 g++ wget zip unzip sudo cmake zip mesa-common-dev libegl1-mesa-dev libharfbuzz-dev libfontconfig-dev
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        version: '6.5.2'
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+        modules: 'qtcharts'
     - name: Checkout for Linux
       uses: actions/checkout@v1
     - name: Fix library links
