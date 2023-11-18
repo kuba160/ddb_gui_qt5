@@ -5,6 +5,7 @@ if (NOT DEFINED SET_QT_VERSION)
     set(SET_QT_VERSION Qt6)
 endif()
 set (USE_WIDGETS 1)
+set (USE_CHARTS 1)
 set(CMAKE_CXX_FLAGS_INIT "-gdwarf-4")
 #set(CMAKE_CXX_FLAGS_INIT "-fsanitize=undefined")
 
