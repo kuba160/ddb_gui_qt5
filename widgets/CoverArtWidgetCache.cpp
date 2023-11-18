@@ -127,11 +127,9 @@ QFuture<QVariant> CoverArtWidgetCache::requestCoverArt(CoverArtRequest_t &reques
 
 QVariant CoverArtWidgetCache::getCoverArt(CoverArtRequest_t &request) {
     if (request.type == COVER_QIMAGE) {
-        CoverArtRequest_t path_request = request;
-        path_request.type = COVER_QSTRING;
-        CoverArtStatusFlags stat = DBAPI->playlist.coverArtStatus(path_request);
+        request.type = COVER_QSTRING;
         if (coverArtStatus(request) & STATUS_CACHED) {
-            QString path = DBAPI->playlist.getCoverArt(path_request).toString();
+            QString path = DBAPI->playlist.getCoverArt(request).toString();
             if (request.size.isValid()) {
                 if (cache_img_scaled.contains({path, request.size})) {
                     return QVariant::fromValue(cache_img_scaled.value({path, request.size}));
@@ -211,6 +209,7 @@ QVariant CoverArtWidgetCache::cover_art_load(DBApi *api, CoverArtWidgetCache *ca
         delete request;
         return QVariant::fromValue(img);
     }
+    delete request;
     return QVariant();
 }
 

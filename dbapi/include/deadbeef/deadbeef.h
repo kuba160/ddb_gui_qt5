@@ -73,6 +73,7 @@ extern "C" {
 // that there's a better replacement in the newer deadbeef versions.
 
 // API version history:
+// 1.18 -- deadbeef-1.9.7
 // 1.17 -- deadbeef-1.9.6
 // 1.16 -- deadbeef-1.9.4
 // 1.15 -- deadbeef-1.9.0
@@ -103,7 +104,7 @@ extern "C" {
 // 0.1 -- deadbeef-0.2.0
 
 #define DB_API_VERSION_MAJOR 1
-#define DB_API_VERSION_MINOR 17
+#define DB_API_VERSION_MINOR 18
 
 #if defined(__clang__)
 
@@ -527,6 +528,11 @@ enum {
     DB_EV_PLAYBACK_STATE_DID_CHANGE = 25,
 #endif
 
+#if (DDB_API_LEVEL >= 18)
+    DB_EV_PLAY_NEXT_ALBUM = 26, // switch to next album
+    DB_EV_PLAY_PREV_ALBUM = 27, // switch to prev album
+    DB_EV_PLAY_RANDOM_ALBUM = 28, // play random album
+#endif
     // -----------------
     // structured events
 
@@ -2285,11 +2291,6 @@ typedef void (* ddb_medialib_listener_t)(ddb_mediasource_event_type_t event, voi
 struct ddb_mediasource_source_t;
 typedef struct ddb_mediasource_source_t ddb_mediasource_source_t;
 
-/// Abstract type representing a selector for media source query (e.g. Albums, Artists, Genres)
-/// Use @c get_selectors_list method to get the list of available selectors.
-/// Use the values to specify the selector when calling @c create_item_tree.
-//typedef struct ddb_mediasource_list_selector_s *ddb_mediasource_list_selector_t;
-
 /// Opaque struct representing the extended API of the underlying plugin. Use @c get_extended_api method to get it.
 typedef struct ddb_mediasource_api_s ddb_mediasource_api_t;
 
@@ -2324,20 +2325,24 @@ typedef struct {
 
     /// This tells the source to start operating with the current configuration.
     /// It may cancel any current operation, and get the new state with the new settings.
-    /// For example, the medialib plugin is supposed to start the scanner with the current / new settings.
-    /// This source is not supposed to run any operations automatically, and the caller is expected to call refresh
+    /// For example, the medialib plugin will start scanning with the current / new settings.
+    /// The source is not supposed to run any operations automatically,
+    /// and the caller is expected to call refresh
     /// every time when the plugin configuration changes.
     /// However, when the source is created - it's may load its initial state.
     void (*refresh) (ddb_mediasource_source_t *source);
 
-    /// Add event listener. Your callback function will be called every time some event occurs. Such as state change, content update, and so on.
-    /// The callback function may be executed on background thread, so make sure to dispatch to main to update UI.
+    /// Add event listener.
+    /// Your callback function will be called every time some event occurs.
+    /// Such as state change, content update, and so on.
+    /// The callback function may be executed on background thread,
+    /// so make sure to dispatch to main when updating UI.
     int (*add_listener) (ddb_mediasource_source_t *source, ddb_medialib_listener_t listener, void *user_data);
 
     /// Remove event listener
     void (*remove_listener) (ddb_mediasource_source_t *source, int listener_id);
 
-    /// Create a tree of items for the given @c selector.
+    /// Create a tree of items for the given @c preset.
     /// The tree is immutable, and can be used by the caller in any way it needs.
     /// The caller must free the returned object by calling the @c free_list
     ddb_medialib_item_t * (*create_item_tree) (ddb_mediasource_source_t *source, ddb_scriptable_item_t *preset, const char *filter);

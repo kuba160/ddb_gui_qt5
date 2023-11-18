@@ -6,71 +6,36 @@ import QtQuick.Controls.Material 2.12
 
 import DeaDBeeF.Q.DBApi 1.0
 
-Page {
-    id: mainPane
-
-    //anchors.fill: parent
-    header: ToolBar {
-        //Material.foreground: "white"
-        Material.background: Material.accent
-        anchors.margins: 5
-        //Material.accent: "white"
-        ToolButton {
-            anchors.left: parent.left
-            anchors.margins: 5
-            text: "Back"
-            icon.name: "go-previous"
-
-            onClicked: {
-                if (stack.depth > 1) {
-                    stack.pop()
-                }
+DDB2Page {
+    id: page
+    title: "Equalizer"
+    page_menu: Menu {
+        id: menu
+        MenuItem {
+            text: qsTr("Zero All")
+            onTriggered: {
+                DBApi.eq.values = Array(DBApi.eq.values.length)
             }
         }
 
-        Label {
-            anchors.centerIn: parent
-            id: deadbeef_label
-            text: "Equalizer"
-            font.pixelSize: 20
-            elide: Label.ElideRight
+        MenuItem {
+            text: qsTr("Zero Preamp")
+            onTriggered: {
+                let vals = DBApi.eq.values
+                vals[0] = 0
+                DBApi.eq.values = vals
+            }
         }
-        ToolButton {
-            anchors.right: parent.right
-            icon.name: "overflow-menu"
+        MenuItem {
+            text: qsTr("Zero Bands")
             onClicked: {
-                menu.open()
+                let new_values =  Array(DBApi.eq.values.length)
+                new_values[0] = DBApi.eq.values[0]
+                DBApi.eq.values = new_values
             }
-
-            Menu {
-                id: menu
-                MenuItem {
-                    text: qsTr("Zero All")
-                    onTriggered: {
-                        DBApi.eq.values = Array(DBApi.eq.values.length)
-                    }
-                }
-
-                MenuItem {
-                    text: qsTr("Zero Preamp")
-                    onTriggered: {
-                        let vals = DBApi.eq.values
-                        vals[0] = 0
-                        DBApi.eq.values = vals
-                    }
-                }
-                MenuItem {
-                    text: qsTr("Zero Bands")
-                    onClicked: {
-                        let new_values =  Array(DBApi.eq.values.length)
-                        new_values[0] = DBApi.eq.values[0]
-                        DBApi.eq.values = new_values
-                    }
-                }
-            }
-
         }
     }
+
 
     ColumnLayout {
         Layout.bottomMargin: 5

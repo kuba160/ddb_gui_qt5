@@ -35,6 +35,10 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 
+if (USE_CHARTS)
+    find_package(Qt6 COMPONENTS REQUIRED Charts)
+endif()
+
 qt6_add_library(dbapi STATIC)
 
 qt6_add_qml_module(dbapi
@@ -72,12 +76,20 @@ qt6_add_qml_module(dbapi
         actions/ActionSpec.h actions/ActionSpec.cpp
         actions/ActionsDeadbeef.h actions/ActionsDeadbeef.cpp
         models/TreeNode.h models/TreeNode.cpp
-        # models/ScriptableModel.h models/ScriptableModel.cpp
+        models/ScriptableModel.h models/ScriptableModel.cpp
         scriptable/scriptable.c scriptable/scriptable.h
-        models/ScriptableSimple.h models/ScriptableSimple.cpp
         SOURCES MedialibConfig.h MedialibConfig.cpp
+        SOURCES VisScope.h VisScope.cpp
+        scope/scope.c scope/scope.h
+
 )
 
 target_link_libraries(dbapi PRIVATE Qt::Core Qt::Concurrent)
+
+if (USE_CHARTS)
+    target_link_libraries(dbapi PRIVATE Qt6::Charts)
+endif()
+
+
 target_include_directories(dbapi PRIVATE include)
 target_compile_definitions(dbapi PRIVATE USE_COVERART_CACHE=${USE_COVERART_CACHE} QT_USE_STRINGBUILDER)

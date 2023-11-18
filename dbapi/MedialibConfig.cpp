@@ -35,6 +35,8 @@ void MedialibConfig::setFolders(QStringList l) {
 
     ml_api->set_folders(source, folders, l.count());
 
+    plug->refresh (source);
+
     for (int i = 0; i < l.count(); i++) {
         free((void*) folders[i]);
     }

@@ -37,32 +37,64 @@ ApplicationWindow {
         }
     }
 
-    Connections {
-        target: DBApi.actions.getAction("q_about")
-        function onActionApplied() {
-            stack.push(about_pane)
+//    Connections {
+//        target: DBApi.actions.getAction("q_about")
+//        function onActionApplied() {
+//            stack.push(about_pane)
+//        }
+//    }
+
+    function about_push(pane) {
+        return function() {
+            stack.push(about_pane, {defaultPane: pane})
         }
     }
 
-    function about_push(pane, extra_pane) {
-        return function() {
-            stack.push(about_pane, {defaultPane: pane, extraPane: extra_pane})
+    Component {
+        id: about_page
+        DDB2Page {
+            id: p
+            required property string text
+            DDB2TextView {
+                text: p.text
+            }
         }
+    }
+
+    function about_push2(idx) {
+
+        return function() {
+            let extra_names = ["ChangeLog", "GPLv2", "LGPLv2.1"]
+            let extra_text = [DBApi.conf.aboutChangelog, DBApi.conf.aboutGPLV2, DBApi.conf.aboutLGPLV21]
+            stack.push(about_page, {title: extra_names[idx], text: extra_text[idx]})
+        }
+    }
+
+
+    function aboutqt_push() {
+        var popup = aboutqt_popup.createObject(windo)
+        popup.open()
     }
     Component.onCompleted: {
-        DBApi.actions.getAction("q_about").actionApplied.connect(about_push(0,0))
-        DBApi.actions.getAction("q_changelog").actionApplied.connect(about_push(0,1))
-        DBApi.actions.getAction("q_gplv2").actionApplied.connect(about_push(0,2))
-        DBApi.actions.getAction("q_lgplv21").actionApplied.connect(about_push(0,3))
+        DBApi.actions.getAction("q_about").actionApplied.connect(about_push(0))
         DBApi.actions.getAction("q_translators").actionApplied.connect(about_push(2))
+        //
+        DBApi.actions.getAction("q_changelog").actionApplied.connect(about_push2(0))
+        DBApi.actions.getAction("q_gplv2").actionApplied.connect(about_push2(1))
+        DBApi.actions.getAction("q_lgplv21").actionApplied.connect(about_push2(2))
         DBApi.actions.getAction("q_quit").actionApplied.connect(close)
-
+        DBApi.actions.getAction("q_about_qt").actionApplied.connect(aboutqt_push)
         DDB2Globals.window = this
     }
 
     Component {
         id: about_pane
          AboutPane {}
+    }
+    Component {
+        id: aboutqt_popup
+        AboutQt {}
+
     }
 
     MainDrawer {
@@ -111,7 +143,6 @@ ApplicationWindow {
              anchors.fill: parent
              initialItem: mainView
              Component.onCompleted: {
-                 console.log("settings stack", stack)
                  DDB2Globals.stack = stack
              }
     }
@@ -155,11 +186,11 @@ ApplicationWindow {
                     //text: "Drawer"
                     //Layout.preferredWidth: 64
                     Component {
-                        id: queue_pane
-                         QueuePane {}
+                        id: queue_page
+                         QueuePage {}
                     }
                     onClicked: {
-                        stack.push(queue_pane)
+                        stack.push(queue_page)
                     }
                     Label {
                         anchors.margins: 8
@@ -181,11 +212,11 @@ ApplicationWindow {
                     //text: "Drawer"
                     //Layout.preferredWidth: 64
                     Component {
-                        id: search_pane
-                         SearchPane {}
+                        id: search_page
+                         SearchPage {}
                     }
                     onClicked: {
-                        stack.push(search_pane)
+                        stack.push(search_page)
                     }
                 }
                 ToolButton {
@@ -222,7 +253,7 @@ ApplicationWindow {
                     ItemDelegate {
                         anchors.centerIn: parent
                         text: "Playlist is empty"
-                        visible: piv.count == 0
+                        visible: piv.count === 0
                         opacity: visible ? 1 : 0
                         enabled: false
                     }

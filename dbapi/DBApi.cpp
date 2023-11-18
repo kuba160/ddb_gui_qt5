@@ -14,7 +14,8 @@ DBApi::DBApi(QObject *parent, DB_functions_t *Api) :
     //cover(this, Api),
     eq(this, Api),
     playback(this, Api),
-    playlist(this, Api) {
+    playlist(this, Api),
+    viz(this, Api) {
     deadbeef = Api;
     DBApi_main = this;
     DBApi_deadbeef = Api;

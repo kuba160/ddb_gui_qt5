@@ -4,6 +4,7 @@
 #include <QAbstractItemModel>
 #include <QObject>
 
+#include "ScriptableModel.h"
 #include <deadbeef/deadbeef.h>
 
 enum MSRole{
@@ -12,6 +13,7 @@ enum MSRole{
     IsSelected,
     IsPartiallySelected,
     IsExpanded,
+    HasChildren
 };
 
 class MediasourceModel : public QAbstractItemModel {
@@ -30,6 +32,11 @@ public:
 //    playItemList tracks(ddb_medialib_item_t *);
 //    QModelIndex indexByPath(QStringList &l);
 
+    Q_PROPERTY(QAbstractItemModel *queries READ getQueries CONSTANT)
+
+    Q_PROPERTY(QStringList presets READ getPresets NOTIFY presetsChanged)
+    Q_PROPERTY(int preset_idx READ getPresetIdx WRITE setPresetIdx NOTIFY presetIdxChanged)
+    Q_PROPERTY(QString filter READ getFilter WRITE setFilter NOTIFY filterChanged)
 
 //    void currentStateClean(CurrentState_t *cs);
 
@@ -41,8 +48,32 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     QModelIndex parent(const QModelIndex &index) const override;
 
+
+    QAbstractItemModel * getQueries() {
+        return m_script_model;
+    }
+
+    int getPresetIdx() {
+        return m_preset_idx;
+    }
+    void setPresetIdx(int idx);
+
+
+    QStringList getPresets();
+
+    QString getFilter() {return m_filter;};
+    void setFilter(QString filter) {
+        if (m_filter.compare(filter)) {
+            m_filter = filter;
+            emit filterChanged();
+        }
+    };
+
 signals:
     void mediasourceNeedsToreload();
+    void presetsChanged();
+    void presetIdxChanged();
+    void filterChanged();
 
 protected:
     DB_mediasource_t *ms = nullptr;
@@ -50,7 +81,10 @@ protected:
     ddb_medialib_item_t *root = nullptr;
 
     ddb_scriptable_item_t *m_script = nullptr;
-    QString filter;
+    ScriptableModel *m_script_model = nullptr;
+    int m_preset_idx = 0;
+
+    QString m_filter;
     int listener;
 
     QHash<int, QByteArray> roleNames() const override;

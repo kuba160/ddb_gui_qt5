@@ -16,15 +16,22 @@ qt_add_qml_module(DDB2
         DDB2PlayItemViewDelegate.qml
         MainDrawer.qml
         PlaylistBrowser.qml
-        SearchPane.qml
+        SearchPage.qml
         RepeatShuffleButton.qml
         AboutPane.qml
-        EqualizerPane.qml
+        EqualizerPage.qml
         VolumeButton.qml
         QML_FILES ActionMenu.qml
         QML_FILES ActionMenuMain.qml
         QML_FILES DDB2Globals.qml
         QML_FILES Medialib.qml
-        QML_FILES QueuePane.qml
+        QML_FILES QueuePage.qml
+        QML_FILES AboutQt.qml
+        QML_FILES DDB2Page.qml
+        QML_FILES SwipeViewTab.qml
+        QML_FILES DDB2TextView.qml
+        QML_FILES LogoPainter.qml
+        QML_FILES VisPage.qml
+        QML_FILES MedialibPresetPage.qml
 )
 

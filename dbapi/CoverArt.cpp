@@ -58,7 +58,7 @@ CoverArt::CoverArt(QObject *parent, DB_functions_t *api) : ICoverArtCache{parent
 
 CoverArt::~CoverArt() {
     delete cover_provider;
-    for (ICoverArtCache *c : qAsConst(cache_hash)) {
+    for (const ICoverArtCache *c : std::as_const(cache_hash)) {
         delete c;
     }
     cache_hash.clear();
@@ -130,6 +130,7 @@ QVariant CoverArt::getCoverArt(CoverArtRequest_t &req) {
 
 bool CoverArt::insertCoverArtCache(int type, ICoverArtCache *obj) {
     if (cache_hash.contains(type)) {
+        delete obj;
         return false;
     }
     cache_hash.insert(type, obj);

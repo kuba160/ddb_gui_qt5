@@ -1,8 +1,8 @@
 #include "MediasourceModel.h"
 #include <QThread>
-
+#include <QTimer>
 #include "medialib.h"
-#include "ScriptableSimple.h"
+#include "ScriptableModel.h"
 
 MediasourceModel::MediasourceModel(QObject *parent, DB_mediasource_t *Ms, QString source_name) : QAbstractItemModel(parent) {
     ms = Ms;
@@ -14,11 +14,15 @@ MediasourceModel::MediasourceModel(QObject *parent, DB_mediasource_t *Ms, QStrin
         ms->set_source_enabled(source, true);
     }
 
-    ddb_scriptable_item_t *scripts = ms->get_queries_scriptable(source);
-    QMap<QString, ddb_scriptable_item_t *> script_map = ScriptableSimple::getSelectors(scripts);
-    m_script = script_map.values()[1];
+    m_script = ms->get_queries_scriptable(source);
+
+    m_script_model = new ScriptableModel(this, m_script);
+    m_script_model->mapRole(Qt::DisplayRole, "name");
+
 
     connect(this, &MediasourceModel::mediasourceNeedsToreload, this, &MediasourceModel::recreateTree);
+    connect(this, &MediasourceModel::presetIdxChanged, this, &MediasourceModel::recreateTree);
+    connect(this, &MediasourceModel::filterChanged, this, &MediasourceModel::recreateTree);
 
     if (strcmp(ms->plugin.id, "medialib") == 0) {
         setProperty("isMedialib", true);
@@ -50,8 +54,16 @@ MediasourceModel::recreateTree() {
     if (root) {
         ms->free_item_tree(source, root);
     }
+    scriptableItem_t *preset = nullptr;
+    if (m_script && m_preset_idx < scriptableItemNumChildren(m_script)) {
+        preset = scriptableItemChildAtIndex(m_script, m_preset_idx);
+    }
     if (m_script) {
-        root = ms->create_item_tree(source, m_script, filter.isEmpty()? nullptr : filter.toUtf8().constData());
+        root = ms->create_item_tree(source, preset, m_filter.isEmpty()? nullptr : m_filter.toUtf8().constData());
+    }
+    // force root tree to be expanded
+    if (root) {
+        ms->set_tree_item_expanded(source, root, true);
     }
     endResetModel();
 }
@@ -71,8 +83,9 @@ void MediasourceModel::source_listener(ddb_mediasource_event_type_t event, void 
 
 QModelIndex MediasourceModel::index(int row, int column, const QModelIndex &parent) const {
     const ddb_medialib_item_t* it = toMedialibItem(parent);
-    if (!parent.isValid() ) {
-        it = root;
+    if (!it && row == 0 && column == 0) {
+        if (root)
+            return createIndex(0,0, (void*)root);
     }
     // go into specific item and create model index
     if (it) {
@@ -95,14 +108,13 @@ QModelIndex MediasourceModel::index(int row, int column, const QModelIndex &pare
 int MediasourceModel::rowCount(const QModelIndex &parent) const {
     const ddb_medialib_item_t *it = toMedialibItem(parent);
     if (it) {
-        qDebug() << "count sub:" <<  ms->tree_item_get_children_count(it);
+        //qDebug() << "count sub:" <<  ms->tree_item_get_children_count(it);
         return ms->tree_item_get_children_count(it);
     }
     else {
-        qDebug() << "count:" <<  ms->tree_item_get_children_count(root);
-        return ms->tree_item_get_children_count(root);
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 int MediasourceModel::columnCount(const QModelIndex &parent) const {
@@ -115,49 +127,58 @@ int MediasourceModel::columnCount(const QModelIndex &parent) const {
 QVariant MediasourceModel::data(const QModelIndex &index, int role) const {
     QVariant ret;
     ddb_medialib_item_t *it = toMedialibItem(index);
-    switch(role) {
-        case Qt::DisplayRole: {
-            if (ms->scanner_state(source) != DDB_MEDIASOURCE_STATE_IDLE && !index.parent().isValid() ||
-                root == nullptr || m_script == nullptr) {
-                const char *state_str[] = {"idle", "loading", "scanning", "indexing", "saving"};
-                ret = QString("Medialib is %1...") .arg(state_str[ms->scanner_state(source)]);
+    if (it) {
+        switch(role) {
+            case Qt::DisplayRole: {
+                if (ms->scanner_state(source) != DDB_MEDIASOURCE_STATE_IDLE && !index.parent().isValid() ||
+                    root == nullptr || m_script == nullptr) {
+                    const char *state_str[] = {"idle", "loading", "scanning", "indexing", "saving"};
+                    ret = QString("Medialib is %1...") .arg(state_str[ms->scanner_state(source)]);
+                    break;
+                }
+                if (it) {
+                    ret = ms->tree_item_get_text(it);
+                }
                 break;
             }
-            if (it) {
-                ret = ms->tree_item_get_text(it);
-            }
-            break;
-        }
-        case MSRole::IsSelected: {
-            if (it) {
-                ret = (bool) ms->is_tree_item_selected(source, it);
-            }
-            break;
-        }
-        case MSRole::IsPartiallySelected: {
-            if (it) {
-                //ret = (bool) ms->is_tree_item_selected(source, it);
-                bool some_selected = false;
-                bool some_unselected = false;
-                for (int i = 0; i < rowCount(index); i++) {
-                    bool child_sel = data(this->index(i,0,index), MSRole::IsSelected).toBool();
-                    bool child_par = data(this->index(i,0,index), MSRole::IsPartiallySelected).toBool();
-                    if (child_sel) {
-                        some_selected = true;
-                    }
-                    else {
-                        some_unselected = true;
-                    }
+            case MSRole::IsPartiallySelected:
+            case MSRole::IsSelected: {
+                if (it) {
+                    ret = (bool) ms->is_tree_item_selected(source, it);
                 }
-                ret = some_selected && some_unselected;
+                break;
             }
-            break;
-        }
-        case MSRole::IsExpanded: {
-            if (it) {
-                ret = (bool) ms->is_tree_item_expanded(source, it);
+    //        case MSRole::IsPartiallySelected: {
+    //            if (it) {
+    //                //ret = (bool) ms->is_tree_item_selected(source, it);
+    //                bool some_selected = false;
+    //                bool some_unselected = false;
+    //                for (int i = 0; i < rowCount(index); i++) {
+    //                    bool child_sel = data(this->index(i,0,index), MSRole::IsSelected).toBool();
+    //                    bool child_par = data(this->index(i,0,index), MSRole::IsPartiallySelected).toBool();
+    //                    if (child_sel) {
+    //                        some_selected = true;
+    //                    }
+    //                    else {
+    //                        some_unselected = true;
+    //                    }
+    //                }
+    //                ret = some_selected && some_unselected;
+    //            }
+    //            break;
+    //        }
+            case MSRole::IsExpanded: {
+                if (it) {
+                    ret = (bool) ms->is_tree_item_expanded(source, it);
+                }
+                break;
             }
-            break;
+            case MSRole::HasChildren: {
+                if (it) {
+                    ret = (bool) ms->tree_item_get_children_count(it);
+                }
+                break;
+            }
         }
     }
     return ret;
@@ -165,12 +186,20 @@ QVariant MediasourceModel::data(const QModelIndex &index, int role) const {
 
 bool MediasourceModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     ddb_medialib_item_t *it = toMedialibItem(index);
-    switch(role) {
-        case MSRole::IsSelected: {
-            ms->set_tree_item_selected(source, it, value.toBool());
-            emit dataChanged(index,index, {MSRole::IsSelected});
-            return true;
-            break;
+    if (it) {
+        switch(role) {
+            case MSRole::IsSelected: {
+                ms->set_tree_item_selected(source, it, value.toBool());
+                emit dataChanged(index,index, {MSRole::IsSelected});
+                return true;
+                break;
+            }
+            case MSRole::IsExpanded: {
+                ms->set_tree_item_expanded(source, it, value.toBool());
+                emit dataChanged(index,index, {MSRole::IsExpanded});
+                return true;
+                break;
+            }
         }
     }
     return false;
@@ -191,5 +220,23 @@ QHash<int, QByteArray> MediasourceModel::roleNames() const {
     l.insert(MSRole::IsSelected, "IsSelected");
     l.insert(MSRole::IsPartiallySelected, "IsPartiallySelected");
     l.insert(MSRole::IsExpanded, "IsExpanded");
+    l.insert(MSRole::HasChildren, "HasChildren");
     return l;
+}
+
+QStringList MediasourceModel::getPresets() {
+    QModelIndex root = m_script_model->index(0,0,{});
+    QStringList l;
+    for (int i = 0; i < m_script_model->rowCount(root); i++) {
+            QModelIndex curr = m_script_model->index(i,0,root);
+            l.append(m_script_model->data(curr,Qt::DisplayRole).toString());
+    }
+    return l;
+}
+
+void MediasourceModel::setPresetIdx(int idx) {
+    if (idx != m_preset_idx) {
+        m_preset_idx = idx;
+        emit presetIdxChanged();
+    }
 }

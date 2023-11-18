@@ -5,166 +5,125 @@ import QtQuick.Controls.Material 2.15
 
 import DeaDBeeF.Q.DBApi 1.0
 import DeaDBeeF.Q.GuiCommon 1.0
+import "."
 
-Page {
-    id: mainPane
-    //anchors.fill: parent
+DDB2Page {
+    id: page
+    title: "Media Library"
+    page_menu: Menu {
+        id: overflow_menu
+        MenuItem {
+            text: "Folders"
+            onTriggered: {
+                DBApi.playlist.medialib_folders = ["/NAS/Media/Muzyka/FLAC/OWN/Falco/"]
+            }
+        }
+        MenuItem {
+            text: "Presets"
+            onTriggered: {
+                DDB2Globals.stack.push("MedialibPresetPage.qml")
+            }
+        }
+    }
+
     Component.onCompleted: {
-        search_line.forceActiveFocus();
+        //search_line.forceActiveFocus();
     }
 
 
-    header: ToolBar {
-        //Material.foreground: "white"
-        Material.background: Material.accent
-        anchors.margins: 5
-        //Material.accent: "white"
-
-            width: parent.width
-            spacing: 10
-            ToolButton {
-                id: back
-                anchors.left: parent.left
-                //text: "Back"
-                icon.name: "go-previous"
-
-                function goBack() {
-                    if (stack.depth > 1) {
-                        stack.pop()
-                    }
-                }
-
-                onClicked: {
-                    goBack()
-                }
-
-                Shortcut {
-                    sequence: StandardKey.Cancel
-                    onActivated: {
-                        back.goBack()
-                    }
-                }
-            }
-
-            Label {
-                anchors.centerIn: parent
-                id: deadbeef_label
-                text: "Media Library"
-                font.pixelSize: 18
-                elide: Label.ElideRight
-            }
-
-//            Label {
-//                text: "Search:"
-//            }
-
-//            TextField {
-//                id: search_line
-//                Layout.margins: 2
-//                Layout.alignment: Qt.AlignBottom
-//                Layout.rightMargin: 32
-//                Layout.fillWidth: true
-//                Layout.maximumHeight: parent.implicitHeight
-//                placeholderText: "Search music"
-//                text: DBApi.playlist.current_search.item_filter
-//                //height: parent.height
-
-//                onTextChanged: {
-//                    DBApi.playlist.current_search.item_filter = text
-//                }
-//            }
-
-            ToolButton {
-                id: prefs
-                icon.name: "overflow-menu"
-                anchors.right: parent.right
-
-                onClicked: {
-                    DBApi.playlist.medialib_folders = ["/NAS/Media/Muzyka/FLAC/OWN/Falco/"]
-                }
-            }
-
-
-    }
-
-    Item {
+    ColumnLayout {
+        spacing: 0
         anchors.fill: parent
-        TreeView {
-            focus: false
-            anchors.fill: parent
-            model: DBApi.playlist.medialib
-            flickableDirection: Flickable.VerticalFlick
-            //delegate: DDB2PlayItemViewDelegate {}
-
-            Transition {
-                id: treeTransitionAnimation
-                NumberAnimation { properties: "y"; duration: 300 }
+        RowLayout {
+            Layout.margins: 4
+            Layout.fillWidth: true
+            ComboBox {
+                id: preset_chooser
+                model: DBApi.playlist.medialib.presets
+                currentIndex: DBApi.playlist.medialib.preset_idx
+                onCurrentIndexChanged: {
+                    DBApi.playlist.medialib.preset_idx = currentIndex
+                }
             }
-            delegate: ItemDelegate {
+            TextField {
+                id: search_line
+                Layout.fillWidth: true
+                placeholderText: "Search"
+                text: DBApi.playlist.medialib.filter
+                onTextEdited: {
+                    DBApi.playlist.medialib.filter = text
+                }
+            }
+        }
+
+        TreeView {
+            id: tree_view
+            model: DBApi.playlist.medialib
+            clip:true
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            flickableDirection: Flickable.VerticalFlick
+            reuseItems: false
+//            pointerNavigationEnabled: false
+
+            delegate: TreeViewDelegate {
                 id: treeDelegate
+                implicitWidth: tree_view.width
                 icon.name: (treeDelegate.isTreeNode && treeDelegate.hasChildren) ?
-                                treeDelegate.expanded ? "arrow-down" : "arrow-right" :
+                                model.IsExpanded ? "arrow-down" : "arrow-right" :
                                 ""
-                text: model.display
-                font.bold: false
-                implicitWidth: parent.width
-                leftPadding: treeDelegate.depth * 32 + 4
-                rightPadding: checkbox.width + 24
+                expanded: model.IsExpanded
+
+
+
+                Component.onCompleted: {
+                    if(model.IsExpanded)
+                        treeView.expand(row)
+                }
+
+
+                onClicked: {
+                    model.IsExpanded = !model.IsExpanded
+                    if (treeView.isExpanded(row))
+                        treeView.collapse(row)
+                    else
+                        treeView.expand(row)
+                }
 
 //                ButtonGroup {
 //                    id: childGroup
 //                    exclusive: false
 //                }
+                contentItem: RowLayout {
+                    spacing: 2
+                    Label {
+                        text: model.display
+                        Layout.fillWidth: true
+                        wrapMode: Text.WrapAnywhere
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        font.bold: model.IsSelected ? true : false
+                        //color : model.IsSelected ? Material.accent : undefined
+                    }
 
-                CheckBox {
-                    id: checkbox
-                    anchors.right: parent.right
-                    anchors.rightMargin: 16
-                    height: parent.height
-                    checked: model.IsSelected ? Qt.Checked : Qt.Unchecked
-//                    checkState: model.IsPartiallySelected ? Qt.PartiallyChecked :
-//                                model.IsSelected ? Qt.Checked :
-//                                                   Qt.Unchecked
 
-                     //ButtonGroup.group: parent.childGroup
-                    onClicked: {
-                        model.IsSelected = checked
+                    CheckBox {
+                        id: checkbox
+                        Layout.fillHeight: true
+                        height: parent.height
+                        checked: model.IsSelected ? Qt.Checked : Qt.Unchecked
+    //                    checkState: model.IsPartiallySelected ? Qt.PartiallyChecked :
+    //                                model.IsSelected ? Qt.Checked :
+    //                                                   Qt.Unchecked
+
+                        onClicked: {
+                            model.IsSelected = checked;
+
+                        }
+                        // avoid scrollbar interference
+                        Layout.rightMargin: 8
                     }
                 }
-
-                //implicitWidth: padding + label.x + label.implicitWidth + padding
-                //implicitHeight: label.implicitHeight * 1.5
-
-//                readonly property real indent: 20
-//                readonly property real padding: 5
-
-                // Assigned to by TreeView:
-                required property TreeView treeView
-                required property bool isTreeNode
-                required property bool expanded
-                required property int hasChildren
-                required property int depth
-
-                onClicked: {
-                    if (!(treeDelegate.isTreeNode && treeDelegate.hasChildren)) {
-                        checkbox.checked = !checkbox.checked
-                    }
-                    else {
-                        if (treeDelegate.expanded) {
-                            treeView.collapseRecursively(row)
-                        }
-                        else {
-                            treeView.toggleExpanded(row)
-                        }
-                    }
-                }
-
-
-//                TapHandler {
-//                    onTapped: {
-
-//                    }
-//                }
             }
 
             ScrollBar.vertical: ScrollBar {}
@@ -182,6 +141,7 @@ Page {
         Material.background: Material.color(Material.Grey, Material.Shade800)
         width: parent.width
         RowLayout {
+            spacing: 0
 //            Label {
 //                text: "Queue"
 //            }

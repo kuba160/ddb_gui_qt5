@@ -36,6 +36,10 @@ if (USE_WIDGETS)
     find_package(Qt6 COMPONENTS REQUIRED Widgets QuickWidgets)
 endif()
 
+if (USE_CHARTS)
+    find_package(Qt6 COMPONENTS REQUIRED Charts)
+endif()
+
 if (USE_WIDGETS)
     set (SOURCES_WIDGETS
         widgets/plugins/PlaybackButtons.cpp
@@ -81,6 +85,10 @@ add_subdirectory(qml/DDB2)
 target_link_libraries(ddb_gui_qt5 dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Gui Qt::Quick Qt::Concurrent)
 if (USE_WIDGETS)
     target_link_libraries(ddb_gui_qt5 dbapi Qt6::Widgets Qt6::QuickWidgets)
+endif()
+
+if (USE_CHARTS)
+    target_link_libraries(ddb_gui_qt5 dbapi Qt6::Charts)
 endif()
 
 target_include_directories(ddb_gui_qt5 PRIVATE ".")

@@ -32,6 +32,7 @@ public:
     Q_PROPERTY(QAbstractItemModel* queue READ getQueue CONSTANT)
     Q_PROPERTY(QAbstractItemModel* list READ getList CONSTANT);
 
+    Q_PROPERTY(bool medialib_available READ getMedialib NOTIFY medialibAvailableChanged)
     Q_PROPERTY(QAbstractItemModel* medialib READ getMedialib CONSTANT)
     Q_PROPERTY(QStringList medialib_folders READ getMedialibFolders WRITE setMedialibFolders NOTIFY medialibFoldersChanged)
 
@@ -45,6 +46,7 @@ signals:
     // Emitted when playback state or queue changes
     void statusRowChanged();
     void medialibFoldersChanged();
+    void medialibAvailableChanged();
 
 public:
     QAbstractItemModel* getCurrentPlaylist();

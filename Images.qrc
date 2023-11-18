@@ -4,5 +4,6 @@
         <file>images/deadbeef.png</file>
         <file>images/play_16.png</file>
         <file>images/pause_16.png</file>
+        <file>images/simple.svg</file>
     </qresource>
 </RCC>

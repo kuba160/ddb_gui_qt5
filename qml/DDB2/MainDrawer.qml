@@ -6,6 +6,7 @@ import DBApi 1.0
 import Qt.labs.settings 1.0
 
 import QtQuick.Controls.Material 2.12
+import DeaDBeeF.Q.DBApi 1.0
 
 Drawer {
     required property var stack
@@ -13,7 +14,7 @@ Drawer {
     id: drawer
     // folded is 42 when style is Fusion, 64 is good for Material
     // TODO fix this shit
-    width: 0.66 * parent.width
+    width: Math.max(0.66 * parent.width, 256)
     height: parent.height
 
     Component {
@@ -22,13 +23,19 @@ Drawer {
     }
 
     Component {
-        id: equalizer_pane
-        EqualizerPane {}
+        id: equalizer_page
+        EqualizerPage {}
     }
 
     Component {
         id: medialib_pane
         Medialib {}
+    }
+
+
+    Component {
+        id: vis_page
+       VisPage {}
     }
 
 
@@ -38,12 +45,18 @@ Drawer {
         Action {
             text: "Equalizer"
             icon.name: "view-media-equalizer"
-            onTriggered: stack.push(equalizer_pane)
+            onTriggered: stack.push(equalizer_page)
         }
         Action {
             text: "Media Library"
+            enabled: DBApi.playlist.medialib_available
             icon.name: "view-institution"
             onTriggered: stack.push(medialib_pane)
+        }
+        Action {
+            text: "Visualizations"
+            icon.name: "view-media-visualization"
+            onTriggered: stack.push(vis_page)
         }
         Action {
             text: "Settings"
@@ -62,6 +75,7 @@ Drawer {
         anchors.fill: parent
         spacing: 0
         ToolBar {
+            id: tb
             Material.background: Material.accent
             RowLayout {
                 ToolButton {
@@ -69,6 +83,17 @@ Drawer {
                     onClicked: {
                         drawer.close()
                     }
+                }
+
+                Image {
+                    id: logo
+                    property int margin: 16
+                    Layout.preferredHeight: parent.height - margin
+                    Layout.preferredWidth: Layout.preferredHeight
+                    source: "/images/simple.svg"
+                    smooth: true
+                    mipmap: true
+
                 }
 
                 Label {
@@ -95,6 +120,7 @@ Drawer {
             Layout.alignment: Qt.AlignTop
             model: actions.actions
             delegate: ItemDelegate {
+                enabled: modelData.enabled
                 text: modelData.text
                 width: parent.width
                 implicitHeight: 42

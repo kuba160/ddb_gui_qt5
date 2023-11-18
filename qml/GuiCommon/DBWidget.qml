@@ -14,6 +14,7 @@ Item {
     readonly property string widgetFormat: "qml"
     property int instance
     required property Component widget
+    property string instanceName: internalName + instance
 
     Layout.fillHeight: true
     Layout.fillWidth: true

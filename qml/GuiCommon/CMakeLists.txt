@@ -13,4 +13,6 @@ qt_add_qml_module(GuiCommon
         PlayItemView.qml
         PlaylistQuick.qml
         PluginWidgets.qml
+        QML_FILES Oscilloscope.qml
+        QML_FILES OscilloscopePolar.qml
 )

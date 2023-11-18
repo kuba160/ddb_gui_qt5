@@ -31,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api)
         plugins.loadNewInstance(this, "tabBar", "Qt Widgets");
         //plugins.loadNewInstance(this, "playlist", "Qt Quick");
         plugins.loadNewInstance(this, "coverArt", "Qt Quick");
+        plugins.loadNewInstance(this, "scope", "Qt Quick");
+        plugins.loadNewInstance(this, "scopePolar", "Qt Quick");
         plugins.loadNewInstance(this, "equalizer", "Qt Quick");
         plugins.loadNewInstance(this, "statusBar", "Qt Widgets");
         plugins.loadNewInstance(this, "playlist", "Qt Widgets");

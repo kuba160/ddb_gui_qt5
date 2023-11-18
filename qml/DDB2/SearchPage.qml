@@ -6,56 +6,12 @@ import QtQuick.Controls.Material 2.15
 import DeaDBeeF.Q.DBApi 1.0
 import DeaDBeeF.Q.GuiCommon 1.0
 
-Page {
-    id: mainPane
-    //anchors.fill: parent
+DDB2Page {
+    title: "Search"
+
     Component.onCompleted: {
         search_line.forceActiveFocus();
     }
-
-
-    header: ToolBar {
-        //Material.foreground: "white"
-        Material.background: Material.accent
-        anchors.margins: 5
-        //Material.accent: "white"
-
-        width: parent.width
-        //spacing: 10
-        ToolButton {
-            id: back
-            anchors.left: parent.left
-
-            //text: "Back"
-            icon.name: "go-previous"
-
-            function goBack() {
-                if (stack.depth > 1) {
-                    stack.pop()
-                }
-            }
-
-            onClicked: {
-                goBack()
-            }
-
-
-            Shortcut {
-                sequence: StandardKey.Cancel
-                onActivated: {
-                    back.goBack()
-                }
-            }
-        }
-        Label {
-            anchors.centerIn: parent
-            id: deadbeef_label
-            text: "Search"
-            font.pixelSize: 18
-            elide: Label.ElideRight
-        }
-    }
-
 
     ColumnLayout {
         anchors.fill: parent
@@ -69,10 +25,25 @@ Page {
             Layout.maximumHeight: parent.implicitHeight
             placeholderText: "Search music"
             text: DBApi.playlist.current_search.item_filter
-            //height: parent.height
 
             onTextChanged: {
                 DBApi.playlist.current_search.item_filter = text
+            }
+
+            RoundButton {
+                text: "×"
+                width: height
+                flat: true
+                visible: search_line.text.length
+                anchors {
+                    right: parent.right
+                    bottom: parent.bottom
+                    top: parent.top
+                    margins: 4
+                }
+                onClicked: {
+                    search_line.clear()
+                }
             }
         }
 
@@ -81,6 +52,7 @@ Page {
             Layout.fillHeight: true
             Layout.fillWidth: true
             PlayItemView {
+                id: playlist_search
                 focus: false
                 anchors.fill: parent
                 model: DBApi.playlist.current_search
@@ -88,8 +60,10 @@ Page {
             }
             ItemDelegate {
                 anchors.centerIn: parent
-                text: "Use search field to find tracks."
-                visible: search_line.length <= 0
+                text: search_line.length > 0 ?
+                          "No results found" :
+                          "Use search field to find tracks."
+                visible: search_line.length <= 0 || !playlist_search.count
                 opacity: visible ? 1 : 0
                 enabled: false
             }
