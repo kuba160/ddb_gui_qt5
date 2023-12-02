@@ -151,6 +151,9 @@ scriptableItemClone (scriptableItem_t *item);
 scriptableItem_t *
 scriptableItemParent (scriptableItem_t *item);
 
+#ifndef __has_extension
+#define __has_extension(X) false
+#endif
 #if __has_extension(blocks)
 void
 scriptableItemPropertiesForEach (scriptableItem_t *item, int (^block) (const char *key, const char *value));

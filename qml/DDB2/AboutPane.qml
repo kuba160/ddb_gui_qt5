@@ -39,7 +39,17 @@ DDB2Page {
                 }
             }
         }
+
+        MenuItem {
+            text: "About Qt"
+
+            onClicked: {
+                about_dialog.open()
+            }
+        }
     }
+
+    AboutQt {id: about_dialog}
 
     Component {
         id: info_deadbeef

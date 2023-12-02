@@ -152,6 +152,7 @@ static void startQuick() {
     engine->rootContext()->setContextProperty("_db_bg_override", false);
     engine->rootContext()->setContextProperty("_db_bg", "transparent");
     engine->rootContext()->setContextProperty("_db_do_not_load", false);
+    engine->rootContext()->setContextProperty("_qt_version", QT_VERSION_STR);
 
     pl = new PluginLoader(nullptr);
     engine->rootContext()->setContextProperty("plugin", pl);

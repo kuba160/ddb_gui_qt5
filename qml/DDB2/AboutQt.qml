@@ -41,7 +41,8 @@ Dialog {
                 leftPadding: 0
 
 
-                text:     ("<p>Qt is a C++ toolkit for cross-platform application " +
+                text:     ("<p>This program uses Qt Version %4.</p>" +
+                          "<p>Qt is a C++ toolkit for cross-platform application " +
                           "development.</p>" +
                           "<p>Qt provides single-source portability across all major desktop " +
                           "operating systems. It is also available for embedded Linux and other " +
@@ -62,7 +63,7 @@ Dialog {
                           "<p>Qt and the Qt logo are trademarks of The Qt Company Ltd.</p>" +
                           "<p>Qt is The Qt Company Ltd product developed as an open source " +
                           "project. See <a href=\"http://%3/\">%3</a> for more information.</p>")
-                           .arg("2023").arg("qt.io/licensing").arg("qt.io")
+                           .arg("2023").arg("qt.io/licensing").arg("qt.io").arg(_qt_version)
                 readOnly: true
                 selectByMouse: false
                 wrapMode: TextEdit.Wrap
