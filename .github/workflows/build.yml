@@ -65,13 +65,13 @@ jobs:
     - name: Install msys2
       uses: msys2/setup-msys2@v2
       with:
-        msystem: MINGW64
+        msystem: CLANG64
         update: true
         install: >-
-         mingw-w64-x86_64-toolchain make tar unzip xz zip mingw-w64-x86_64-qt6-static mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
+         mingw-w64-clang-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-static mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja
     - name: Build for Windows
       shell: msys2 {0}
-      run: CMAKE_PREFIX_PATH=/mingw64/qt6-static/ cmake . ; cmake --build . ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-static.zip plugins/*.dll
+      run: CMAKE_PREFIX_PATH=/clang64/qt6-static/ cmake . ; cmake --build . ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-static.zip plugins/*.dll
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
