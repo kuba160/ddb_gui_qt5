@@ -110,13 +110,14 @@ jobs:
        submodules: true
    - name: Install dependencies
      run: |
-       brew install gcc zip make
-       wget -q https://github.com/kuba160/qt5_static_build/releases/download/6.5.2/qt_6.5.2_static_macos.zip
-       unzip -qq qt_6.5.2_static_macos.zip
+       brew install zip cmake
+       wget -q https://github.com/kuba160/qt5_static_build/releases/download/6.6.2/qt_6.6.2_static_macos.zip
+       unzip -qq qt_6.6.2_static_macos.zip
    - name: Build for macOS
      run: |
        export PATH="/usr/local/opt/zip/bin:$PATH"
        export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
+       export PATH="/usr/local/opt/cmake/bin:$PATH"
        CMAKE_PREFIX_PATH=$PWD/qt5_static/ cmake .
        cmake --build .
        mkdir -p plugins
