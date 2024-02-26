@@ -75,6 +75,14 @@ ApplicationWindow {
         var popup = aboutqt_popup.createObject(windo)
         popup.open()
     }
+
+    function page_push(page) {
+        return (function () {
+            console.log("page pushed");
+            DDB2Globals.stack.push(page);
+          });
+    }
+
     Component.onCompleted: {
         DBApi.actions.getAction("q_about").actionApplied.connect(about_push(0))
         DBApi.actions.getAction("q_translators").actionApplied.connect(about_push(2))
@@ -84,7 +92,68 @@ ApplicationWindow {
         DBApi.actions.getAction("q_lgplv21").actionApplied.connect(about_push2(2))
         DBApi.actions.getAction("q_quit").actionApplied.connect(close)
         DBApi.actions.getAction("q_about_qt").actionApplied.connect(aboutqt_push)
+        DBApi.actions.getAction("q_find").actionApplied.connect(page_push(search_page))
+        DBApi.actions.getAction("q_add_location").actionApplied.connect(add_location_dialog.open)
+
+
+
+        file_dialog.bindActions()
         DDB2Globals.window = this
+    }
+
+    Dialog {
+        id: add_location_dialog
+        anchors.centerIn: parent
+        title: "Add Location"
+        width: parent.width * 0.8
+
+        Component.onCompleted: {
+            field.forceActiveFocus();
+        }
+
+        onAccepted: {
+            console.log("ADD LOCATION FIXME TODO")
+            field.text = undefined
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+
+            TextField {
+                id: field
+                placeholderText: "URL"
+                Layout.fillWidth: true
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                Button {
+                    text: "OK"
+                    onClicked: {
+                        add_location_dialog.accept()
+                    }
+
+                }
+                Button {
+                    text: "Cancel"
+                    onClicked: {
+                        add_location_dialog.reject()
+                    }
+                }
+            }
+        }
+    }
+
+    DBFileDialogs {
+        id: file_dialog
+    }
+
+    Component {
+        id: search_page
+         SearchPage {}
     }
 
     Component {
@@ -192,29 +261,40 @@ ApplicationWindow {
                     onClicked: {
                         stack.push(queue_page)
                     }
-                    Label {
+                    Rectangle {
+                        color: Material.foreground
                         anchors.margins: 8
                         anchors.bottomMargin: 6
                         anchors.bottom: parent.bottom
                         anchors.right: parent.right
-                        text: DBApi.playlist.queue.length >= 100 ? "XD" : DBApi.playlist.queue.length
-                        visible: DBApi.playlist.queue.length
-                        font.pixelSize: 12
-                        font.bold: true
-                        style: Text.Outline
-                        styleColor: Material.backgroundColor //Material.color(Material.Grey, Material.Shade800)
-                        z: 5
+                        width: q_label.height + 2
+                        height:q_label.height + 2
+                        radius: 10
+                        z: 4
 
+                        opacity: DBApi.playlist.queue.length ? 1 : 0
+                        Behavior on opacity { SmoothedAnimation { velocity: 10; } }
+
+
+                        Label {
+                            id: q_label
+                            anchors.centerIn: parent
+                            text: DBApi.playlist.queue.length >= 100 ? "XD" :
+                                  DBApi.playlist.queue.length
+                            font.pixelSize: 10
+                            //font.bold: true
+                            //style: Text.Outline
+                            color: Material.backgroundColor //Material.color(Material.Grey, Material.Shade800)
+                            z: 5
+                        }
                     }
+
+
                 }
                 ToolButton {
                     icon.name: "search"
                     //text: "Drawer"
                     //Layout.preferredWidth: 64
-                    Component {
-                        id: search_page
-                         SearchPage {}
-                    }
                     onClicked: {
                         stack.push(search_page)
                     }
@@ -239,6 +319,7 @@ ApplicationWindow {
             }
 
             ColumnLayout {
+                id: col_layout
                 anchors.fill: parent
                 SeekSlider {}
 
@@ -246,7 +327,7 @@ ApplicationWindow {
                     id: piv
                     model: DBApi.playlist.current
                     delegate: FocusScope {
-                        width: parent.width; height: childrenRect.height
+                        width: col_layout.width; height: childrenRect.height
                         x:childrenRect.x; y: childrenRect.y
                         DDB2PlayItemViewDelegate {}}
 

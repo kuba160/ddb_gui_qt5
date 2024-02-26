@@ -10,6 +10,16 @@ DDB2Page {
     id: page
     title: "Queue"
 
+    page_menu: Menu {
+        MenuItem {
+            text: "Clear queue"
+            icon.name: "edit-clear-all"
+            onClicked: {
+                DBApi.playlist.queue.removeRows(0,DBApi.playlist.queue.rowCount())
+            }
+        }
+    }
+
     Item {
         anchors.fill: parent
         PlayItemView {

@@ -1,7 +1,7 @@
 import QtQuick 2.15
 //import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.2
-
+import QtQuick.Window 2.15
 import QtQuick.Controls.Material 2.12
 
 import DeaDBeeF.Q.DBApi 1.0
@@ -25,9 +25,17 @@ Item {
         property int distance: 0
         onPaint: {
             var ctx = getContext('2d')
-            ctx.lineWidth = 1.5
+            ctx.lineWidth = 1 * Screen.pixelDensity * (Math.min(height,width)/1000)
             let px = canvas2.ctx.getImageData(lastX, lastY, 1, 1).data;
             ctx.strokeStyle =  Qt.rgba(px[0]/255, px[1]/255, px[2]/255, px[3]/255)
+            if (px[3] === 0) {
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.strokeStyle =  Qt.rgba(px[0]/255, px[1]/255, px[2]/255, 255)
+
+            }
+            else {
+                ctx.globalCompositeOperation = "source-over";
+            }
             ctx.beginPath()
             ctx.moveTo(lastX, lastY)
             var dx = area.mouseX - lastX

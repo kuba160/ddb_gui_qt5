@@ -9,6 +9,13 @@ import DeaDBeeF.Q.GuiCommon 1.0
 DDB2Page {
     title: "Visualizations"
 
+    Component {
+        id: osc_shader
+        OscilloscopeShader {
+            property string instanceNAME: "ScopeShader"
+        }
+    }
+
    Component {
        id: osc
        Oscilloscope {
@@ -25,7 +32,7 @@ DDB2Page {
 
    SwipeViewTab {
        anchors.fill: parent
-       titles: ["Oscilloscope", "Polar Oscilloscope"]
-       objs: [osc, osc_polar]
+       titles: ["Oscilloscope Shader", "Oscilloscope", "Polar Oscilloscope"]
+       objs: [osc_shader, osc, osc_polar]
    }
 }

@@ -30,6 +30,12 @@ PlayItemIterator::PlayItemIterator(const PlayItemIterator &from) {
     // NONE or CURRENT_TRACK, nothing to copy
 }
 
+PlayItemIterator::PlayItemIterator() {
+    this->d_type = NONE;
+    this->d_playlist = nullptr;
+    //this->d_tracklist = nullptr;
+}
+
 PlayItemIterator::PlayItemIterator(ddb_playlist_t* plt) {
     this->d_playlist = plt;
     DBAPI->plt_ref(d_playlist);
@@ -300,7 +306,7 @@ QList<DB_playItem_t*> PlayItemMimeData::getTracks(const QMimeData *mime) {
 
 PlayItemMimeData::~PlayItemMimeData() {
     QList<DB_playItem_t*> tracks = getTracks(this);
-    for (DB_playItem_t *it : qAsConst(tracks)) {
+    for (DB_playItem_t *it : std::as_const(tracks)) {
         api->pl_item_unref(it);
     }
 }

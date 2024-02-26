@@ -176,7 +176,7 @@ bool DRoleMapProxyModel::setHeaderData(int section, Qt::Orientation orientation,
 
                 // shift titles
                 QList<int> keys = titles.keys();
-                for (int i : qAsConst(keys)) {
+                for (int i : std::as_const(keys)) {
                     if (i > section) {
                         // TODO FIX THIS SHIT
                         QString title = titles.value(i);

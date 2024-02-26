@@ -14,7 +14,11 @@ Drawer {
     id: drawer
     // folded is 42 when style is Fusion, 64 is good for Material
     // TODO fix this shit
-    width: Math.max(0.66 * parent.width, 256)
+    width: width_override <= 0 || width_override > parent.width ?
+               Math.max(0.66 * parent.width, 256) :
+               Math.max(256,width_override)
+
+    property int width_override: 0
     height: parent.height
 
     Component {
@@ -72,6 +76,7 @@ Drawer {
     }
 
     ColumnLayout {
+        id: col
         anchors.fill: parent
         spacing: 0
         ToolBar {
@@ -104,9 +109,42 @@ Drawer {
                     verticalAlignment: Qt.AlignVCenter
                     Layout.fillWidth: true
                 }
+
+
             }
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
+
+            Rectangle {
+                id: rect
+                width: 8
+                //height: col.height / 8.0
+                anchors.right: parent.right
+                height: parent.height
+                //color: "red"
+                color: "transparent"
+                Layout.alignment: Qt.AlignRight
+                z: 66
+
+                MouseArea {
+                    anchors.fill: parent
+                    property bool resiz: false
+                    cursorShape: Qt.SizeHorCursor
+                    onPressed: {
+                        resiz = true
+                        drawer.interactive = false
+                    }
+                    onReleased: {
+                        resiz = false
+                        drawer.interactive = true
+                    }
+                    onPositionChanged: function (mouse) {
+                        var x_mapped = mapToItem(col, mouseX, mouseY)
+                        if (resiz)
+                            drawer.width_override = x_mapped.x
+                    }
+                }
+            }
         }
 
         ListView {

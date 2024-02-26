@@ -54,9 +54,9 @@ ActionHandlers::ActionHandlers(QWidget *parent, DBApi *Api) : QObject(parent) {
             if (!folder.isNull()) {
                 QProgressDialog *dialog = new QProgressDialog(parent);
                 QFuture<PlayItemIterator> future_import = Api->playlist.runFolderImport(QStringList{folder});
-                QFutureWatcher<PlayItemIterator> *watcher = new QFutureWatcher<PlayItemIterator>(parent);
+                QFutureWatcher<PlayItemIterator> *watcher = new QFutureWatcher<PlayItemIterator>();
                 watcher->setFuture(future_import);
-                connect(watcher, &QFutureWatcher<PlayItemIterator>::finished, Api, [watcher, dialog, Api]() {
+                connect(watcher, &QFutureWatcher<PlayItemIterator>::finished, Api, [watcher, dialog, Api, future_import]() {
                     PlayItemIterator pit = watcher->result();
                     QMimeData *mime = pit.toMimeData();
                     Api->playlist.getCurrentPlaylist()->dropMimeData(mime,Qt::CopyAction,-1,-1,QModelIndex());

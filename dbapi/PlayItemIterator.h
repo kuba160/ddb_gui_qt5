@@ -19,6 +19,9 @@ public:
         PLAYLIST_SELECTED // TODO IGNORE FOR NOW
     };
 
+    // invalid
+    PlayItemIterator();
+
     // duplicate
     PlayItemIterator(const PlayItemIterator &from);
     // create playlist action context
@@ -27,7 +30,7 @@ public:
     PlayItemIterator(QList<DB_playItem_t*> tracks);
     PlayItemIterator(DB_playItem_t* track);
     // create main or nowplaying action context
-    PlayItemIterator(bool nowplaying = false);
+    PlayItemIterator(bool nowplaying);
     //PlayItemIterator() : PlayItemIterator(false) {}; // none for no arguments
     // url
     PlayItemIterator(QUrl url);

@@ -9,6 +9,8 @@
 #include <QQuickItem>
 #include <QThread>
 
+#include <QQuickView>
+
 #define DBAPI (this->api)
 /*
 enum DBWidgetType {
@@ -95,8 +97,46 @@ DBWidget::DBWidget(QWidget *parent, DBApi *Api, PluginWidgetsWrapper &info, int 
 QWidget* DBWidget::createQmlWrapper(QWidget *DB_parent, DBApi *api, PluginQmlWrapper &info, int instance) {
     QUrl source = info.property("widgetUrl").toUrl();
 
+    if (source.toString().contains("Shader", Qt::CaseInsensitive)) {
+        QQuickView *widget = new QQuickView();//new QQuickWidget();
+        widget->setResizeMode(QQuickView::SizeRootObjectToView);
+
+        if (info.property("widgetType").toString() == "main") {
+            qobject_cast<QDockWidget*>(DB_parent)->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        }
+
+        widget->rootContext()->setContextProperty("_db_bg_override", true);
+        widget->rootContext()->setContextProperty("_db_bg", QPalette().window().color());
+        // Set API and load widget
+        //widget->rootContext()->setContextProperty("app", app);
+        widget->rootContext()->setContextProperty("api", api);
+        widget->rootContext()->setContextProperty("playback", &api->playback);
+        widget->rootContext()->setContextProperty("conf", &api->conf);
+        widget->rootContext()->setContextProperty("eq", &api->eq);
+        widget->rootContext()->setContextProperty("cover", &api->playlist);
+        widget->rootContext()->setContextProperty("playlist", &api->playlist);
+        if (DB_parent)
+            DB_parent->setProperty("instance", instance);
+        widget->rootContext()->setContextProperty("DB_parent", DB_parent);
+        widget->rootContext()->setProperty("instance",instance);
+        widget->rootContext()->setProperty("_db_do_not_load",false);
+
+        widget->setSource(source);
+
+        while (widget->status() != QQuickView::Ready) {
+            QThread::msleep(50);
+        }
+        widget->rootObject()->setProperty("instance",instance);
+
+        //QWidget *container = QWidget::createWindowContainer(view, this);
+        return QWidget::createWindowContainer(widget, DB_parent);
+    }
+
+    //QQuickView *view = new QQuickView();
+    //
 
     QQuickWidget *widget = new QQuickWidget();
+    widget->setResizeMode(QQuickWidget::SizeRootObjectToView);
     // Allow resize
     widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     // TODO allow specifying size policy (and size) through properties

@@ -89,6 +89,10 @@ public:
     // data(&QModelIndex, int): reinterpret/rearrange data
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
+
+    // function wrappers
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+
     /// ACCESIBLE FUNCTIONS THAT
     /// CAN BE USED
 

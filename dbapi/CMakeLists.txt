@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.1.0)
 project(dbapi LANGUAGES C CXX)
 
 set(USE_COVERART_CACHE 1)
+set(USE_SCOPESHADER 0)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,6 +39,14 @@ find_package(Qt6 REQUIRED COMPONENTS Core Quick)
 if (USE_CHARTS)
     find_package(Qt6 COMPONENTS REQUIRED Charts)
 endif()
+
+if (USE_SCOPESHADER)
+    find_package(Qt6 COMPONENTS REQUIRED Qml ShaderTools)
+    set (SOURCES_SCOPESHADER
+        ScopeConfig.cpp ScopeConfig.h
+    )
+endif()
+
 
 qt6_add_library(dbapi STATIC)
 
@@ -81,7 +90,8 @@ qt6_add_qml_module(dbapi
         SOURCES MedialibConfig.h MedialibConfig.cpp
         SOURCES VisScope.h VisScope.cpp
         scope/scope.c scope/scope.h
-
+        ScopeShader.cpp ScopeShader.h
+        ${SOURCES_SCOPESHADER}
 )
 
 target_link_libraries(dbapi PRIVATE Qt::Core Qt::Concurrent)
@@ -90,6 +100,20 @@ if (USE_CHARTS)
     target_link_libraries(dbapi PRIVATE Qt6::Charts)
 endif()
 
+if (USE_SCOPESHADER)
+    target_link_libraries(dbapi PRIVATE
+        Qt6::GuiPrivate
+        Qt6::Qml
+    )
+    qt_add_shaders(dbapi "ddb_gui_qt5_shaders"
+        GLSL "430"
+        PRECOMPILE
+        OPTIMIZED
+        FILES
+            ScopeShader.vert
+            ScopeShader.frag
+    )
+endif()
 
 target_include_directories(dbapi PRIVATE include)
-target_compile_definitions(dbapi PRIVATE USE_COVERART_CACHE=${USE_COVERART_CACHE} QT_USE_STRINGBUILDER)
+target_compile_definitions(dbapi PRIVATE USE_COVERART_CACHE=${USE_COVERART_CACHE} USE_CHARTS=${USE_CHARTS} USE_SCOPESHADER=${USE_SCOPESHADER} QT_USE_STRINGBUILDER)

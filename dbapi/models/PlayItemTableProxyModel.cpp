@@ -46,7 +46,7 @@ void PlayItemTableProxyModel::setSourceModel(QAbstractItemModel *sourceModel) {
             PlayItemModel *m = qobject_cast<PlayItemModel*>(getPlayItemModel());
             if (m) {
                 QList<int> l = custom_roles_queued.keys();
-                for (int i : qAsConst(l)) {
+                for (int i : std::as_const(l)) {
                     HeaderData_t hd = custom_roles_queued.value(i);
                     setRoleMap(i, hd);
                 }
@@ -66,7 +66,7 @@ void PlayItemTableProxyModel::setSourceModel(QAbstractItemModel *sourceModel) {
 QByteArray PlayItemTableProxyModel::getHeaderConfiguration() const {
     QByteArray a;
     QDataStream in(&a, QIODevice::WriteOnly);
-    for (const HeaderData_t &data : qAsConst(headers)) {
+    for (const HeaderData_t &data : std::as_const(headers)) {
         in << data.role;
         in << data.title;
         in << data.format;
@@ -81,7 +81,7 @@ void PlayItemTableProxyModel::setHeaderConfiguration(QByteArray &data) {
                 PlayItemModel::ItemPlaying, PlayItemModel::ItemArtistAlbum,
                 PlayItemModel::ItemTrackNum, PlayItemModel::ItemTitle,
                 PlayItemModel::ItemLength};
-        for (int i : qAsConst(role_list)) {
+        for (int i : std::as_const(role_list)) {
             HeaderData_t header = getDefaultHeaderData(i);
             header.title = QString{};
             addHeader(header);

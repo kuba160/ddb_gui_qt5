@@ -55,9 +55,17 @@ DBWidget {
             lineVisible: false
         }
 
+        Connections {
+            id: cons
+            target: null
+            function onDataChanged() {
+                scope.replaceData()
+            }
+        }
+
         Component.onCompleted: {
             scope = DBApi.viz.createVisScope(this);
-
+            cons.target = scope
             // settings
             changeStyle(DBApi.conf.get(name_i(), "style", 1))
             scope.mode = DBApi.conf.get(name_i(), "mode", 1)

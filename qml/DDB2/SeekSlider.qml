@@ -37,16 +37,27 @@ DBWidget {
             Label {
                 padding: 5
                 property bool remaining: false
-                property real len: remaining ? Math.abs((control.value - 100.0)) * DBApi.playback.position_max / 100.0
+                property bool remaining_total: DBApi.conf.get("DDB2","SeekSlider_remaining_total", 0)
+                property real len: remaining && !remaining_total ? Math.abs((control.value - 100.0)) * DBApi.playback.position_max / 100.0 :
+                                    remaining ? DBApi.playback.position_max
                                              : DBApi.playback.position_max * control.value / 100.0
                 property int hour: len/3600
                 property int min: (len-hour*3600)/60
                 property int sec: (len-hour*3600-min*60)
-                property string minus: remaining ? "-" : ""
+                property string minus: remaining && !remaining_total ? "-" : ""
 
                 text: hour ? minus + hour.toString().padStart(2,'0') + ":" + min.toString().padStart(2,'0') + ":" + sec.toString().padStart(2,'0') :
                              minus + min.toString().padStart(2,'0') + ":" + sec.toString().padStart(2,'0')
                 font.pixelSize: 10
+
+                MouseArea {
+                    enabled: parent.remaining
+                    anchors.fill: parent
+                    onPressAndHold: {
+                        DBApi.conf.set("DDB2","SeekSlider_remaining_total", !parent.remaining_total)
+                        parent.remaining_total = !parent.remaining_total
+                    }
+                }
             }
         }
         Rectangle {

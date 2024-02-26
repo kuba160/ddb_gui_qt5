@@ -73,7 +73,7 @@ extern "C" {
 // that there's a better replacement in the newer deadbeef versions.
 
 // API version history:
-// 1.18 -- deadbeef-1.9.7
+// 1.18 -- deadbeef-1.10.0
 // 1.17 -- deadbeef-1.9.6
 // 1.16 -- deadbeef-1.9.4
 // 1.15 -- deadbeef-1.9.0
@@ -139,6 +139,12 @@ extern "C" {
 
 #ifndef DDB_API_LEVEL
 #define DDB_API_LEVEL DB_API_VERSION_MINOR
+#endif
+
+#if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 18)
+#define DEPRECATED_118 DDB_DEPRECATED("since deadbeef API 1.18")
+#else
+#define DEPRECATED_118
 #endif
 
 #if (DDB_WARN_DEPRECATED && DDB_API_LEVEL >= 17)
@@ -366,7 +372,7 @@ enum {
     DB_PLUGIN_VFS     = 5,
     DB_PLUGIN_PLAYLIST = 6,
     DB_PLUGIN_GUI = 7,
-#if (DDB_API_LEVEL >= 15)
+#if (DDB_API_LEVEL >= 18)
     DB_PLUGIN_MEDIASOURCE = 8,
 #endif
 };
@@ -829,8 +835,29 @@ typedef enum {
 } ddb_insert_file_flags_t;
 #endif
 
+#if (DDB_API_LEVEL >= 18)
+struct ddb_undomanager_s;
+struct ddb_undobuffer_s;
+
+typedef struct {
+    size_t _size;
+    void (*group_begin)(void);
+    void (*group_end)(void);
+    void (*set_action_name)(const char *action_name);
+    void (*free_buffer)(struct ddb_undobuffer_s *undobuffer);
+    void (*execute_buffer)(struct ddb_undobuffer_s *undobuffer);
+} ddb_undo_interface_t;
+
+typedef struct {
+    size_t _size;
+    void (*initialize)(ddb_undo_interface_t *undo_interface);
+    int (*process_action)(struct ddb_undobuffer_s *undobuffer, const char *action_name);
+} ddb_undo_hooks_t;
+#endif
+
 // forward decl for plugin struct
 struct DB_plugin_s;
+typedef struct DB_plugin_s DB_plugin_t;
 
 // player api definition
 typedef struct {
@@ -1008,6 +1035,8 @@ typedef struct {
     int (*plt_getselcount) (ddb_playlist_t *playlist);
     float (*plt_get_totaltime) (ddb_playlist_t *plt);
     int (*plt_get_item_count) (ddb_playlist_t *plt, int iter);
+
+    /// If undo registration is enabled: to call on main thread.
     int (*plt_delete_selected) (ddb_playlist_t *plt);
     void (*plt_set_cursor) (ddb_playlist_t *plt, int iter, int cursor);
     int (*plt_get_cursor) (ddb_playlist_t *plt, int iter);
@@ -1128,31 +1157,31 @@ typedef struct {
     DB_playItem_t *(*pl_get_prev) (DB_playItem_t *it, int iter);
 
     /*
-       pl_format_title formats the line for display in playlist
-       @it pointer to playlist item
-       @idx number of that item in playlist (or -1)
-       @s output buffer
-       @size size of output buffer
-       @id one of IDs defined in pl_column_id_t enum, can be -1
-       @fmt format string, used if id is -1
-       format is printf-alike. specification:
-       %a artist
-       %t title
-       %b album
-       %B band / album artist
-       %n track
-       %l length (duration)
-       %y year
-       %g genre
-       %c comment
-       %r copyright
-       %T tags
-       %f filename without path
-       %F full pathname/uri
-       %d directory without path (e.g. /home/user/file.mp3 -> user)
-       %D directory name with full path (e.g. /home/user/file.mp3 -> /home/user)
-       more to come
-    */
+     pl_format_title formats the line for display in playlist
+     @it pointer to playlist item
+     @idx number of that item in playlist (or -1)
+     @s output buffer
+     @size size of output buffer
+     @id one of IDs defined in pl_column_id_t enum, can be -1
+     @fmt format string, used if id is -1
+     format is printf-alike. specification:
+     %a artist
+     %t title
+     %b album
+     %B band / album artist
+     %n track
+     %l length (duration)
+     %y year
+     %g genre
+     %c comment
+     %r copyright
+     %T tags
+     %f filename without path
+     %F full pathname/uri
+     %d directory without path (e.g. /home/user/file.mp3 -> user)
+     %D directory name with full path (e.g. /home/user/file.mp3 -> /home/user)
+     more to come
+     */
     int (*pl_format_title) (DB_playItem_t *it, int idx, char *s, int size, int id, const char *fmt) DEPRECATED_18;
 
     // _escaped version wraps all conversions with '' and replaces every ' in conversions with \'
@@ -1625,7 +1654,7 @@ typedef struct {
     int (*plt_is_loading_cue) (ddb_playlist_t *plt);
 #endif
 
-// since 1.11
+    // since 1.11
 #if (DDB_API_LEVEL >= 11)
     // Set and get shuffle / repeat modes.
 
@@ -1638,7 +1667,7 @@ typedef struct {
     ddb_repeat_t (*streamer_get_repeat) (void);
 #endif
 
-// since 1.12
+    // since 1.12
 #if (DDB_API_LEVEL >= 12)
     DB_metaInfo_t *(*pl_meta_for_key_with_override) (ddb_playItem_t *it, const char *key);
     const char *(*pl_find_meta_with_override) (DB_playItem_t *it, const char *key);
@@ -1646,7 +1675,7 @@ typedef struct {
     int (*pl_meta_exists_with_override) (DB_playItem_t *it, const char *key);
 #endif
 
-// since 1.13
+    // since 1.13
 #if (DDB_API_LEVEL >= 13)
     void (*plt_item_set_selected)(ddb_playlist_t *plt, ddb_playItem_t *it, int sel);
     ddb_playlist_t * (*plt_find_by_name) (const char *name);
@@ -1660,7 +1689,7 @@ typedef struct {
     ddb_playItem_t * (*plt_get_tail_item) (ddb_playlist_t *p, int iter);
 #endif
 
-// since 1.14
+    // since 1.14
 #if (DDB_API_LEVEL >= 14)
     // Get full filesystem path to the specified plugin file (.so/.dll/.dylib)
     const char* (*plug_get_path_for_plugin_ptr) (struct DB_plugin_s *plugin_ptr);
@@ -1694,15 +1723,15 @@ typedef struct {
     /// @param user_data A pointer to arbitrary data to pass to the callback.
     /// @return the last inserted item.
     ddb_playItem_t *(*plt_insert_dir3) (
-        int visibility,
-        uint32_t flags,
-        ddb_playlist_t *plt,
-        ddb_playItem_t *after,
-        const char *dirname,
-        int *pabort,
-        int (*callback)(ddb_insert_file_result_t result, const char *filename, void *user_data),
-        void *user_data
-    );
+                                        int visibility,
+                                        uint32_t flags,
+                                        ddb_playlist_t *plt,
+                                        ddb_playItem_t *after,
+                                        const char *dirname,
+                                        int *pabort,
+                                        int (*callback)(ddb_insert_file_result_t result, const char *filename, void *user_data),
+                                        void *user_data
+                                        );
 #endif
 
 #if (DDB_API_LEVEL >= 16)
@@ -1710,6 +1739,47 @@ typedef struct {
     /// Please ensure that this function is not called from within @c pl_lock,
     /// since this function internally uses streamer_lock, which may cause a deadlock against pl_lock.
     ddb_playItem_t * (*streamer_get_playing_track_safe) (void);
+#endif
+
+#if (DDB_API_LEVEL >= 18)
+    /// Move all items from playlist @c from to playlist @c to,
+    /// after the item specified by @c insert_after
+    /// If undo registration is enabled: required to be called on main thread.
+    void (*plt_move_all_items) (ddb_playlist_t *to, ddb_playlist_t *from, ddb_playItem_t *insert_after);
+
+    /// Called to send the accumulated undo buffer to the active UI plugin.
+    void (*undo_process)(void);
+
+    /// Allow the UI plugin to declare Undo support, and register for receiving undo events.
+    /// Calling this function will enable Undo system, and will use the hooks
+    /// for communicating with UI plugin.
+    /// This function can be called only once per session,
+    /// usually from the UI plugin's start method.
+    void (*register_for_undo) (ddb_undo_hooks_t *undo_hooks);
+
+    /// Get all items from specified playlist as an array, increase reference counts.
+    /// The resulting array must be freed.
+    /// @return number of resulting items
+    size_t (*plt_get_items) (ddb_playlist_t *plt, ddb_playItem_t ***out_items);
+
+    /// Get all selected items from specified playlist as an array, increase reference counts
+    /// The resulting array must be freed.
+    /// @return number of resulting items
+    size_t (*plt_get_selected_items) (ddb_playlist_t *plt, ddb_playItem_t ***out_items);
+
+    /// Load playlist from buffer
+    /// @return 0 on success, -1 on error
+    int (*plt_load_from_buffer) (ddb_playlist_t *plt, const uint8_t *buffer, size_t size);
+
+    /// Save playlist to the buffer.
+    /// The resulting buffer must be freed after use.
+    /// @return buffer size on success, -1 on error
+    ssize_t (*plt_save_to_buffer) (ddb_playlist_t *plt, uint8_t **out_buffer);
+
+    /// Register a plugin for async deinitialization.
+    /// The deinit func will be called before unloading a plugin,
+    /// and the caller will wait until completion block is performed.
+    void (*plug_register_for_async_deinit) (DB_plugin_t *plugin, void (*deinit_func)(void (*completion_callback)(DB_plugin_t *plugin)));
 #endif
 } DB_functions_t;
 
@@ -1821,7 +1891,9 @@ enum {
 #endif
 
 #if (DDB_API_LEVEL >= 15)
-    DDB_PLUGIN_FLAG_ASYNC_STOP = 8,
+    // This flag is deprecated, do not use.
+    // It has been superceded by the API call plug_register_for_async_deinit
+    DDB_PLUGIN_FLAG_ASYNC_STOP DEPRECATED_118 = 8,
 #endif
 };
 #endif
@@ -1830,10 +1902,9 @@ enum {
 /// Reserved command IDs, usable with @c plugin.command method.
 /// The commands with numbers 1000 and up are reserved for internal use.
 enum {
-    // Stop plugin asynchronously.
-    // The plugin is expected to handle this command, if it has the flag @c DDB_PLUGIN_FLAG_ASYNC_STOP.
-    // The command 2nd argument is a void (^completion_block)(void).
-    DDB_COMMAND_PLUGIN_ASYNC_STOP = 1000,
+    // This flag is deprecated, do not use.
+    // It has been superceded by the API call plug_register_for_async_deinit
+    DDB_COMMAND_PLUGIN_ASYNC_STOP DEPRECATED_118 = 1000,
 };
 
 typedef struct ddb_response_s {
@@ -1844,7 +1915,7 @@ typedef struct ddb_response_s {
 #endif
 
 // base plugin interface
-typedef struct DB_plugin_s {
+struct DB_plugin_s {
     // type must be one of DB_PLUGIN_ types
     int32_t type;
     // api version
@@ -1916,7 +1987,7 @@ typedef struct DB_plugin_s {
     // plugin configuration dialog is constructed from this data
     // can be NULL
     const char *configdialog;
-} DB_plugin_t;
+};
 
 // file format stuff
 
@@ -2255,11 +2326,7 @@ typedef struct DB_playlist_s {
 #endif
 } DB_playlist_t;
 
-// NOTE: Media source API is a work in progress, and is disabled in this version of source code.
-// This is to prevent plugin devs from releasing media source plugins, before this API is finalized.
-// Please use the appropriate development branch to test media source plugins.
-// The media source API is a subject to change.
-#if (DDB_API_LEVEL >= 15)
+#if (DDB_API_LEVEL >= 18)
 
 // Mediasource plugin
 // The purpose is to provide access to external media sources.
@@ -2270,8 +2337,7 @@ typedef enum {
     DDB_MEDIASOURCE_EVENT_CONTENT_DID_CHANGE = 0,
     DDB_MEDIASOURCE_EVENT_STATE_DID_CHANGE = 1,
     DDB_MEDIASOURCE_EVENT_ENABLED_DID_CHANGE = 2,
-    DDB_MEDIASOURCE_EVENT_SELECTORS_DID_CHANGE = 3,
-    DDB_MEDIASOURCE_EVENT_OUT_OF_SYNC = 4, // Needs refresh -- e.g. if there are new files in music folders
+    DDB_MEDIASOURCE_EVENT_OUT_OF_SYNC = 3, // Needs refresh -- e.g. if there are new files in music folders
 } ddb_mediasource_event_type_t;
 
 /// Numbers from 1024 and up can be used by the plugins for additional events.

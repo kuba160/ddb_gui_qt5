@@ -133,8 +133,9 @@ void PlayqueueModel::moveIndexes(QList<int> ind, int after) {
 void PlayqueueModel::removeIndexes(QList<int> ind) {
     // TODO: use beginRemoveRows?
     beginResetModel();
+    int del_counter = 0;
     foreach(int i, ind) {
-        DBAPI->playqueue_remove_nth(i);
+        DBAPI->playqueue_remove_nth(i - del_counter++);
     }
     endResetModel();
     emit lengthChanged();

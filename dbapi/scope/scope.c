@@ -1,6 +1,6 @@
 /*
     DeaDBeeF -- the music player
-    Copyright (C) 2009-2021 Alexey Yakovenko and other contributors
+    Copyright (C) 2009-2021 Oleksiy Yakovenko and other contributors
 
     This software is provided 'as-is', without any express or implied
     warranty.  In no event will the authors be held liable for any damages
@@ -25,12 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "scope.h"
+#include <deadbeef/fastftoi.h>
 
 #pragma mark - Public
 
 ddb_scope_t *
 ddb_scope_alloc (void) {
-    return calloc(1, sizeof (ddb_scope_t));
+    return calloc (1, sizeof (ddb_scope_t));
 }
 
 ddb_scope_t *
@@ -50,21 +51,20 @@ ddb_scope_free (ddb_scope_t *scope) {
 }
 
 void
-ddb_scope_process (ddb_scope_t * restrict scope, int samplerate, int channels, const float * restrict samples, int sample_count) {
+ddb_scope_process (ddb_scope_t *restrict scope, int samplerate, int channels, const float *restrict samples, int sample_count) {
 
     if (scope->fragment_duration == 0) {
         scope->fragment_duration = 50;
     }
 
     int fragment_sample_count = (float)scope->fragment_duration / 1000.f * samplerate;
-    if (channels != scope->channels
-        || samplerate != scope->samplerate
-        || fragment_sample_count != scope->sample_count) {
+    if (channels != scope->channels || samplerate != scope->samplerate || fragment_sample_count != scope->sample_count) {
         scope->channels = channels;
         scope->sample_count = fragment_sample_count;
         scope->samplerate = samplerate;
         free (scope->samples);
         scope->samples = calloc (scope->sample_count * channels, sizeof (float));
+        scope->mode_did_change = 1;
     }
 
     // append samples
@@ -76,19 +76,18 @@ ddb_scope_process (ddb_scope_t * restrict scope, int samplerate, int channels, c
     // otherwise append
     else {
         int move_samples = scope->sample_count - sample_count;
-        memmove (scope->samples, scope->samples + (scope->sample_count - move_samples) * channels, move_samples * channels * sizeof(float));
+        memmove (scope->samples, scope->samples + (scope->sample_count - move_samples) * channels, move_samples * channels * sizeof (float));
         memcpy (scope->samples + move_samples * channels, samples, sample_count * channels * sizeof (float));
     }
 }
 
 void
-ddb_scope_tick (ddb_scope_t * restrict scope) {
+ddb_scope_tick (ddb_scope_t *restrict scope) {
 }
 
 void
-ddb_scope_get_draw_data (ddb_scope_t * restrict scope, int view_width, int view_height, int y_axis_flip, ddb_scope_draw_data_t * restrict draw_data) {
-    if (scope->mode_did_change
-        || draw_data->point_count != view_width) {
+ddb_scope_get_draw_data (ddb_scope_t *restrict scope, int view_width, int view_height, int y_axis_flip, ddb_scope_draw_data_t *restrict draw_data) {
+    if (scope->mode_did_change || draw_data->point_count != view_width) {
         free (draw_data->points);
         int channels = scope->mode == DDB_SCOPE_MONO ? 1 : scope->channels;
         draw_data->points = calloc (view_width * channels, sizeof (ddb_scope_point_t));
@@ -97,120 +96,128 @@ ddb_scope_get_draw_data (ddb_scope_t * restrict scope, int view_width, int view_
     }
 
     int output_channels;
+    int average_channels;
+    float faverage_channels_inv;
     switch (scope->mode) {
     case DDB_SCOPE_MONO:
         output_channels = 1;
+        average_channels = scope->channels;
         break;
     case DDB_SCOPE_MULTICHANNEL:
         output_channels = scope->channels;
+        average_channels = 1;
         break;
     }
+
+    faverage_channels_inv = 1.f / average_channels;
 
     float channel_height = view_height / output_channels;
     float pixel_amplitude = channel_height / 2;
 
-    float left = 0;
-    float left_a = 0;
-    float left_b = 0;
+    fpu_control fpu;
+    (void)fpu;
+    fpu_setround (&fpu);
+
+    int left_a = 0;
+    int left_b = 0;
     float leftfrac = 0;
+
+    float fpoint_count = (float)draw_data->point_count;
+    float fsample_count = (float)scope->sample_count;
+
     for (int i = 0; i < draw_data->point_count; i++) {
-        float right = (float)(i+1) / draw_data->point_count * scope->sample_count;
-        if (right > scope->sample_count-1) {
-            right = scope->sample_count-1;
+        float right = (float)(i + 1) / fpoint_count * (fsample_count - 1);
+        if (right > scope->sample_count - 1) {
+            right = scope->sample_count - 1;
         }
 
-        float right_a = floor(right);
-        float right_b = ceil(right);
+        int right_a = ftoi (floorf (right));
+        float fright_b = ceilf (right);
+        int right_b = ftoi (fright_b);
 
-        float rightfrac = right_b-right;
+        float rightfrac = 1.f - (fright_b - right);
 
         for (int c = 0; c < output_channels; c++) {
             draw_data->points[draw_data->point_count * c + i].ymin = 1;
             draw_data->points[draw_data->point_count * c + i].ymax = -1;
         }
 
-        for (int c = 0; c < scope->channels; c++) {
-            int output_channel;
+        for (int c = 0; c < output_channels; c++) {
+            int output_channel = c;
 
-            switch (scope->mode) {
-            case DDB_SCOPE_MONO:
-                output_channel = 0;
-                break;
-            case DDB_SCOPE_MULTICHANNEL:
-                output_channel = c;
-                break;
+            ddb_scope_point_t *restrict minmax = &draw_data->points[draw_data->point_count * output_channel + i];
+            float minmax_ymin = minmax->ymin;
+            float minmax_ymax = minmax->ymax;
+
+            // Interpolated leftmost and rightmost samples
+            float leftsample = 0;
+            float rightsample = 0;
+
+            for (int ac = 0; ac < average_channels; ac++) {
+                float leftsample_a = scope->samples[left_a * scope->channels + c + ac];
+                float leftsample_b = scope->samples[left_b * scope->channels + c + ac];
+                leftsample += leftsample_a + (leftsample_b - leftsample_a) * leftfrac;
+
+                float rightsample_a = scope->samples[right_a * scope->channels + c + ac];
+                float rightsample_b = scope->samples[right_b * scope->channels + c + ac];
+                rightsample += rightsample_a + (rightsample_b - rightsample_a) * rightfrac;
             }
 
-            ddb_scope_point_t *minmax = &draw_data->points[draw_data->point_count * output_channel + i];
+            leftsample *= faverage_channels_inv;
+            rightsample *= faverage_channels_inv;
 
-            float leftsample_a = scope->samples[(int)left_a * scope->channels + c];
-            float leftsample_b = scope->samples[(int)left_b * scope->channels + c];
-            float leftsample = leftsample_a + (leftsample_b - leftsample_a) * leftfrac;
-
-            if (leftsample > minmax->ymax) {
-                minmax->ymax = leftsample;
+            if (leftsample > minmax_ymax) {
+                minmax_ymax = leftsample;
             }
-            if (leftsample < minmax->ymin) {
-                minmax->ymin = leftsample;
+            if (leftsample < minmax_ymin) {
+                minmax_ymin = leftsample;
             }
 
-            float rightsample_a = scope->samples[(int)right_a * scope->channels + c];
-            float rightsample_b = scope->samples[(int)right_b * scope->channels + c];
-            float rightsample = rightsample_a + (rightsample_b - rightsample_a) * rightfrac;
-
-            if (rightsample > minmax->ymax) {
-                minmax->ymax = rightsample;
+            if (rightsample > minmax_ymax) {
+                minmax_ymax = rightsample;
             }
-            if (rightsample < minmax->ymin) {
-                minmax->ymin = rightsample;
+            if (rightsample < minmax_ymin) {
+                minmax_ymin = rightsample;
             }
 
-            for (int n = (int)left_b; n <= (int)right_a; n++) {
-                float sample = scope->samples[n * scope->channels + c];
-
-                if (sample > minmax->ymax) {
-                    minmax->ymax = sample;
+            // The rest of the "whole" samples
+            for (int n = left_b; n <= right_a; n++) {
+                float sample = 0;
+                for (int ac = 0; ac < average_channels; ac++) {
+                    sample += scope->samples[n * scope->channels + c + ac];
                 }
-                if (sample < minmax->ymin) {
-                    minmax->ymin = sample;
+                sample *= faverage_channels_inv;
+
+                if (sample > minmax_ymax) {
+                    minmax_ymax = sample;
+                }
+                if (sample < minmax_ymin) {
+                    minmax_ymin = sample;
                 }
             }
 
-            int rescale = 0;
-            switch (scope->mode) {
-            case DDB_SCOPE_MONO:
-                if (c == scope->channels - 1) {
-                    rescale = 1;
-                }
-                break;
-            case DDB_SCOPE_MULTICHANNEL:
-                rescale = 1;
-                break;
+            int offs;
+            float ymin;
+            float ymax;
+            if (y_axis_flip) {
+                offs = output_channel * channel_height;
+                ymin = -minmax_ymax;
+                ymax = -minmax_ymin;
             }
-
-            if (rescale) {
-                int offs;
-                float ymin;
-                float ymax;
-                if (y_axis_flip) {
-                    offs = output_channel * channel_height;
-                    ymin = -minmax->ymax;
-                    ymax = -minmax->ymin;
-                }
-                else {
-                    offs = (output_channels - output_channel - 1) * channel_height;
-                    ymin = minmax->ymin;
-                    ymax = minmax->ymax;
-                }
-                minmax->ymin = ymin * pixel_amplitude + pixel_amplitude + offs;
-                minmax->ymax = ymax * pixel_amplitude + pixel_amplitude + offs;
+            else {
+                offs = (output_channels - output_channel - 1) * channel_height;
+                ymin = minmax_ymin;
+                ymax = minmax_ymax;
             }
+            minmax->ymin = ymin * pixel_amplitude + pixel_amplitude + offs;
+            minmax->ymax = ymax * pixel_amplitude + pixel_amplitude + offs;
         }
-        left = right;
         left_a = right_a;
         left_b = right_b;
         leftfrac = rightfrac;
     }
+
+    fpu_restore (fpu);
 
     draw_data->mode = scope->mode;
     draw_data->channels = scope->channels;
@@ -219,5 +226,5 @@ ddb_scope_get_draw_data (ddb_scope_t * restrict scope, int view_width, int view_
 void
 ddb_scope_draw_data_dealloc (ddb_scope_draw_data_t *draw_data) {
     free (draw_data->points);
-    memset (draw_data, 0, sizeof(ddb_scope_draw_data_t));
+    memset (draw_data, 0, sizeof (ddb_scope_draw_data_t));
 }

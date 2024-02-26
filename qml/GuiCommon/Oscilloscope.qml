@@ -56,6 +56,7 @@ DBWidget {
 
         Component.onCompleted: {
             scope = DBApi.viz.createVisScope(this);
+            cons.target = scope
 
             // settings
             changeStyle(DBApi.conf.get(name_i(), "style", 1))
@@ -67,6 +68,14 @@ DBWidget {
             wave2_color = DBApi.conf.get(name_i(), "wave2_color", "#2b7fba")
 
             use_global_accent = DBApi.conf.get(name_i(), "use_global_accent", 1)
+        }
+
+        Connections {
+            id: cons
+            target: null
+            function onDataChanged() {
+                scope.replaceData()
+            }
         }
 
         property color wave1_color: "#2b7fba"

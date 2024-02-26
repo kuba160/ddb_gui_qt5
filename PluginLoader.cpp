@@ -79,7 +79,7 @@ QAbstractItemModel* PluginLoader::pluginLibraryModel() {
 }
 
 void PluginLoader::insertPlugins(QStringList list) {
-    for(const QString &path: qAsConst(list)) {
+    for(const QString &path: std::as_const(list)) {
         if (!path.isEmpty()) {
             PluginQmlWrapper *plugin = new PluginQmlWrapper(this, path);
             QString internalName = plugin->property("internalName").toString();
@@ -99,7 +99,7 @@ PluginLoader::~PluginLoader() {
     delete m_plugins;
     m_plugins = nullptr;
 
-    for(QObject *wrapper : qAsConst(pluginLibrary)) {
+    for(QObject *wrapper : std::as_const(pluginLibrary)) {
         delete wrapper;
     }
     pluginLibrary.clear();

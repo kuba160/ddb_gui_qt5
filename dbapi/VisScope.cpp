@@ -1,5 +1,5 @@
 #include "VisScope.h"
-
+#include <QDebug>
 #include <scope/scope.h>
 
 #define SCOPE static_cast<ddb_scope_t*>(scope)
@@ -8,8 +8,10 @@ VisScope::VisScope(QObject *parent) : QObject(parent) {
     scope = ddb_scope_alloc();
     ddb_scope_init(SCOPE);
 
+#if USE_CHARTS
     series.append(nullptr);
     series.append(nullptr);
+#endif
     SCOPE->fragment_duration = 50;
     SCOPE->samplerate = 44100;
     SCOPE->mode = DDB_SCOPE_MULTICHANNEL;
@@ -27,11 +29,17 @@ VisScope::~VisScope() {
     ddb_scope_free(SCOPE);
 }
 
+#if USE_CHARTS
 void VisScope::setSeries(int pos, QAbstractSeries *s) {
     if (pos >= 0 && pos <=1) {
         series.replace(pos,static_cast<QXYSeries*>(s));
     }
+
+    connect(s, &QObject::destroyed, this, [=]() {
+        series.replace(pos, nullptr);
+    });
 }
+#endif
 
 int VisScope::getFragmentDuration() {
     return SCOPE->fragment_duration;
@@ -102,7 +110,36 @@ void VisScope::setChannelOffset(bool on) {
     }
 }
 
+void VisScope::replaceData() {
+#if USE_CHARTS
+    bool is_stereo = !(SCOPE->mode == DDB_SCOPE_MONO || SCOPE->channels == 1);
+    //data_mod.lock();
+    if (!is_stereo) {
+        if (series.at(1) && series.at(1)->isVisible()) {
+            series.at(1)->setVisible(false);
+        }
+    }
+    else {
+        if (series.at(0)) {
+            QVector<QPointF> vec(*data_left);
+            vec.detach();
+            series.at(0)->replace(vec.toList());
+        }
+        if (series.at(1)) {
+            if (!series.at(1)->isVisible()) {
+                series.at(1)->setVisible();
+            }
+            QVector<QPointF> vec(*data_right);
+            vec.detach();
+            series.at(1)->replace(vec.toList());
+        }
+    }
+    //data_mod.unlock();
+#endif
+}
+
 void VisScope::process(const ddb_audio_data_t *data) {
+#if USE_CHARTS
     if (m_paused) {
         return;
     }
@@ -127,6 +164,7 @@ void VisScope::process(const ddb_audio_data_t *data) {
     size_t total_samples = ((float)SCOPE->fragment_duration)/1000.0 * SCOPE->samplerate;
     bool is_stereo = !(SCOPE->mode == DDB_SCOPE_MONO || data->fmt->channels == 1);
 
+    //data_mod.lock();
     if (reformat_x) {
         if (!data_left) {
             data_left = new QVector<QPointF>();
@@ -164,12 +202,14 @@ void VisScope::process(const ddb_audio_data_t *data) {
         m_mode_changed = false;
         m_fragment_duration_changed = false;
     }
+    //data_mod.unlock();
 
     ddb_scope_process(SCOPE, data->fmt->samplerate, data->fmt->channels, data->data, data->nframes);
 
     if (is_stereo) {
         size_t i_out = 0;
         size_t bail_out_at = ((int) total_samples/m_scale/2)*2*m_scale;
+        //data_mod.lock();
         for (size_t i = 0; i < bail_out_at; i+=2*m_scale) {
             for (size_t right_chn = 0; right_chn < 2; right_chn++) {
                 float offset = m_channel_offset ? (right_chn ? -0.5 : 0.5) : 0;
@@ -185,10 +225,11 @@ void VisScope::process(const ddb_audio_data_t *data) {
             }
             i_out++;
         }
+        //data_mod.unlock();
         if (series.at(0)) {
             QVector<QPointF> vec(*data_left);
             vec.detach();
-            series.at(0)->replace(vec.toList());
+            //series.at(0)->replace(vec.toList());
         }
         if (series.at(1)) {
             if (!series.at(1)->isVisible()) {
@@ -196,7 +237,7 @@ void VisScope::process(const ddb_audio_data_t *data) {
             }
             QVector<QPointF> vec(*data_right);
             vec.detach();
-            series.at(1)->replace(vec.toList());
+            //series.at(1)->replace(vec.toList());
         }
     }
     else {
@@ -217,10 +258,13 @@ void VisScope::process(const ddb_audio_data_t *data) {
         }
 
         if (series.at(0)) {
-            series.at(0)->replace(*data_left);
+            //series.at(0)->replace(*data_left);
         }
         if (series.at(1) && series.at(1)->isVisible()) {
-            series.at(1)->setVisible(false);
+            //series.at(1)->setVisible(false);
         }
     }
+    replaceData();
+    //emit dataChanged();
+#endif
 }

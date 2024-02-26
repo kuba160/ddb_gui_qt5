@@ -2,9 +2,13 @@
 #define VISUALIZATIONS_H
 
 #include <QObject>
+#include <QHash>
+
 #include <deadbeef/deadbeef.h>
 
 #include "VisScope.h"
+
+typedef void (*scope_callback_t)(const ddb_audio_data_t *);
 
 class Visualizations : public QObject
 {
@@ -15,9 +19,12 @@ public:
 
     // internal scope list to dispatch waveforms
     QList<QObject *> scope_list;
+    QHash<QObject *, int> wf_methods;
 
 public slots:
     //
+    void scope_callback_attach(QObject * obj, QString method="process(const ddb_audio_data_t *)");
+
     QObject *createVisScope(QObject *parent);
 
 protected:

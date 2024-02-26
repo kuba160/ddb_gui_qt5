@@ -2,7 +2,13 @@
 #define VISSCOPE_H
 
 #include <deadbeef/deadbeef.h>
+
+#include <QObject>
+#if USE_CHARTS
 #include <QXYSeries>
+#endif
+
+#include <QMutex>
 
 #if (QT_VERSION < QT_VERSION_CHECK(6,0,0))
 using namespace QtCharts;
@@ -39,10 +45,14 @@ public:
     void process(const ddb_audio_data_t *data);
 
 public slots:
+#if USE_CHARTS
     void setSeries(int num,QAbstractSeries *s);
+#endif
     void setPaused(bool pause);
     void setScale(int s);
     void setChannelOffset(bool on);
+
+    void replaceData();
 
 signals:
     void fragmentDurationChanged();
@@ -51,16 +61,21 @@ signals:
     void pausedChanged();
     void scaleChanged();
     void channelOffsetChanged();
+
+    void dataChanged();
 private:
     void *scope;
+#if USE_CHARTS
     QList<QXYSeries *> series;
-
+#endif
     int m_paused;
     int m_scale;
     bool m_scale_changed;
     bool m_mode_changed;
     bool m_fragment_duration_changed;
     bool m_channel_offset;
+
+    QMutex data_mod;
 
     QVector<QPointF> *data_left = nullptr;
     bool waveform_mono_set = false;

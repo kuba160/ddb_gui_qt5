@@ -13,6 +13,12 @@ DDB2Page {
     page_menu: Menu {
         id: overflow_menu
         MenuItem {
+            text: "Clear selection after usage"
+            checkable: true
+            checked: true
+        }
+
+        MenuItem {
             text: "Folders"
             onTriggered: {
                 DBApi.playlist.medialib_folders = ["/NAS/Media/Muzyka/FLAC/OWN/Falco/"]
@@ -43,6 +49,11 @@ DDB2Page {
                 currentIndex: DBApi.playlist.medialib.preset_idx
                 onCurrentIndexChanged: {
                     DBApi.playlist.medialib.preset_idx = currentIndex
+                    DBApi.conf.set("DDB2", "Medialib_preset_idx", currentIndex)
+                }
+
+                Component.onCompleted: {
+                    DBApi.playlist.medialib.preset_idx = DBApi.conf.get("DDB2", "Medialib_preset_idx", 0)
                 }
             }
             TextField {
@@ -83,11 +94,16 @@ DDB2Page {
 
 
                 onClicked: {
-                    model.IsExpanded = !model.IsExpanded
-                    if (treeView.isExpanded(row))
-                        treeView.collapse(row)
-                    else
-                        treeView.expand(row)
+                    if (treeDelegate.hasChildren) {
+                        model.IsExpanded = !model.IsExpanded
+                        if (treeView.isExpanded(row))
+                            treeView.collapse(row)
+                        else
+                            treeView.expand(row)
+                    }
+                    else {
+                        model.IsSelected = !checkbox.checked
+                    }
                 }
 
 //                ButtonGroup {

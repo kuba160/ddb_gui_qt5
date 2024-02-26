@@ -105,6 +105,19 @@ void PlayItemModel::removeIndexes(QList<int> indices) {
     qDebug() << "PlayItemModel::removeIndexes unimplemented!";
 }
 
+bool PlayItemModel::removeRows(int row, int count, const QModelIndex &parent) {
+    // very dumb implementation
+    if (!parent.isValid()) {
+        QList<int> ind;
+        for (int i = row; i < row+count; i++) {
+            ind.append(i);
+        }
+        removeIndexes(ind);
+        return true;
+    }
+    return false;
+}
+
 int PlayItemModel::addFormat(QString str) {
     if (format_role_map.contains(str)) {
         return format_role_map.value(str);

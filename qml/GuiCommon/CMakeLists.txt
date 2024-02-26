@@ -15,4 +15,6 @@ qt_add_qml_module(GuiCommon
         PluginWidgets.qml
         QML_FILES Oscilloscope.qml
         QML_FILES OscilloscopePolar.qml
+        QML_FILES DBFileDialogs.qml
+        QML_FILES OscilloscopeShader.qml
 )
