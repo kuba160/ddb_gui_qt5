@@ -1,5 +1,5 @@
 #!/bin/sh
-QT5_STATIC_URL="https://github.com/kuba160/qt5_static_build/releases/download/6.5.2/qt_6.5.2_static_linux.zip"
+QT5_STATIC_URL="https://github.com/kuba160/qt5_static_build/releases/download/6.6.2/qt_6.6.2_static_linux.zip"
 QT5_STATIC_LOC=/opt
 # QMAKE=/opt/qt5_static/bin/qmake
 BUILD_PWD=`pwd`

@@ -83,13 +83,13 @@ add_subdirectory(qml/DDB2)
 # add_subdirectory(qml/Material)
 
 
-target_link_libraries(ddb_gui_qt5 dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Gui Qt::Quick Qt::Concurrent)
+target_link_libraries(ddb_gui_qt5 PRIVATE dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Gui Qt::Quick Qt::Concurrent)
 if (USE_WIDGETS)
-    target_link_libraries(ddb_gui_qt5 dbapi Qt6::Widgets Qt6::QuickWidgets)
+    target_link_libraries(ddb_gui_qt5 PRIVATE dbapi Qt6::Widgets Qt6::QuickWidgets)
 endif()
 
 if (USE_CHARTS)
-    target_link_libraries(ddb_gui_qt5 dbapi Qt6::Charts)
+    target_link_libraries(ddb_gui_qt5 PRIVATE dbapi Qt6::Charts)
 endif()
 
 target_include_directories(ddb_gui_qt5 PRIVATE ".")
@@ -98,5 +98,12 @@ target_compile_definitions(ddb_gui_qt5 PRIVATE USE_WIDGETS=${USE_WIDGETS} QT_USE
 target_compile_definitions(ddb_gui_qt5 PRIVATE USE_CACHE=${USE_COVERART_CACHE})
 
 target_compile_options(ddb_gui_qt5 PRIVATE "-gdwarf-4")
+
+# fix for static qt
+get_target_property(QT_TARGET_TYPE Qt6::Core TYPE)
+if(${QT_TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
+    find_package(Qt6QmlImportScanner REQUIRED)
+    qt6_import_qml_plugins(ddb_gui_qt5)
+endif()
 
 install(TARGETS ddb_gui_qt5 DESTINATION "~/.local/lib/deadbeef")
