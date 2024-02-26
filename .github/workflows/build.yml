@@ -10,12 +10,11 @@ jobs:
     steps:
     - name: Install dependencies for Linux
       run: |
-        sed -i '/deb-src/s/^#//g' /etc/apt/sources.list
         apt-get -qq update
-        apt-get build-dep -y -qq qt6-base-dev
         apt-get install -y -qq libxcb-xinerama0-dev git g++ wget zip perl cmake
         apt-get install -y -qq '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev \
           libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+        apt-get install -y -qq zlib1g-dev libharfbuzz-dev libfreetype-dev libegl-dev libfontconfig1-dev libudev-dev libmtdev-dev libinput-dev libdbus-1-dev
     - name: Checkout for Linux
       uses: actions/checkout@v1
     - name: Fix library links
