@@ -77,7 +77,8 @@ set(SOURCES
     WidgetLibraryModel.cpp
     QtGui.cpp)
 qt_add_resources(SOURCES Images.qrc)
-add_library(ddb_gui_qt5 SHARED ${SOURCES})
+add_library(ddb_gui_qt5 SHARED ${SOURCES}
+    widgets/PluginConfParser.h widgets/PluginConfParser.cpp)
 
 
 # fix for Qt Creator to find qml files

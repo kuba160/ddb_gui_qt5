@@ -68,9 +68,9 @@ PluginLoader::PluginLoader(QObject *parent) : QObject(parent) {
        default_qml_list.append(QString("qrc:/qt/qml/DeaDBeeF/Q/GuiCommon/").append(str));
 #endif
     }
-    insertPlugins(default_qml_list);
 
-    m_plugins = new WidgetLibraryModel(this, &pluginLibrary);
+    m_plugins = new WidgetLibraryModel(this);
+    insertPlugins(default_qml_list);
     // External widgets will be appended to widgetLibrary in pluginConnect
 }
 
@@ -84,9 +84,10 @@ void PluginLoader::insertPlugins(QStringList list) {
             PluginQmlWrapper *plugin = new PluginQmlWrapper(this, path);
             QString internalName = plugin->property("internalName").toString();
             if (!internalName.isEmpty()) {
-                pluginLibrary.insert(internalName, plugin);
+                m_plugins->insert(plugin);
             }
             else {
+                qDebug() << "Loading of" << path << "failed!";
                 delete plugin;
             }
         }
@@ -99,10 +100,6 @@ PluginLoader::~PluginLoader() {
     delete m_plugins;
     m_plugins = nullptr;
 
-    for(QObject *wrapper : std::as_const(pluginLibrary)) {
-        delete wrapper;
-    }
-    pluginLibrary.clear();
 }
 
 QUrl PluginLoader::getConstructorUrl(QString &internalName, QString style) {
@@ -114,24 +111,10 @@ QUrl PluginLoader::getConstructorUrl(QString &internalName, QString style) {
 }
 
 QObject * PluginLoader::getWrapper(QString &internalName, QString style, QString type) {
-    auto [i, end] = pluginLibrary.equal_range(internalName);
-    while (i != end) {
-        if (!style.isEmpty()) {
-            QString widgetStyle = i.value()->property("widgetStyle").toString();
-            if (widgetStyle != style) {
-                i++;
-                continue;
-            }
-        }
-        if (!type.isEmpty()) {
-            QString widgetType = i.value()->property("widgetType").toString();
-            if (widgetType != type) {
-                i++;
-                continue;
-            }
-        }
-        return i.value();
-     }
+    QList<QObject *> l = m_plugins->getWidgets(internalName, style, type);
+    if (l.count() == 1) {
+        return l[0];
+    }
     return nullptr;
 }
 

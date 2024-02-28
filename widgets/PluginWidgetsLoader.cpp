@@ -27,7 +27,7 @@ void PluginWidgetsLoader::insertWidgetPlugins(QList<WidgetPluginConstructor> lis
         PluginWidgetsWrapper *w = new PluginWidgetsWrapper(this, c);
         QString name = w->property("internalName").toString();
         if (!name.isEmpty()) {
-            pluginLibrary.insert(name, w);
+            m_plugins->insert(w);
         }
     }
 }

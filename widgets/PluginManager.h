@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMainWindow>
 #include "PluginWidgetsLoader.h"
+#include "PluginConfParser.h"
 
 class DBWidget {
 public:
@@ -27,19 +28,19 @@ public:
     explicit PluginManager(QObject *parent, DBApi *Api = nullptr);
     ~PluginManager();
     PluginWidgetsLoader loader;
+    PluginConfParser parser;
 
 
 
     QWidget *loadNewInstance(QMainWindow *parent, QString name, QString style = QString());
+    void removeInstance(QString name, int instance);
 
     void restoreWidgets(QMainWindow *window, QString name);
 
 protected:
     QWidget *loadNewInstance(QMainWindow *parent, PluginWidgetsWrapper *info);
 
-
     QMultiHash<QString, DBWidget *> widgets;
-
 signals:
 
 };

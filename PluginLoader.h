@@ -5,7 +5,8 @@
 #include <QUrl>
 #include <QAbstractItemModel>
 
-class WidgetLibraryModel;
+#include "WidgetLibraryModel.h"
+
 
 class PluginQmlWrapper : public QObject {
     Q_OBJECT
@@ -23,7 +24,6 @@ protected:
 
 class PluginLoader : public QObject {
     Q_OBJECT
-    WidgetLibraryModel *m_plugins;
 public:
     PluginLoader (QObject *parent);
     ~PluginLoader();
@@ -37,13 +37,14 @@ public:
     QUrl getConstructorUrl(QString &internalName, QString style = QString());
     QObject *getWrapper(QString &internalName, QString style = QString(), QString type = QString());
 protected:
+    WidgetLibraryModel *m_plugins;
     //// widgetLibrary
     ///
     //
 
     // list of widgets that can be added
     //QList<PluginWrapper *> widgetLibrary;
-    QMultiMap<QString, QObject *> pluginLibrary;
+    //QList<QObject *> pluginLibrary;
 };
 
 //}

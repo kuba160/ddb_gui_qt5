@@ -4,7 +4,27 @@
 #include <QFileDialog>
 #include <QProgressDialog>
 #include <QInputDialog>
+#include <QTextEdit>
 #include <QMessageBox>
+#include <QVBoxLayout>
+#include <QFontDatabase>
+
+void showDialog(QWidget *parent, DBApi *Api, QString text, QString title) {
+    QDialog *dialog = new QDialog(parent);
+    QVBoxLayout *layout = new QVBoxLayout(dialog);
+
+    QTextEdit *textEdit = new QTextEdit(dialog);
+    textEdit->setReadOnly(true);
+    textEdit->setWordWrapMode(QTextOption::WordWrap);
+    textEdit->setText(text);
+    textEdit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+
+    layout->addWidget(textEdit);
+    dialog->setLayout(layout);
+    dialog->setWindowTitle(title);
+    dialog->resize(QSize(600,400));
+    dialog->show();
+}
 
 ActionHandlers::ActionHandlers(QWidget *parent, DBApi *Api) : QObject(parent) {
     api = Api;
@@ -134,11 +154,41 @@ ActionHandlers::ActionHandlers(QWidget *parent, DBApi *Api) : QObject(parent) {
             parent->close();
         });
     }
+
     if ((action = Api->actions.getAction("q_about_qt"))) {
         connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
             QMessageBox::aboutQt(parent);
         });
     }
 
+    if ((action = Api->actions.getAction("q_changelog"))) {
+        connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
+            showDialog(parent,Api, Api->conf.getAboutChangelog(), tr("Changelog"));
+        });
+    }
+
+    if ((action = Api->actions.getAction("q_gplv2"))) {
+        connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
+            showDialog(parent,Api, Api->conf.getAboutGPLV2(), tr("GPLv2"));
+        });
+    }
+
+    if ((action = Api->actions.getAction("q_lgplv21"))) {
+        connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
+            showDialog(parent,Api, Api->conf.getAboutLGPLV21(), tr("LGPLv2.1"));
+        });
+    }
+
+    if ((action = Api->actions.getAction("q_translators"))) {
+        connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
+            showDialog(parent,Api, Api->conf.getAboutTranslators(), tr("Translators"));
+        });
+    }
+
+    if ((action = Api->actions.getAction("q_about"))) {
+        connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
+            showDialog(parent,Api, Api->conf.getAboutText(), tr("About DeaDBeeF"));
+        });
+    }
 
 }

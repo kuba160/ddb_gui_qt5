@@ -208,7 +208,8 @@ QWidget* DBWidget::createQmlWrapper(QWidget *DB_parent, DBApi *api, PluginQmlWra
 
 PluginManager::PluginManager(QObject *parent, DBApi *Api)
     : QObject{parent},
-      loader(this)
+      loader(this),
+      parser(this,Api)
 {
     api = Api;
 }
@@ -221,7 +222,7 @@ PluginManager::~PluginManager() {
 
 QWidget * PluginManager::loadNewInstance(QMainWindow *window, PluginWidgetsWrapper *info) {
     QString internalName = info->property("internalName").toString();
-    int instance = widgets.count(internalName);
+    int instance = parser.getAvailableInstance(internalName);
     DBWidget *widget = new DBWidget(window, api, *info, instance);
     widgets.insert(internalName, widget);
     QString widgetType = info->property("widgetType").toString();
@@ -234,18 +235,54 @@ QWidget * PluginManager::loadNewInstance(QMainWindow *window, PluginWidgetsWrapp
     else if (widgetType == "statusbar") {
         window->setStatusBar(qobject_cast<QStatusBar *>(widget->widget));
     }
+
+    parser.insertPlugin(internalName, instance, info->property("widgetStyle").toString());
     return widget->DB_parent;
 }
 
 QWidget * PluginManager::loadNewInstance(QMainWindow *window, QString name, QString style) {
     QObject * obj = loader.getWrapper(name,style);
     if (!obj) {
-        qDebug() << "ERROR getting wrapper";
+        qDebug() << "ERROR getting wrapper for " << name << ", style:" << style;
         return nullptr;
     }
     return loadNewInstance(window,(PluginWidgetsWrapper*)obj);
 }
 
 void PluginManager::restoreWidgets(QMainWindow *window, QString name) {
+    QList<PluginConfData> conf = parser.getConfiguration();
 
+    for (PluginConfData d : conf) {
+        QObject * obj = loader.getWrapper(d.internalName,d.style);
+        if (!obj) {
+            qDebug() << "ERROR getting wrapper for " << d.internalName << ", style:" << d.style;
+            return;
+        }
+        PluginWidgetsWrapper *wrap = (PluginWidgetsWrapper*)obj;
+        DBWidget *widget = new DBWidget(window, api, *wrap, d.instance);
+        widgets.insert(d.internalName, widget);
+        QString widgetType = wrap->property("widgetType").toString();
+        if (widgetType == "toolbar") {
+            window->addToolBar(qobject_cast<QToolBar *>(widget->DB_parent));
+        }
+        else if (widgetType == "main") {
+            window->addDockWidget(Qt::RightDockWidgetArea, qobject_cast<QDockWidget *>(widget->DB_parent));
+        }
+        else if (widgetType == "statusbar") {
+            window->setStatusBar(qobject_cast<QStatusBar *>(widget->widget));
+        }
+        //return;// widget->DB_parent;
+    }
+}
+
+void PluginManager::removeInstance(QString name, int instance) {
+    parser.deletePlugin(name, instance);
+    QList<DBWidget*> l = widgets.values(name);
+    for (DBWidget *w : l) {
+        if (w->instance == instance) {
+            widgets.remove(name, w);
+            delete w->DB_parent;
+            delete w;
+        }
+    }
 }

@@ -33,7 +33,6 @@ QList<WidgetPluginConstructor> default_plugin_list =
             PlaybackButtons::constructor,
             SeekSlider::constructor,
             VolumeSlider::constructor,
-            SeekSlider::constructor,
             Playlist::constructor,
             ActionsTree::constructor,
             TabBar::constructor,

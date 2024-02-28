@@ -17,31 +17,32 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api)
     api = Api;
 
     bool rebuild_layout = DBAPI->conf.get("General", "RebuildLayout", true).toBool();
-    if (rebuild_layout) {
-        plugins.loadNewInstance(this, "playbackButtons", "Qt Widgets");
-        plugins.loadNewInstance(this, "seekSlider", "Qt Widgets");
-        plugins.loadNewInstance(this, "volumeSlider", "Qt Widgets");
-        addToolBarBreak();
-        plugins.loadNewInstance(this, "playbackButtons", "Qt Quick");
-        plugins.loadNewInstance(this, "seekSlider", "Qt Quick");
-        plugins.loadNewInstance(this, "volumeSlider", "Qt Quick");
-        addToolBarBreak();
-        plugins.loadNewInstance(this, "tabBar", "Qt Quick");
-        addToolBarBreak();
-        plugins.loadNewInstance(this, "tabBar", "Qt Widgets");
-        //plugins.loadNewInstance(this, "playlist", "Qt Quick");
-        plugins.loadNewInstance(this, "coverArt", "Qt Quick");
-        plugins.loadNewInstance(this, "scope", "Qt Quick");
-        plugins.loadNewInstance(this, "scopePolar", "Qt Quick");
-        plugins.loadNewInstance(this, "equalizer", "Qt Quick");
-        plugins.loadNewInstance(this, "statusBar", "Qt Widgets");
-        plugins.loadNewInstance(this, "playlist", "Qt Widgets");
-        plugins.loadNewInstance(this, "actionsTree", "Qt Widgets");
-        plugins.loadNewInstance(this, "queueManager", "Qt Widgets");
-        plugins.loadNewInstance(this, "medialib", "Qt Widgets");
+    // if (rebuild_layout) {
+    //     plugins.loadNewInstance(this, "playbackButtons", "Qt Widgets");
+    //     plugins.loadNewInstance(this, "seekSlider", "Qt Widgets");
+    //     plugins.loadNewInstance(this, "volumeSlider", "Qt Widgets");
+    //     addToolBarBreak();
+    //     plugins.loadNewInstance(this, "playbackButtons", "Qt Quick");
+    //     plugins.loadNewInstance(this, "seekSlider", "Qt Quick");
+    //     plugins.loadNewInstance(this, "volumeSlider", "Qt Quick");
+    //     addToolBarBreak();
+    //     plugins.loadNewInstance(this, "tabBar", "Qt Quick");
+    //     addToolBarBreak();
+    //     plugins.loadNewInstance(this, "tabBar", "Qt Widgets");
+    //     //plugins.loadNewInstance(this, "playlist", "Qt Quick");
+    //     plugins.loadNewInstance(this, "coverArt", "Qt Quick");
+    //     plugins.loadNewInstance(this, "scope", "Qt Quick");
+    //     plugins.loadNewInstance(this, "scopePolar", "Qt Quick");
+    //     plugins.loadNewInstance(this, "equalizer", "Qt Quick");
+    //     plugins.loadNewInstance(this, "statusBar", "Qt Widgets");
+    //     plugins.loadNewInstance(this, "playlist", "Qt Widgets");
+    //     plugins.loadNewInstance(this, "actionsTree", "Qt Widgets");
+    //     plugins.loadNewInstance(this, "queueManager", "Qt Widgets");
+    //     plugins.loadNewInstance(this, "medialib", "Qt Widgets");
 
-        //Api->conf.set("General", "RebuildLayout", true);
-    }
+    //     //Api->conf.set("General", "RebuildLayout", true);
+    // }
+    plugins.restoreWidgets(this, "DDBW");
 
     setCentralWidget(new QWidget());
     centralWidget()->setVisible(false);
@@ -90,13 +91,49 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 QMenu* MainWindow::createPopupMenu() {
     QMenu* menu = QMainWindow::createPopupMenu();
+
+
+    QMenu *remove = new QMenu("Remove...", menu);
+    QList<PluginConfData> l = plugins.parser.getConfiguration();
+    for (PluginConfData d : l) {
+        int total_instances = plugins.parser.getTotalInstances(d.internalName);
+        QObject *wrapper = plugins.loader.getWrapper(d.internalName, d.style);
+        QString friendlyName = wrapper->property("friendlyName").toString();
+        QString title = QString("%1 (%2)").arg(friendlyName, d.style);
+        if (d.instance != 0) {
+            title = title.append(QString(" (%1)").arg(d.instance));
+        }
+        QAction *a = remove->addAction(title);
+        connect(a, &QAction::triggered, this, [=]() {
+            plugins.removeInstance(d.internalName, d.instance);
+        });
+    }
+    menu->insertMenu(menu->actions()[0], remove);
+
     QMenu *add = new QMenu("Add...", menu);
     QAbstractItemModel *model = plugins.loader.pluginLibraryModel();
     for (int i = 0; i < model->rowCount(); i++) {
         QVariant name = model->data(model->index(i, 0));
-        add->addAction(name.toString());
+        QStringList styles = model->data(model->index(i, 0),WidgetLibraryModel::WidgetStyles).toStringList();
+        if (styles.count() > 1) {
+            QMenu *style_menu = new QMenu(name.toString(),add);
+            for (QString &style : styles) {
+                QAction *a = style_menu->addAction(style);
+                connect(a, &QAction::triggered, this, [=]() {
+                    plugins.loadNewInstance(this, model->index(i,0).data(WidgetLibraryModel::WidgetInternalName).toString(), style);
+                });
+            }
+            add->addMenu(style_menu);
+        }
+        else {
+            QAction * a = add->addAction(name.toString());
+            connect(a, &QAction::triggered, this, [=]() {
+                plugins.loadNewInstance(this, model->index(i,0).data(WidgetLibraryModel::WidgetInternalName).toString(), styles[0]);
+            });
+        }
     }
+    menu->insertMenu(menu->actions()[0], add);
+    //menu->addMenu(add);
 
-    menu->addMenu(add);
     return menu;
 }
