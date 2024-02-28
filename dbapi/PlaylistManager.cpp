@@ -146,6 +146,20 @@ PlayItemTableProxyModel* PlaylistManager::createTableProxy(QObject *parent) {
     return new PlayItemTableProxyModel(parent);
 }
 
+MediasourceModel* PlaylistManager::createMediasource(QObject *parent, QString plug_id, QString conf_name) {
+    DB_plugin_t *plug = DBAPI->plug_get_for_id(plug_id.toUtf8().constData());
+    if (!plug) {
+        qDebug() << "Failed to create mediasource for plugin" << plug_id;
+        return nullptr;
+    }
+    if (plug->type != DB_PLUGIN_MEDIASOURCE) {
+        qDebug() << "Failed to create mediasource for plugin" << plug_id << ", plugin not a mediasource type!";
+        return nullptr;
+    }
+    return new MediasourceModel(parent, static_cast<DB_mediasource_t*>((void *) plug), conf_name);
+}
+
+
 void PlaylistManager::queueAppend(QVariant mime) {
     if (mime.value<QMimeData *>()) {
         m_queue->dropMimeData(mime.value<QMimeData *>(), Qt::CopyAction, -2, 0, QModelIndex());

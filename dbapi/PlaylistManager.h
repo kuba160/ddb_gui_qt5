@@ -64,6 +64,7 @@ public:
 
     // standalone functions
     PlayItemTableProxyModel* createTableProxy(QObject *parent);
+    MediasourceModel* createMediasource(QObject *parent, QString plug_id, QString conf_name);
 
 
     // track insertion
