@@ -63,6 +63,7 @@ if (USE_WIDGETS)
         widgets/PlaylistView.cpp
         widgets/plugins/Playlist.h widgets/plugins/Playlist.cpp
         widgets/plugins/ActionsTree.h widgets/plugins/ActionsTree.cpp
+        widgets/plugins/Medialib.cpp widgets/plugins/Medialib.h
         widgets/plugins/QueueManager.cpp widgets/plugins/QueueManager.h
         widgets/DBActionMenu.h widgets/DBActionMenu.cpp
         widgets/ActionHandlers.cpp widgets/ActionHandlers.h

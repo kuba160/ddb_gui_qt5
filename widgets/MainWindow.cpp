@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api)
         plugins.loadNewInstance(this, "playlist", "Qt Widgets");
         plugins.loadNewInstance(this, "actionsTree", "Qt Widgets");
         plugins.loadNewInstance(this, "queueManager", "Qt Widgets");
+        plugins.loadNewInstance(this, "medialib", "Qt Widgets");
 
         //Api->conf.set("General", "RebuildLayout", true);
     }
