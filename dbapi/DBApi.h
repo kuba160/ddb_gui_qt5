@@ -106,9 +106,9 @@ typedef struct DB_qtgui_s {
 // Pointer to deadbeef functions
 //#define DBAPI (this->api->deadbeef)
 // Macro to read entry X with default value Y to config (instance specific, returns QVariant)
-#define CONFGET(X, Y) (this->api->confGetValue(_internalNameWidget, X,Y))
+#define CONFGET(X, Y) (this->api->conf.get(this->property("internalName").toString(), X,Y))
 // Macro to save entry X with value Y to config (instance specific, returns void)
-#define CONFSET(X, Y) (this->api->confSetValue(_internalNameWidget, X,Y))
+#define CONFSET(X, Y) (this->api->conf.set(this->property("internalName").toString(), X,Y))
 
 
 //class TrackRefc {
