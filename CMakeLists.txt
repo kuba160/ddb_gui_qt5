@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.16)
 set(CMAKE_FIND_STATIC FIRST)
 
 
@@ -114,4 +114,6 @@ if(${QT_TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
     qt6_import_qml_plugins(ddb_gui_qt5)
 endif()
 
-install(TARGETS ddb_gui_qt5 DESTINATION "~/.local/lib/deadbeef")
+# WORKAROUND: with qt 6.7: install for some reason links to local qt...
+# install(TARGETS ddb_gui_qt5 DESTINATION "~/.local/lib/deadbeef")
+install(FILES ${CMAKE_BINARY_DIR}/ddb_gui_qt5.so DESTINATION "~/.local/lib/deadbeef")

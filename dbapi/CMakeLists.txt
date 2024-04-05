@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.16)
 
 project(dbapi LANGUAGES C CXX)
 
@@ -94,7 +94,7 @@ qt6_add_qml_module(dbapi
         ${SOURCES_SCOPESHADER}
 )
 
-target_link_libraries(dbapi PRIVATE Qt::Core Qt::Concurrent)
+target_link_libraries(dbapi PRIVATE Qt::Core Qt::Concurrent Qt::Quick)
 
 if (USE_CHARTS)
     target_link_libraries(dbapi PRIVATE Qt6::Charts)

@@ -1,10 +1,10 @@
-qt6_add_library(DDB2 STATIC)
 
 set_source_files_properties(DDB2Globals.qml PROPERTIES
     QT_QML_SINGLETON_TYPE TRUE
 )
 
 qt_add_qml_module(DDB2
+    STATIC
     URI DeaDBeeF.Q.DDB2
     VERSION 1.0
     RESOURCE_PREFIX
