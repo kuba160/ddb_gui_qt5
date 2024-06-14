@@ -46,7 +46,7 @@ DBWidget::DBWidget(QWidget *parent, DBApi *Api, PluginWidgetsWrapper &info, int 
     else if (type == "main")
         DB_parent = new QDockWidget(friendlyName, parent);
     else if (type == "statusbar")
-        DB_parent = nullptr;
+        DB_parent = parent;
     else {
         DB_parent = nullptr;
         qDebug() << "DBWidget" << friendlyName << ": couldn't choose appropiate parent for type=" << type;

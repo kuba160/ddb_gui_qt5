@@ -65,6 +65,7 @@ void StatusBar::update() {
     DB_playItem_t* curr_track = DBAPI->deadbeef->streamer_get_playing_track ();
     ddb_playlist_t *plt_curr = DBAPI->deadbeef->plt_get_curr ();
     ddb_tf_context_t context;
+    memset(&context, 0, sizeof(ddb_tf_context_t));
     context._size = sizeof(ddb_tf_context_t);
     context.flags = 0;
     context.it = curr_track;

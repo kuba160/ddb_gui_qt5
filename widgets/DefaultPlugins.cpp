@@ -27,6 +27,7 @@
 #include "plugins/TabBar.h"
 #include "plugins/QueueManager.h"
 #include "plugins/Medialib.h"
+#include "plugins/StatusBar.h"
 
 QList<WidgetPluginConstructor> default_plugin_list =
         QList<WidgetPluginConstructor>({
@@ -38,6 +39,7 @@ QList<WidgetPluginConstructor> default_plugin_list =
             TabBar::constructor,
             QueueManager::constructor,
             Medialib::constructor,
+            StatusBar::constructor,
         });
 
 /*
