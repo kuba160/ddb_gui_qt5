@@ -77,6 +77,14 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api)
     PlayItemIterator pit = PlayItemIterator();
     QJsonArray a = DBAPI->actions.parsePrototype(DBAction::ACTION_LOC_MENUBAR, pit);
     qDebug() << a;// QJsonDocument(a).toJson(QJsonDocument::Compact);
+
+    api->setProperty("ddbw_pluginmanager", QVariant::fromValue(&plugins));
+
+    bool widgets_locked = api->conf.get("MainWindow", "widgets_locked", false).toBool();
+    plugins.lockWidgets(widgets_locked);
+    DBAction* action = api->actions.getAction("q_design_mode");
+    action->properties_const.insert("checked", widgets_locked);
+    emit action->actionPropertiesChanged();
 }
 
 MainWindow::~MainWindow() {

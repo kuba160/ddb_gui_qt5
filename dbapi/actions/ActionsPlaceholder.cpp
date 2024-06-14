@@ -17,7 +17,7 @@ bool DBActionPlaceholder::apply(PlayItemIterator &context) {
 }
 
 QHash<QString,QVariant> DBActionPlaceholder::contextualize(PlayItemIterator &context) const {
-    QHash<QString,QVariant> ret;
+    QHash<QString,QVariant> ret = properties_const;
 
     static const QMetaMethod actionAppliedSignal = QMetaMethod::fromSignal(&DBAction::actionApplied);
     // assume implementable to true if not specified
@@ -199,7 +199,7 @@ ActionsPlaceholder::ActionsPlaceholder(QObject *parent)
             .id = "q_design_mode",
             .loc = DBAction::ACTION_LOC_HOTKEY | DBAction::ACTION_LOC_MENUBAR,
             .arg = DBAction::ACTION_ARG_NONE,
-            .props = QHash<QString,QVariant>{ {"enabled", QVariant(false)} }
+            .props = QHash<QString,QVariant>{{"checkable", QVariant(true)}, {"implementable", QVariant(true)}}
         },
         ActionSpec {
             .path = QStringList{"Playback", "Scroll follows playback"},

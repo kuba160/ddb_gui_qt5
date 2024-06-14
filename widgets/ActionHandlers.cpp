@@ -1,4 +1,5 @@
 #include "ActionHandlers.h"
+#include "PluginManager.h"
 #include <QDebug>
 #include <QObject>
 #include <QFileDialog>
@@ -188,6 +189,16 @@ ActionHandlers::ActionHandlers(QWidget *parent, DBApi *Api) : QObject(parent) {
     if ((action = Api->actions.getAction("q_about"))) {
         connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
             showDialog(parent,Api, Api->conf.getAboutText(), tr("About DeaDBeeF"));
+        });
+    }
+
+    // design mode
+    if (action = api->actions.getAction("q_design_mode")) {
+        connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
+            PluginManager* pm = Api->property("ddbw_pluginmanager").value<PluginManager*>();
+            bool state_new = !Api->conf.get("MainWindow", "widgets_locked", false).toBool();
+            Api->conf.set("MainWindow", "widgets_locked", state_new);
+            pm->lockWidgets(state_new);
         });
     }
 

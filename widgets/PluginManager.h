@@ -37,6 +37,8 @@ public:
 
     void restoreWidgets(QMainWindow *window, QString name);
 
+    void lockWidgets(bool lock);
+
 protected:
     QWidget *loadNewInstance(QMainWindow *parent, PluginWidgetsWrapper *info);
 

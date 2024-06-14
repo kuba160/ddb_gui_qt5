@@ -57,6 +57,7 @@ DBWidget::DBWidget(QWidget *parent, DBApi *Api, PluginWidgetsWrapper &info, int 
         DB_parent->setProperty("friendlyName", friendlyName);
         DB_parent->setProperty("internalName", internalName);
         DB_parent->setObjectName(internalName + "_DBP");
+        DB_parent->setProperty("widgetType", type);
         //true_parent->setProperty("internalName", internalName);
     }
 
@@ -73,7 +74,6 @@ DBWidget::DBWidget(QWidget *parent, DBApi *Api, PluginWidgetsWrapper &info, int 
 
     if (type == "toolbar") {
        qobject_cast<QToolBar *>(DB_parent)->addWidget(widget);
-       //qobject_cast<QToolBar *>(DB_parent)->setMovable(!locked);
     }
     else if (type == "main") {
        qobject_cast<QDockWidget *>(DB_parent)->setWidget(widget);
@@ -283,6 +283,23 @@ void PluginManager::removeInstance(QString name, int instance) {
             widgets.remove(name, w);
             delete w->DB_parent;
             delete w;
+        }
+    }
+}
+
+void PluginManager::lockWidgets(bool lock) {
+    for (DBWidget* w : widgets.values()) {
+        QString type = w->DB_parent->property("widgetType").toString();
+        if (type == "toolbar") {
+            static_cast<QToolBar*>(w->DB_parent)->setMovable(lock);
+        }
+        else if (type == "main") {
+            if (lock) {
+                static_cast<QDockWidget*>(w->DB_parent)->setTitleBarWidget(nullptr);
+            }
+            else {
+                static_cast<QDockWidget*>(w->DB_parent)->setTitleBarWidget(w->empty_titlebar_toolbar);
+            }
         }
     }
 }
