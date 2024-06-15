@@ -101,14 +101,6 @@ QStringList Actions::getActions() {
     return actions;
 }
 
-QString Actions::getActionTitle(QString action_id) {
-    DBAction *action = getAction(action_id);
-    if (action) {
-        return action->title;
-    }
-    return QString();
-}
-
 QHash<QString, QVariant> Actions::getActionContext(QString action_id, PlayItemIterator &context) {
     DBAction *action = getAction(action_id);
     if (action) {

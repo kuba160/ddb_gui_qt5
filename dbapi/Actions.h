@@ -85,7 +85,6 @@ public slots:
 
     DBAction* getAction(QString action_id);
     QStringList getActions();
-    QString getActionTitle(QString action_id);
     QHash<QString, QVariant> getActionContext(QString id, PlayItemIterator &context);
     bool execAction(QString action, PlayItemIterator context = PlayItemIterator(false));
 
