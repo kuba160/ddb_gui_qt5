@@ -45,6 +45,11 @@ QString DBActionImported::iconOnAction(const QString action) {
                                                {"skip_to_next_artist", "view-media-artist"},
                                                {"skip_to_next_album", "view-media-album-cover"},
                                                {"cd_add", "gtk-cdrom"},
+                                               {"play", "media-playback-start"},
+                                               {"stop", "media-playback-stop"},
+                                               {"prev", "media-skip-backward"},
+                                               {"next", "media-skip-forward"},
+                                               {"playback_random", "media-playlist-shuffle"},
                                                };
     if (icon_map.contains(action)) {
         return icon_map.value(action);
