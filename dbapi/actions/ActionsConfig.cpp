@@ -243,6 +243,16 @@ ActionsConfig::ActionsConfig(QObject *parent, DBApi *Api)
         m_actions.append(action);
     }
 
+    ActionSpec quick = {
+        .path = QStringList{"View", "Qt Quick Window (requires restart)"},
+        .id = "q_qtquick_window",
+        .loc = DBAction::ACTION_LOC_HOTKEY | DBAction::ACTION_LOC_MENUBAR,
+        .arg = DBAction::ACTION_ARG_NONE,
+        .props = QHash<QString,QVariant>{{"config_default", QVariant(false)}, {"config", QVariant(QString("qgui.show_qtquick_window"))}}
+    };
+    DBActionConfigBool *quick_action = new DBActionConfigBool(this, Api, quick);
+    m_actions.append(quick_action);
+
 }
 
 ActionsConfig::~ActionsConfig() {

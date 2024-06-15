@@ -191,7 +191,9 @@ static int pluginStart() {
     plugin.plugin.message = pluginMessage_wrapper;
 
     startWidgets();
-    startQuick();
+
+    if (!USE_WIDGETS || DBAPI->conf_get_int("qgui.show_qtquick_window", false))
+        startQuick();
 
     // GUI thread loop
     app->exec();
