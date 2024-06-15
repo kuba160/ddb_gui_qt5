@@ -109,7 +109,8 @@ void ActionsModel::rebuildActionTree() {
     // first round of adding from prototype
     for (QString &action_id : order) {
         DBAction *action = actions->getAction(action_id);
-        if (action && action->locations & location_filter) {
+        DBAction::ActionLocations location_filter_custom = location_filter == DBAction::ACTION_LOC_CUSTOM ? DBAction::ACTION_LOC_ALL : (DBAction::ActionLocations)location_filter;
+        if (action && action->locations & location_filter_custom) {
             QStringList order_path;
             if (order_extract.contains(action_id)) {
                 tree->insertChild(action->title, action->action_id);

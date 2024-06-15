@@ -38,12 +38,15 @@ public:
     };
     Q_ENUM(ActionAccepts);
     enum ActionLocations {
+        ACTION_LOC_CUSTOM = 0, // only add actions from prototype
         ACTION_LOC_HOTKEY = 1 << 0,
         ACTION_LOC_TRACK_CONTEXT = 1 << 1, // item(s) context
         ACTION_LOC_PLAYLIST_CONTEXT = 1 << 2,
         ACTION_LOC_MENUBAR = 1 << 3,
+        ACTION_LOC_TRAY = 1 << 4,
         ACTION_LOC_ALL = (ACTION_LOC_HOTKEY | ACTION_LOC_TRACK_CONTEXT |
-                          ACTION_LOC_PLAYLIST_CONTEXT | ACTION_LOC_MENUBAR)
+                          ACTION_LOC_PLAYLIST_CONTEXT | ACTION_LOC_MENUBAR |
+                          ACTION_LOC_TRAY)
 
     };
     Q_ENUM(ActionLocations);
@@ -104,8 +107,8 @@ signals:
 protected:
 
 
-    const int filter_flags[4] = { DBAction::ACTION_LOC_HOTKEY, DBAction::ACTION_LOC_TRACK_CONTEXT,
-                                      DBAction::ACTION_LOC_PLAYLIST_CONTEXT, DBAction::ACTION_LOC_MENUBAR };
+    const int filter_flags[5] = { DBAction::ACTION_LOC_HOTKEY, DBAction::ACTION_LOC_TRACK_CONTEXT,
+                                 DBAction::ACTION_LOC_PLAYLIST_CONTEXT, DBAction::ACTION_LOC_MENUBAR, DBAction::ACTION_LOC_TRAY };
 
     void rebuildMenu(DBAction::ActionLocations);
 
@@ -125,6 +128,8 @@ protected:
                 return 2;
             case DBAction::ACTION_LOC_MENUBAR:
                 return 3;
+            case DBAction::ACTION_LOC_TRAY:
+                return 4;
             default:
                 return 0;
         }

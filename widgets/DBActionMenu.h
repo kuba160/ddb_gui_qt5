@@ -37,5 +37,6 @@
 
 QMenuBar* buildMenuBar(QWidget *parent, DBApi *Api);
 QMenu* buildTrackContextMenu(QWidget *parent, DBApi *Api, PlayItemIterator pit);
+QMenu* buildTrayContextMenu(QWidget *parent, DBApi *Api);
 
 #endif // DBACTIONMENU_H

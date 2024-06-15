@@ -67,6 +67,8 @@ if (USE_WIDGETS)
         widgets/plugins/QueueManager.cpp widgets/plugins/QueueManager.h
         widgets/DBActionMenu.h widgets/DBActionMenu.cpp
         widgets/ActionHandlers.cpp widgets/ActionHandlers.h
+        widgets/PluginConfParser.h widgets/PluginConfParser.cpp
+        widgets/TrayIcon.h widgets/TrayIcon.cpp
 )
 endif()
 
@@ -77,8 +79,8 @@ set(SOURCES
     WidgetLibraryModel.cpp
     QtGui.cpp)
 qt_add_resources(SOURCES Images.qrc)
-add_library(ddb_gui_qt5 SHARED ${SOURCES}
-    widgets/PluginConfParser.h widgets/PluginConfParser.cpp)
+add_library(ddb_gui_qt5 SHARED ${SOURCES})
+
 
 
 # fix for Qt Creator to find qml files

@@ -6,6 +6,7 @@
 
 #include "PluginManager.h"
 #include "ActionHandlers.h"
+#include "TrayIcon.h"
 
 class MainWindow : public QMainWindow
 {
@@ -22,6 +23,7 @@ public:
 protected:
     PluginManager plugins;
     ActionHandlers action_handlers;
+    TrayIcon *tray;
 signals:
 
 };

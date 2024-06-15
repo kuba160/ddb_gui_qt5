@@ -12,9 +12,9 @@ Actions::Actions(QObject *parent)
     //default_actions = new ActionsDefault(this, Api);
 
     QList<DBAction::ActionLocations> filter_flags = { DBAction::ACTION_LOC_HOTKEY, DBAction::ACTION_LOC_TRACK_CONTEXT,
-                                DBAction::ACTION_LOC_PLAYLIST_CONTEXT, DBAction::ACTION_LOC_MENUBAR };
+                                                     DBAction::ACTION_LOC_PLAYLIST_CONTEXT, DBAction::ACTION_LOC_MENUBAR, DBAction::ACTION_LOC_TRAY };
 
-    for (int i = 0 ; i < 4; i++) {
+    for (int i = 0 ; i < 5; i++) {
         //m_prototypes.insert(i, new ActionsModel(this, i, getDefaultConfig(filter_flags[i])));
         registerPrototype(static_cast<uint32_t>(filter_flags[i]), DBAction::ACTION_ARG_ALL, getDefaultConfig(filter_flags[i]));
         //m_prototypes.insert(i, new ActionsModel(this, i));
@@ -33,6 +33,9 @@ void Actions::registerActionOwner(ActionOwner *owner) {
 // unregister action owner
 
 uint32_t Actions::registerPrototype(uint32_t location_filter, uint32_t accepts_filter, QString config) {
+    if (location_filter == DBAction::ACTION_LOC_TRAY) {
+        location_filter = DBAction::ACTION_LOC_CUSTOM;
+    }
     m_prototypes.insert(prototype_counter, new ActionsModel(this, location_filter, config));
     return prototype_counter++;
 }
@@ -137,6 +140,11 @@ QString Actions::getDefaultConfig(DBAction::ActionLocations location) {
         break;
         case DBAction::ACTION_LOC_TRACK_CONTEXT:
             return "[{\"action\":\"add_to_front_of_playback_queue\",\"properties\":{\"extract\":true}},{\"action\":\"add_to_playback_queue\",\"properties\":{\"extract\":true}},{\"action\":\"remove_from_playback_queue\",\"properties\":{\"extract\":true,\"separator_after\":true}},{\"action\":\"q_cut\"},{\"action\":\"q_copy\"},{\"action\":\"q_paste\",\"properties\":{\"separator_after\":true}},{\"action\":\"q_track_properties\",\"properties\":{\"last\":true}}]";
+            break;
+        case DBAction::ACTION_LOC_TRAY:
+            return "[{\"action\":\"stop\",\"properties\":{\"extract\":true}},{\"action\":\"play\",\"properties\":{\"extract\":true}},{\"action\":\"pause\",\"properties\":{\"extract\":true}},{\"action\":\"prev\",\"properties\":{\"extract\":true}},{\"action\":\"next\",\"properties\":{\"extract\":true}},{\"action\":\"playback_random\",\"properties\":{\"extract\":true}},{\"action\":\"q_about\", \"properties\": {\"extract\": true}},{\"action\":\"q_quit\", \"properties\":{\"separator_before\": true, \"extract\":true}}]";
+            break;
+        default:
             break;
     }
     return {};

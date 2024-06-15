@@ -99,3 +99,11 @@ QMenu* buildTrackContextMenu(QWidget *parent, DBApi *Api, PlayItemIterator pit) 
     buildMenuIter(menu, Api, array, pit);
     return menu;
 }
+
+QMenu* buildTrayContextMenu(QWidget *parent, DBApi *Api) {
+    PlayItemIterator pit = PlayItemIterator();
+    QMenu *menu = new QMenu(parent);
+    QJsonArray array = Api->actions.parsePrototype(4, pit);
+    buildMenuIter(menu, Api, array, pit);
+    return menu;
+}

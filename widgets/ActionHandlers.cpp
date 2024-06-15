@@ -193,7 +193,7 @@ ActionHandlers::ActionHandlers(QWidget *parent, DBApi *Api) : QObject(parent) {
     }
 
     // design mode
-    if (action = api->actions.getAction("q_design_mode")) {
+    if ((action = api->actions.getAction("q_design_mode"))) {
         connect(action, &DBAction::actionApplied, Api,  [parent, Api]() {
             PluginManager* pm = Api->property("ddbw_pluginmanager").value<PluginManager*>();
             bool state_new = !Api->conf.get("MainWindow", "widgets_locked", false).toBool();

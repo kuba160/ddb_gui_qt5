@@ -85,6 +85,8 @@ MainWindow::MainWindow(QWidget *parent, DBApi *Api)
     DBAction* action = api->actions.getAction("q_design_mode");
     action->properties_const.insert("checked", widgets_locked);
     emit action->actionPropertiesChanged();
+
+    tray = new TrayIcon(this, api);
 }
 
 MainWindow::~MainWindow() {
@@ -94,6 +96,7 @@ MainWindow::~MainWindow() {
 void MainWindow::closeEvent(QCloseEvent *event) {
     api->conf.set("MainWindow", "geometry", saveGeometry());
     api->conf.set("MainWindow", "state", saveState());
+    delete tray;
     QMainWindow::closeEvent(event);
 }
 
