@@ -67,7 +67,7 @@ jobs:
         msystem: CLANG64
         update: true
         install: >-
-         mingw-w64-clang-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-static mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja mingw-w64-clang-x86_64-zlib mingw-w64-clang-x86_64-pcre2 mingw-w64-clang-x86_64-libpng mingw-w64-clang-x86_64-freetype
+         mingw-w64-clang-x86_64-toolchain make tar unzip xz zip mingw-w64-clang-x86_64-qt6-static mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-ninja mingw-w64-clang-x86_64-zlib mingw-w64-clang-x86_64-pcre2 mingw-w64-clang-x86_64-libpng mingw-w64-clang-x86_64-freetype mingw-w64-clang-x86_64-libwebp mingw-w64-clang-x86_64-libmng
     - name: Build for Windows
       shell: msys2 {0}
       run: CMAKE_PREFIX_PATH=/clang64/qt6-static/ cmake . -DCMAKE_DISABLE_FIND_PACKAGE_harfbuzz=TRUE ; cmake --build . ; mkdir -p plugins; mv release/*.dll plugins/ ; zip -r ddb_gui_qt5_windows-static.zip plugins/*.dll
