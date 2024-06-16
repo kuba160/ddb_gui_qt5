@@ -117,7 +117,7 @@ jobs:
        export PATH="/usr/local/opt/zip/bin:$PATH"
        export PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
        export PATH="/usr/local/opt/cmake/bin:$PATH"
-       CMAKE_PREFIX_PATH=$PWD/qt5_static/ cmake .
+       CMAKE_PREFIX_PATH=$PWD/qt5_static/ cmake . -DCMAKE_OSX_ARCHITECTURES=x86_64
        cmake --build .
        mkdir -p plugins
        cp ddb_gui_qt5.dylib plugins/
