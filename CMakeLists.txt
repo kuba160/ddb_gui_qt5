@@ -116,6 +116,10 @@ if(${QT_TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
     qt6_import_qml_plugins(ddb_gui_qt5)
 endif()
 
+if(WIN32)
+target_link_options(ddb_gui_qt5 PRIVATE "-Wl,--export-all-symbols")
+endif()
+
 # WORKAROUND: with qt 6.7: install for some reason links to local qt...
 # install(TARGETS ddb_gui_qt5 DESTINATION "~/.local/lib/deadbeef")
 install(FILES ${CMAKE_BINARY_DIR}/ddb_gui_qt5.so DESTINATION "~/.local/lib/deadbeef")
