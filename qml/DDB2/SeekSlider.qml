@@ -46,7 +46,7 @@ DBWidget {
                 property int sec: (len-hour*3600-min*60)
                 property string minus: remaining && !remaining_total ? "-" : ""
 
-                text: hour ? minus + hour.toString().padStart(2,'0') + ":" + min.toString().padStart(2,'0') + ":" + sec.toString().padStart(2,'0') :
+                text: len == -1 ? "∞" : hour ? minus + hour.toString().padStart(2,'0') + ":" + min.toString().padStart(2,'0') + ":" + sec.toString().padStart(2,'0') :
                              minus + min.toString().padStart(2,'0') + ":" + sec.toString().padStart(2,'0')
                 font.pixelSize: 10
 

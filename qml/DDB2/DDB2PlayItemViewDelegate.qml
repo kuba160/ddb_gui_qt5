@@ -284,7 +284,7 @@ ItemDelegate {
 
                     }
                 }
-                property string text_stream: it_delegate.isPlaying ? currentTime + "/∞" + ItemLength : "∞"
+                property string text_stream:"∞"
                 property string text_file: it_delegate.isPlaying ? currentTime + "/" + ItemLength : ItemLength
                 text: ItemCodec === "content" ? text_stream : text_file
                 font.pixelSize: 12
