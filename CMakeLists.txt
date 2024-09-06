@@ -93,7 +93,7 @@ add_subdirectory(qml/DDB2)
 # add_subdirectory(qml/Material)
 
 
-target_link_libraries(ddb_gui_qt5 PRIVATE dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Gui Qt::Quick Qt::Concurrent)
+target_link_libraries(ddb_gui_qt5 PRIVATE dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Gui Qt::Quick Qt::Concurrent Qt::Svg)
 if (USE_WIDGETS)
     target_link_libraries(ddb_gui_qt5 PRIVATE dbapi Qt6::Widgets Qt6::QuickWidgets)
 endif()
