@@ -44,7 +44,7 @@ public:
     Q_PROPERTY(repeat repeat READ getRepeat WRITE setRepeat NOTIFY repeatChanged)
     Q_PROPERTY(playback_state state MEMBER m_state NOTIFY stateChanged)
     Q_PROPERTY(bool stop_after_current READ getStopAfterCurrent WRITE setStopAfterCurrent NOTIFY stopAfterCurrentChanged)
-    Q_PROPERTY(bool stop_after_album MEMBER m_stop_after_album NOTIFY stopAfterAlbumChanged)
+    Q_PROPERTY(bool stop_after_album READ getStopAfterAlbum WRITE setStopAfterAlbum NOTIFY stopAfterAlbumChanged)
     //Q_PROPERTY(DB_playItem_t * currentTrack READ getCurrentTrack NOTIFY currentTrackChanged)
     Q_PROPERTY(quint32 currentTrackIdx READ getCurrentTrackIdx WRITE setCurrentTrackIdx NOTIFY currentTrackChanged) // NOTE: won't be changed when track is moved
 
@@ -102,6 +102,8 @@ public:
 
     bool getStopAfterCurrent();
     void setStopAfterCurrent(bool value);
+    bool getStopAfterAlbum();
+    void setStopAfterAlbum(bool value);
 
 public slots:
     QString tf_current(const QString &format);

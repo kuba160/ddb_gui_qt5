@@ -205,6 +205,19 @@ bool PlaybackControl::getStopAfterCurrent() {
 void PlaybackControl::setStopAfterCurrent(bool value) {
     deadbeef->conf_set_int("playlist.stop_after_current", value);
     deadbeef->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
+    m_stop_after_current = value;
+    emit stopAfterCurrentChanged();
+}
+
+bool PlaybackControl::getStopAfterAlbum() {
+    return m_stop_after_album;
+}
+
+void PlaybackControl::setStopAfterAlbum(bool value) {
+    deadbeef->conf_set_int("playlist.stop_after_album", value);
+    deadbeef->sendmessage (DB_EV_CONFIGCHANGED, 0, 0, 0);
+    m_stop_after_album = value;
+    emit stopAfterAlbumChanged();
 }
 
 QString PlaybackControl::tf_current(const QString &format) {

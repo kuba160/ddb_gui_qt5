@@ -123,3 +123,53 @@ endif()
 # WORKAROUND: with qt 6.7: install for some reason links to local qt...
 # install(TARGETS ddb_gui_qt5 DESTINATION "~/.local/lib/deadbeef")
 install(FILES ${CMAKE_BINARY_DIR}/ddb_gui_qt5.so DESTINATION "~/.local/lib/deadbeef")
+
+
+# TESTS
+
+project(ddb_gui_q_test LANGUAGES CXX)
+
+add_library(ddb_gui_q_test SHARED ${SOURCES} tests/Tests.cpp
+    tests/Tests.h
+    tests/DBApi/All_DBApi.h tests/DBApi/All_DBApi.cpp
+    tests/DBApi/t_PlaybackControl.h tests/DBApi/t_PlaybackControl.cpp
+    tests/DBApi/t_PlaylistManager.h tests/DBApi/t_PlaylistManager.cpp
+    tests/DBApi/t_ItemImporter.cpp
+    tests/DBApi/t_ItemImporter.h
+    tests/DBApi/t_Equalizer.h tests/DBApi/t_Equalizer.cpp)
+
+find_package(Qt6 COMPONENTS REQUIRED Test)
+
+
+
+target_link_libraries(ddb_gui_q_test PRIVATE dbapiplugin DDB2 GuiCommon DDB2plugin GuiCommonplugin Qt6::Core Qt::Gui Qt::Quick Qt::Concurrent Qt::Svg Qt::Test)
+if (USE_WIDGETS)
+    target_link_libraries(ddb_gui_q_test PRIVATE dbapi Qt6::Widgets Qt6::QuickWidgets)
+endif()
+
+if (USE_CHARTS)
+    target_link_libraries(ddb_gui_q_test PRIVATE dbapi Qt6::Charts)
+endif()
+
+target_include_directories(ddb_gui_q_test PRIVATE ".")
+
+target_compile_definitions(ddb_gui_q_test PRIVATE USE_WIDGETS=${USE_WIDGETS} QT_USE_STRINGBUILDER)
+target_compile_definitions(ddb_gui_q_test PRIVATE USE_CACHE=${USE_COVERART_CACHE})
+
+target_compile_options(ddb_gui_q_test PRIVATE "-gdwarf-4")
+
+# fix for static qt
+get_target_property(QT_TARGET_TYPE Qt6::Core TYPE)
+if(${QT_TARGET_TYPE} STREQUAL "STATIC_LIBRARY")
+    find_package(Qt6QmlImportScanner REQUIRED)
+    qt6_import_qml_plugins(ddb_gui_q_test)
+endif()
+
+if(WIN32)
+target_link_options(ddb_gui_q_test PRIVATE "-Wl,--export-all-symbols")
+endif()
+
+
+target_compile_definitions(ddb_gui_q_test PRIVATE Q_TEST=1)
+
+install(FILES ${CMAKE_BINARY_DIR}/ddb_gui_q_test.so DESTINATION "~/.local/lib/deadbeef")

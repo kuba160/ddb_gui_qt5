@@ -38,6 +38,10 @@
 #include <QLocale>
 #include <QQuickWindow>
 
+#if Q_TEST
+#include "tests/Tests.h"
+#endif
+
 
 //#include "DeadbeefTranslator.h"
 
@@ -66,7 +70,9 @@ QGuiApplication *app = nullptr;
 
 
 static int pluginMessage_wrapper(uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
-    return api->pluginMessage(id, ctx, p1, p2);
+    if (api)
+        return api->pluginMessage(id, ctx, p1, p2);
+    return 0;
 }
 
 static void initializeQApp() {
@@ -190,6 +196,10 @@ static int pluginStart() {
     api = new DBApi(nullptr, deadbeef_internal);
     plugin.plugin.message = pluginMessage_wrapper;
 
+#if Q_TEST
+    runTests(api);
+#else
+
     startWidgets();
 
     if (!USE_WIDGETS || DBAPI->conf_get_int("qgui.show_qtquick_window", false))
@@ -200,8 +210,10 @@ static int pluginStart() {
 
     unloadQuick();
     unloadWidgets();
-
-    delete api;
+#endif
+    DBApi *api_del = api;
+    api = nullptr;
+    delete api_del;
     delete app;
 
     DBAPI->sendmessage(DB_EV_TERMINATE, 0, 0, 0);
@@ -247,4 +259,45 @@ extern "C" {
         qt_plugin.register_widget = registerWidget;
         return DB_PLUGIN(&plugin);
     }
+
+#if Q_TEST
+    DB_plugin_t *ddb_gui_q_test_load(DB_functions_t *Api) {
+        deadbeef_internal = Api;
+        plugin.plugin.api_vmajor = 1;
+        plugin.plugin.api_vminor = 9;
+        plugin.plugin.version_major = 1;
+        plugin.plugin.version_minor = 9;
+        plugin.plugin.type = DB_PLUGIN_GUI;
+        plugin.plugin.id = "qt5";
+        plugin.plugin.name = "Qt user interface";
+        plugin.plugin.descr = "Qt user interface";
+        plugin.plugin.copyright =
+            "ddb_gui_qt5 - Qt user interface\n"
+            "Copyright (C) 2010 Anton Novikov <tonn.post@gmail.com>\n"
+            "Copyright (C) 2011 Semen Minyushov <semikmsv@gmail.com>\n"
+            "Copyright (C) 2013 Karjavin Roman <redpunk231@gmail.com>\n"
+            "Copyright (C) 2019-2021 Jakub Wasylków <kuba_160@protonmail.com>\n"
+            "\n"
+            "This program is free software; you can redistribute it and/or\n"
+            "modify it under the terms of the GNU General Public License\n"
+            "as published by the Free Software Foundation; either version 2\n"
+            "of the License, or (at your option) any later version.\n"
+            "\n"
+            "This program is distributed in the hope that it will be useful,\n"
+            "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+            "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+            "GNU General Public License for more details.\n"
+            "\n"
+            "You should have received a copy of the GNU General Public License\n"
+            "along with this program; if not, write to the Free Software\n"
+            "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n";
+        plugin.plugin.website = "https://github.com/kuba160/ddb_gui_qt5";
+        plugin.plugin.start = pluginStart;
+        plugin.plugin.stop = pluginStop;
+        plugin.plugin.connect = pluginConnect;
+        plugin.plugin.message = nullptr;
+        qt_plugin.register_widget = registerWidget;
+        return DB_PLUGIN(&plugin);
+    }
+#endif
 }

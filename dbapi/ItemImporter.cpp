@@ -2,6 +2,7 @@
 
 #include <DBApi.h>
 #include <QFutureWatcher>
+#define USE_CONCURRENT 1
 #ifdef USE_CONCURRENT
 #include <QtConcurrent>
 #endif

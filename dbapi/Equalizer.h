@@ -11,7 +11,7 @@ class Equalizer : public QObject
     inline ddb_dsp_context_t * get_supereq();
 public:
     explicit Equalizer(QObject *parent, DB_functions_t *api);
-    Q_PROPERTY(bool available READ getEqAvailable NOTIFY eqAvailableChanged)
+    Q_PROPERTY(bool available READ getEqAvailable CONSTANT)
     Q_PROPERTY(bool enabled READ getEqEnabled WRITE setEqEnabled NOTIFY eqEnabledChanged)
 
     Q_PROPERTY(QVariantList values READ getEq WRITE setEq NOTIFY eqChanged)
